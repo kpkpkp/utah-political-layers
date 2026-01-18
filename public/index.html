@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Utah House & Senate Districts - Party Map</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>Utah State House & Senate Districts</h1>
+      <p class="subtitle">Party affiliation overlay with toggleable House, Senate, and Utah boundary layers.</p>
+    </header>
+
+    <div id="map"></div>
+
+    <aside class="panel control-panel" id="controls">
+      <button class="panel-toggle" id="panel-toggle" aria-expanded="true" title="Hide panel">
+        ◀
+      </button>
+      <div class="panel-section">
+        <div class="panel-title">Layers</div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-boundary" checked />
+          <span>Utah boundary</span>
+        </label>
+        <div class="layer-row">
+          <label class="toggle">
+            <input type="checkbox" id="toggle-tiles" checked />
+            <span>Map tiles</span>
+          </label>
+          <select class="tile-select" id="tile-style-select" aria-label="Map tile style">
+            <option value="osm">OSM</option>
+            <option value="carto-light">Carto Light</option>
+            <option value="carto-voyager">Carto Voyager</option>
+            <option value="carto-dark">Carto Dark</option>
+            <option value="osm-hot">OSM HOT</option>
+            <option value="opentopo">OpenTopoMap</option>
+          </select>
+        </div>
+        <div class="layer-row">
+          <label class="toggle">
+            <input type="checkbox" id="toggle-population" />
+            <span>Population</span>
+          </label>
+          <input type="color" id="color-population" value="#ff0000" aria-label="Population density color" />
+        </div>
+        <div class="layer-row">
+          <label class="toggle">
+            <input type="checkbox" id="toggle-house" checked />
+            <span>State Legislature House districts</span>
+          </label>
+          <input type="color" id="color-house" value="#ff6f00" aria-label="House outline color" />
+        </div>
+        <div class="layer-row">
+          <label class="toggle">
+            <input type="checkbox" id="toggle-senate" checked />
+            <span>State Legislature Senate districts</span>
+          </label>
+          <input type="color" id="color-senate" value="#00b0ff" aria-label="Senate outline color" />
+        </div>
+        <div class="layer-row">
+          <label class="toggle">
+            <input type="checkbox" id="toggle-congress-current" checked />
+            <span>Federal House districts (current)</span>
+          </label>
+          <input type="color" id="color-congress-current" value="#8e24aa" aria-label="Federal House current outline color" />
+        </div>
+        <div class="layer-row">
+          <label class="toggle">
+            <input type="checkbox" id="toggle-congress-future" />
+            <span>Federal House districts (coming)</span>
+          </label>
+          <input type="color" id="color-congress-future" value="#43a047" aria-label="Federal House coming outline color" />
+        </div>
+        <div class="note">Coming federal districts have unknown party until elections.</div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">Styling</div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-party-fill" checked />
+          <span>Party fill colors</span>
+        </label>
+        <div class="slider-row">
+          <label for="line-width">Line width</label>
+          <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.6" />
+        </div>
+        <div class="slider-row">
+          <label for="line-opacity">Line opacity</label>
+          <input type="range" id="line-opacity" min="0" max="1" step="0.01" value="1" />
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title">Party legend</div>
+        <div class="legend">
+          <div class="legend-row"><span class="swatch republican"></span>Republican</div>
+          <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
+          <div class="legend-row"><span class="swatch other"></span>Other / Unknown</div>
+        </div>
+      </div>
+
+      <div class="panel-section source">
+        <div class="panel-title">Data sources</div>
+        <div>District boundaries: Utah SGID ArcGIS services</div>
+        <div>Party & member roster: Utah Legislature</div>
+      </div>
+    </aside>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
+  <script src="app.js?v=20260118-hover"></script>
+</body>
+</html>

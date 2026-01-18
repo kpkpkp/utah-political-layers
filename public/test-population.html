@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Population Layer Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Utah Population Layer - Diagnostic Test</h1>
+
+  <div id="status">Testing...</div>
+
+  <h2>Test Results:</h2>
+  <div id="results"></div>
+
+  <script>
+    const results = document.getElementById('results');
+    const status = document.getElementById('status');
+
+    async function runTests() {
+      const testResults = [];
+
+      // Test 1: Check API with Utah filter
+      status.innerHTML = '<div class="info status">Test 1: Checking API with Utah filter...</div>';
+
+      try {
+        const baseUrl = "https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Blocks_PopDensity_5orMore_Albers_Equal_Area/FeatureServer/0/query";
+
+        const countParams = new URLSearchParams({
+          where: "STATEFP10='49'",
+          returnCountOnly: "true",
+          f: "json"
+        });
+
+        const countResp = await fetch(`${baseUrl}?${countParams.toString()}`);
+        const countData = await countResp.json();
+
+        testResults.push({
+          name: "Utah Census Block Count",
+          success: countData.count > 0,
+          message: `Found ${countData.count?.toLocaleString() || 0} Utah census blocks`,
+          data: countData
+        });
+
+        // Test 2: Get sample features
+        status.innerHTML = '<div class="info status">Test 2: Fetching sample features...</div>';
+
+        const featParams = new URLSearchParams({
+          where: "STATEFP10='49'",
+          outFields: "FID,STATEFP10,PopDensity,POP10,Area",
+          f: "geojson",
+          resultRecordCount: "3"
+        });
+
+        const featResp = await fetch(`${baseUrl}?${featParams.toString()}`);
+        const featData = await featResp.json();
+
+        testResults.push({
+          name: "Sample Features",
+          success: featData.features?.length > 0,
+          message: `Retrieved ${featData.features?.length || 0} sample features`,
+          data: {
+            features: featData.features?.map(f => ({
+              FID: f.properties.FID,
+              State: f.properties.STATEFP10,
+              Population: f.properties.POP10,
+              Density: f.properties.PopDensity
+            }))
+          }
+        });
+
+      } catch (error) {
+        testResults.push({
+          name: "API Test",
+          success: false,
+          message: `Error: ${error.message}`,
+          data: { error: error.toString() }
+        });
+      }
+
+      // Display results
+      status.innerHTML = '<div class="success status">Tests Complete!</div>';
+
+      results.innerHTML = testResults.map(test => `
+        <div class="${test.success ? 'success' : 'error'} status">
+          <strong>${test.success ? '✅' : '❌'} ${test.name}</strong><br>
+          ${test.message}
+        </div>
+        ${test.data ? `<pre>${JSON.stringify(test.data, null, 2)}</pre>` : ''}
+      `).join('');
+
+      // Final verdict
+      const allPassed = testResults.every(t => t.success);
+      if (allPassed) {
+        results.innerHTML += `
+          <div class="success status">
+            <h3>✅ ALL TESTS PASSED!</h3>
+            <p>The population data API is working correctly. The fixes are in place.</p>
+            <p><strong>Next step:</strong> Go to <a href="/">the main page</a> and make sure to hard refresh (Ctrl+Shift+R)</p>
+          </div>
+        `;
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

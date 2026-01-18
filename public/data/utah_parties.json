@@ -1,0 +1,461 @@
+{
+  "house": {
+    "57": {
+      "party": "Republican",
+      "name": "Abbott, Nelson T."
+    },
+    "38": {
+      "party": "Republican",
+      "name": "Acton, Cheryl K."
+    },
+    "70": {
+      "party": "Republican",
+      "name": "Albrecht, Carl R."
+    },
+    "41": {
+      "party": "Democrat",
+      "name": "Arthur, John"
+    },
+    "4": {
+      "party": "Republican",
+      "name": "Auxier, Tiara"
+    },
+    "20": {
+      "party": "Republican",
+      "name": "Ballard, Melissa G."
+    },
+    "17": {
+      "party": "Republican",
+      "name": "Barlow, Stewart E."
+    },
+    "29": {
+      "party": "Republican",
+      "name": "Bolinder, Bridger"
+    },
+    "75": {
+      "party": "Republican",
+      "name": "Brooks, Walt"
+    },
+    "64": {
+      "party": "Republican",
+      "name": "Burton, Jefferson S."
+    },
+    "54": {
+      "party": "Republican",
+      "name": "Chevrier, Kristen"
+    },
+    "68": {
+      "party": "Republican",
+      "name": "Chew, Scott H."
+    },
+    "53": {
+      "party": "Republican",
+      "name": "Christofferson, Kay J."
+    },
+    "60": {
+      "party": "Republican",
+      "name": "Clancy, Tyler"
+    },
+    "18": {
+      "party": "Republican",
+      "name": "Cutler, Paul A."
+    },
+    "22": {
+      "party": "Democrat",
+      "name": "Dailey-Provost, Jennifer"
+    },
+    "15": {
+      "party": "Republican",
+      "name": "Defay, Ariel"
+    },
+    "35": {
+      "party": "Democrat",
+      "name": "Dominguez, Rosalba"
+    },
+    "36": {
+      "party": "Republican",
+      "name": "Dunnigan, James A."
+    },
+    "43": {
+      "party": "Republican",
+      "name": "Eliason, Steve"
+    },
+    "72": {
+      "party": "Republican",
+      "name": "Elison, Joseph"
+    },
+    "48": {
+      "party": "Republican",
+      "name": "Fiefia, Doug"
+    },
+    "30": {
+      "party": "Democrat",
+      "name": "Fitisemanu, Jake"
+    },
+    "50": {
+      "party": "Republican",
+      "name": "Gricius, Stephanie"
+    },
+    "6": {
+      "party": "Republican",
+      "name": "Gwynn, Matthew H."
+    },
+    "11": {
+      "party": "Republican",
+      "name": "Hall, Katy"
+    },
+    "51": {
+      "party": "Republican",
+      "name": "Hansen, Leah"
+    },
+    "55": {
+      "party": "Republican",
+      "name": "Hawkins, Jon"
+    },
+    "32": {
+      "party": "Democrat",
+      "name": "Hayes, Sahara"
+    },
+    "21": {
+      "party": "Democrat",
+      "name": "Hollins, Sandra"
+    },
+    "39": {
+      "party": "Republican",
+      "name": "Ivory, Ken"
+    },
+    "73": {
+      "party": "Republican",
+      "name": "Jack, Colin W."
+    },
+    "10": {
+      "party": "Republican",
+      "name": "Koford, Jill"
+    },
+    "59": {
+      "party": "Republican",
+      "name": "Kohler, Mike L."
+    },
+    "8": {
+      "party": "Republican",
+      "name": "Kyle, Jason B."
+    },
+    "16": {
+      "party": "Republican",
+      "name": "Lee, Trevor"
+    },
+    "14": {
+      "party": "Republican",
+      "name": "Lisonbee, Karianne"
+    },
+    "27": {
+      "party": "Republican",
+      "name": "Loubet, Anthony E."
+    },
+    "26": {
+      "party": "Republican",
+      "name": "MacPherson, Matt"
+    },
+    "52": {
+      "party": "Republican",
+      "name": "Maloy, A. Cory"
+    },
+    "37": {
+      "party": "Democrat",
+      "name": "Matthews, Ashlee"
+    },
+    "31": {
+      "party": "Democrat",
+      "name": "Mauga, Verona"
+    },
+    "24": {
+      "party": "Democrat",
+      "name": "Miller, Grant Amjad"
+    },
+    "45": {
+      "party": "Republican",
+      "name": "Miller, Tracy"
+    },
+    "69": {
+      "party": "Republican",
+      "name": "Monson, Logan"
+    },
+    "34": {
+      "party": "Democrat",
+      "name": "Moss, Carol S."
+    },
+    "23": {
+      "party": "Democrat",
+      "name": "Nguyen, Hoang"
+    },
+    "42": {
+      "party": "Republican",
+      "name": "Okerlund, Clinton"
+    },
+    "33": {
+      "party": "Democrat",
+      "name": "Owens, Doug"
+    },
+    "28": {
+      "party": "Republican",
+      "name": "Peck, Nicholeen P."
+    },
+    "2": {
+      "party": "Republican",
+      "name": "Petersen, Michael J."
+    },
+    "13": {
+      "party": "Republican",
+      "name": "Peterson, Karen M."
+    },
+    "1": {
+      "party": "Republican",
+      "name": "Peterson, Thomas W."
+    },
+    "56": {
+      "party": "Republican",
+      "name": "Peterson, Val L."
+    },
+    "49": {
+      "party": "Republican",
+      "name": "Pierucci, Candice B."
+    },
+    "46": {
+      "party": "Republican",
+      "name": "Roberts, Calvin"
+    },
+    "25": {
+      "party": "Democrat",
+      "name": "Romero, Angela"
+    },
+    "9": {
+      "party": "Republican",
+      "name": "Sawyer, Jake"
+    },
+    "12": {
+      "party": "Republican",
+      "name": "Schultz, Mike"
+    },
+    "58": {
+      "party": "Republican",
+      "name": "Shallenberger, David"
+    },
+    "66": {
+      "party": "Republican",
+      "name": "Shelley, Troy"
+    },
+    "61": {
+      "party": "Republican",
+      "name": "Shepherd, Lisa"
+    },
+    "71": {
+      "party": "Republican",
+      "name": "Shipp, Rex P."
+    },
+    "5": {
+      "party": "Republican",
+      "name": "Snider, Casey"
+    },
+    "40": {
+      "party": "Democrat",
+      "name": "Stoddard, Andrew"
+    },
+    "47": {
+      "party": "Republican",
+      "name": "Strong, Mark A."
+    },
+    "44": {
+      "party": "Republican",
+      "name": "Teuscher, Jordan D."
+    },
+    "3": {
+      "party": "Republican",
+      "name": "Thompson, Jason E."
+    },
+    "62": {
+      "party": "Republican",
+      "name": "Thurston, Norman K"
+    },
+    "74": {
+      "party": "Republican",
+      "name": "Walter, R. Neil"
+    },
+    "19": {
+      "party": "Republican",
+      "name": "Ward, Raymond P."
+    },
+    "67": {
+      "party": "Republican",
+      "name": "Watkins, Christine F."
+    },
+    "65": {
+      "party": "Republican",
+      "name": "Welton, Doug"
+    },
+    "63": {
+      "party": "Republican",
+      "name": "Whyte, Stephen L."
+    },
+    "7": {
+      "party": "Republican",
+      "name": "Wilcox, Ryan D."
+    }
+  },
+  "senate": {
+    "7": {
+      "party": "Republican",
+      "name": "Adams, J. Stuart"
+    },
+    "22": {
+      "party": "Republican",
+      "name": "Balderree, Heidi"
+    },
+    "13": {
+      "party": "Democrat",
+      "name": "Blouin, Nate"
+    },
+    "21": {
+      "party": "Republican",
+      "name": "Brammer, Brady"
+    },
+    "11": {
+      "party": "Forward",
+      "name": "Buss, Emily"
+    },
+    "19": {
+      "party": "Republican",
+      "name": "Cullimore, Kirk A."
+    },
+    "10": {
+      "party": "Democrat",
+      "name": "Escamilla, Luz"
+    },
+    "17": {
+      "party": "Republican",
+      "name": "Fillmore, Lincoln"
+    },
+    "23": {
+      "party": "Republican",
+      "name": "Grover, Keith"
+    },
+    "16": {
+      "party": "Republican",
+      "name": "Harper, Wayne A."
+    },
+    "26": {
+      "party": "Republican",
+      "name": "Hinkins, David P."
+    },
+    "29": {
+      "party": "Republican",
+      "name": "Ipson, Don L."
+    },
+    "3": {
+      "party": "Republican",
+      "name": "Johnson, John D."
+    },
+    "12": {
+      "party": "Democrat",
+      "name": "Kwan, Karen"
+    },
+    "18": {
+      "party": "Republican",
+      "name": "McCay, Daniel"
+    },
+    "25": {
+      "party": "Republican",
+      "name": "McKell, Michael K."
+    },
+    "5": {
+      "party": "Republican",
+      "name": "Millner, Ann"
+    },
+    "4": {
+      "party": "Republican",
+      "name": "Musselman, Calvin R."
+    },
+    "27": {
+      "party": "Republican",
+      "name": "Owens, Derrin R."
+    },
+    "14": {
+      "party": "Democrat",
+      "name": "Pitcher, Stephanie"
+    },
+    "9": {
+      "party": "Democrat",
+      "name": "Plumb, Jen"
+    },
+    "15": {
+      "party": "Democrat",
+      "name": "Riebe, Kathleen A."
+    },
+    "1": {
+      "party": "Republican",
+      "name": "Sandall, Scott D."
+    },
+    "6": {
+      "party": "Republican",
+      "name": "Stevenson, Jerry W"
+    },
+    "24": {
+      "party": "Republican",
+      "name": "Stratton, Keven J."
+    },
+    "28": {
+      "party": "Republican",
+      "name": "Vickers, Evan J."
+    },
+    "8": {
+      "party": "Republican",
+      "name": "Weiler, Todd"
+    },
+    "2": {
+      "party": "Republican",
+      "name": "Wilson, Chris H."
+    },
+    "20": {
+      "party": "Republican",
+      "name": "Winterton, Ronald M."
+    }
+  },
+  "source": "https://le.utah.gov/asp/roster/roster.asp?house=H",
+  "congress_current": {
+    "1": {
+      "party": "Republican",
+      "name": "Blake Moore"
+    },
+    "2": {
+      "party": "Republican",
+      "name": "Celeste Maloy"
+    },
+    "3": {
+      "party": "Republican",
+      "name": "John Curtis"
+    },
+    "4": {
+      "party": "Republican",
+      "name": "Burgess Owens"
+    }
+  },
+  "congress_future": {
+    "1": {
+      "party": "Unknown",
+      "name": "TBD"
+    },
+    "2": {
+      "party": "Unknown",
+      "name": "TBD"
+    },
+    "3": {
+      "party": "Unknown",
+      "name": "TBD"
+    },
+    "4": {
+      "party": "Unknown",
+      "name": "TBD"
+    }
+  },
+  "source_congress_current": "https://ballotpedia.org/United_States_congressional_delegations_from_Utah",
+  "note_congress_future": "Party assignments not known yet; update when candidates are elected."
+}
