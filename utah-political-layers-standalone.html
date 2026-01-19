@@ -1573,7 +1573,7 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
     }
     received += features.length;
     if (status) {
-      status.textContent = `Population: ${received.toLocaleString()} loaded (REST)`;
+      status.textContent = `Population: ${received.toLocaleString()} blocks loaded (REST)`;
     }
     offset += pageSize;
     if (features.length < pageSize) {
@@ -1616,7 +1616,7 @@ const loadPopulationPoints = async () => {
     }
     if (status) {
       status.textContent = restCount
-        ? `Population: ready (${restCount.toLocaleString()})`
+        ? `Population: ready (${restCount.toLocaleString()} blocks)`
         : "Population: ready (no features)";
     }
     const populationToggle = document.getElementById("toggle-population");
