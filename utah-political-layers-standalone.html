@@ -838,13 +838,16 @@ const loadStoredView = () => {
 };
 
 const map = L.map("map", {
-  zoomSnap: 0.5,
-  zoomControl: false  // We'll add it manually at bottomleft
+  zoomSnap: 0.25,      // Snap to quarter-zoom levels for smoother transitions
+  zoomDelta: 0.25,     // Each +/- button click zooms by 0.25 levels
+  zoomControl: false   // We'll add it manually at bottomleft
 });
 
 // Add zoom control at bottom-left
 L.control.zoom({
-  position: 'bottomleft'
+  position: 'bottomleft',
+  zoomInTitle: 'Zoom in (0.25x)',
+  zoomOutTitle: 'Zoom out (0.25x)'
 }).addTo(map);
 
 // Add scale control at bottom-left
