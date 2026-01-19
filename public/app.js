@@ -78,6 +78,8 @@ const enablePopulationCanvasClicks = () => {
 // Expose for debugging
 window.populationLayer = populationLayer;
 window.populationRenderer = populationRenderer;
+window.setDistrictPointerEvents = null; // Will be set after function definition
+window.styleState = styleState;
 
 const partyColor = (partyRaw) => {
   const party = (partyRaw || "").toLowerCase();
@@ -364,6 +366,25 @@ const attachToggle = (checkboxId, layerKey) => {
   });
 };
 
+const setDistrictPointerEvents = () => {
+  // When party fill is disabled, only the stroke should be clickable
+  // This allows clicking on population dots underneath the district outlines
+  const pointerEvents = styleState.partyFill ? "auto" : "stroke";
+
+  [layerState.house, layerState.senate, layerState.congressCurrent, layerState.congressFuture].forEach((layer) => {
+    if (layer) {
+      layer.eachLayer((sublayer) => {
+        if (sublayer._path) {
+          sublayer._path.style.pointerEvents = pointerEvents;
+        }
+      });
+    }
+  });
+};
+
+// Expose for debugging
+window.setDistrictPointerEvents = setDistrictPointerEvents;
+
 const refreshPartyFill = (parties) => {
   const houseLayer = layerState.house;
   const senateLayer = layerState.senate;
@@ -401,6 +422,12 @@ const refreshPartyFill = (parties) => {
       return congressFutureStyle(info?.party);
     });
   }
+
+  // Set pointer-events after styles are applied
+  // Use requestAnimationFrame to ensure DOM is updated
+  requestAnimationFrame(() => {
+    setDistrictPointerEvents();
+  });
 };
 
 const densityScale = (value) => {
@@ -1030,6 +1057,9 @@ const init = async () => {
       refreshPartyFill(parties);
     });
   }
+
+  // Set initial pointer-events based on party fill state
+  refreshPartyFill(parties);
 
   bindColorPickers(parties);
   bindLineControls(parties);
