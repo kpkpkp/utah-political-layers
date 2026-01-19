@@ -866,16 +866,26 @@ if (storedView) {
 }
 
 const populationPane = map.createPane("populationPane");
-populationPane.style.zIndex = "450";
-populationPane.style.pointerEvents = "auto";
+populationPane.style.zIndex = "250";  // Above tiles (200), below overlays (400)
+populationPane.style.pointerEvents = "none";  // Allow clicks to pass through to districts
 
 const populationOutlinePane = map.createPane("populationOutlinePane");
-populationOutlinePane.style.zIndex = "460";
+populationOutlinePane.style.zIndex = "260";  // Just above population pane
 populationOutlinePane.style.pointerEvents = "none";
 
 const populationRenderer = L.canvas({ padding: 0.5, pane: "populationPane" });
 const populationLayer = L.layerGroup();
 let populationHighlight = null;
+
+// Helper to enable pointer-events on the population canvas
+// Called after canvas is created (when first marker is added)
+const enablePopulationCanvasClicks = () => {
+  const canvas = populationPane.querySelector('canvas');
+  if (canvas && canvas.style.pointerEvents !== "auto") {
+    canvas.style.pointerEvents = "auto";
+    console.log('Enabled pointer-events on population canvas');
+  }
+};
 
 // Expose for debugging
 window.populationLayer = populationLayer;
@@ -1561,6 +1571,10 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
           // Force renderer to draw this chunk
           if (populationRenderer && populationRenderer._redraw) {
             populationRenderer._redraw();
+          }
+          // Enable canvas clicks after first chunk is added
+          if (index === chunkSize) {
+            enablePopulationCanvasClicks();
           }
           if (index < markers.length) {
             requestAnimationFrame(addChunk);
