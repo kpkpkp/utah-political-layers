@@ -19,17 +19,35 @@ const loadStoredView = () => {
 
 const map = L.map("map", {
   zoomSnap: 0.5,
-  zoomControl: true
+  zoomControl: false  // We'll add it manually at bottomleft
 });
+
+// Add zoom control at bottom-left
+L.control.zoom({
+  position: 'bottomleft'
+}).addTo(map);
+
+// Add scale control at bottom-left
+L.control.scale({
+  position: 'bottomleft',
+  imperial: true,
+  metric: true
+}).addTo(map);
 
 // Expose for debugging
 window.map = map;
+
+// Utah's approximate bounds: [south, west] to [north, east]
+const utahBounds = [[37.0, -114.05], [42.0, -109.04]];
 
 const storedView = loadStoredView();
 if (storedView) {
   map.setView(storedView.center, storedView.zoom);
 } else {
-  map.setView([39.4, -111.6], 6.5);
+  // Fit Utah to ~90% of viewport height
+  map.fitBounds(utahBounds, {
+    padding: [20, 20]  // 20px padding on all sides
+  });
 }
 
 const populationPane = map.createPane("populationPane");
