@@ -22,6 +22,9 @@ const map = L.map("map", {
   zoomControl: true
 });
 
+// Expose for debugging
+window.map = map;
+
 const storedView = loadStoredView();
 if (storedView) {
   map.setView(storedView.center, storedView.zoom);
@@ -40,6 +43,10 @@ populationOutlinePane.style.pointerEvents = "none";
 const populationRenderer = L.canvas({ padding: 0.5, pane: "populationPane" });
 const populationLayer = L.layerGroup();
 let populationHighlight = null;
+
+// Expose for debugging
+window.populationLayer = populationLayer;
+window.populationRenderer = populationRenderer;
 
 const partyColor = (partyRaw) => {
   const party = (partyRaw || "").toLowerCase();
@@ -294,6 +301,9 @@ const layerState = {
   congressFuture: null
 };
 
+// Expose for debugging
+window.layerState = layerState;
+
 const loadJson = async (url) => {
   const response = await fetch(url);
   if (!response.ok) {
@@ -311,6 +321,10 @@ const attachToggle = (checkboxId, layerKey) => {
       layer.addTo(map);
       if (layerKey === "population") {
         loadPopulationPoints().catch((error) => console.error(error));
+        // Force canvas renderer to redraw if markers already loaded
+        if (populationState.loaded && populationRenderer && populationRenderer._reset) {
+          populationRenderer._reset();
+        }
       }
     } else {
       map.removeLayer(layer);
@@ -675,7 +689,7 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
   while (true) {
     const params = new URLSearchParams({
       where: "STATEFP10='49'",
-      outFields: "FID,PopDensity,POP10,Area",
+      outFields: "*",
       outSR: "4326",
       f: "geojson",
       resultOffset: String(offset),
@@ -705,6 +719,10 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
           const end = Math.min(index + chunkSize, markers.length);
           for (; index < end; index += 1) {
             populationLayer.addLayer(markers[index]);
+          }
+          // Force renderer to draw this chunk
+          if (populationRenderer && populationRenderer._redraw) {
+            populationRenderer._redraw();
           }
           if (index < markers.length) {
             requestAnimationFrame(addChunk);
@@ -766,7 +784,14 @@ const loadPopulationPoints = async () => {
     const populationToggle = document.getElementById("toggle-population");
     if (populationToggle && populationToggle.checked && !map.hasLayer(populationLayer)) {
       populationLayer.addTo(map);
-      populationLayer.eachLayer((layer) => layer.bringToFront && layer.bringToFront());
+      // Trigger a map redraw to render the canvas markers
+      setTimeout(() => {
+        if (populationRenderer && populationRenderer._redraw) {
+          populationRenderer._redraw();
+        }
+        // Force map to redraw
+        map.invalidateSize();
+      }, 100);
     }
   } catch (error) {
     populationState.loading = false;
@@ -973,13 +998,15 @@ const init = async () => {
   bindPopulationColor();
   bindTileStylePicker();
 
-  loadPopulationPoints().catch((error) => {
-    console.error(error);
-    const status = ensurePopulationStatus();
-    if (status) {
-      status.textContent = "Population: failed to load (check console).";
-    }
-  });
+  // Don't load population points during init - only load when user checks the toggle
+  // This ensures markers are added after the layer is on the map
+  // loadPopulationPoints().catch((error) => {
+  //   console.error(error);
+  //   const status = ensurePopulationStatus();
+  //   if (status) {
+  //     status.textContent = "Population: failed to load (check console).";
+  //   }
+  // });
 
   const panel = document.getElementById("controls");
   const panelToggle = document.getElementById("panel-toggle");
