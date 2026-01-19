@@ -80,6 +80,7 @@ const partyColor = (partyRaw) => {
   const party = (partyRaw || "").toLowerCase();
   if (party.startsWith("rep")) return "#d73027";
   if (party.startsWith("dem")) return "#4575b4";
+  if (party.startsWith("forward") || party.startsWith("fwd")) return "#8b5cf6";
   return "#9e9e9e";
 };
 
