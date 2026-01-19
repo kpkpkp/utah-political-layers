@@ -35,8 +35,10 @@ node build-standalone.js
 3. Under "Build and deployment":
    - **Source:** Deploy from a branch
    - **Branch:** `main`
-   - **Folder:** `/public`
+   - **Folder:** `/` (root)
 4. Click **Save**
+
+Note: GitHub will serve your site from the root, and you'll access it at the `/public` path.
 
 #### Step 2: Wait for Deployment
 - GitHub will automatically build and deploy your site
