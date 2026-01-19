@@ -998,6 +998,8 @@ const init = async () => {
       map.removeLayer(layerState[key]);
     } else if (key === "population") {
       layerState.population.addTo(map);
+      // Load population data if checkbox is initially checked
+      loadPopulationPoints().catch((error) => console.error(error));
     }
   });
 
