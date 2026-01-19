@@ -5,6 +5,8 @@ import { readFileSync, writeFileSync } from 'fs';
 console.log('Building standalone HTML file...\n');
 
 // Read all necessary files
+const indexHtml = readFileSync('public/index.html', 'utf-8');
+const stylesCSS = readFileSync('public/styles.css', 'utf-8');
 const appJs = readFileSync('public/app.js', 'utf-8');
 const utahBoundary = readFileSync('public/data/utah_boundary.geojson', 'utf-8');
 const utahHouse = readFileSync('public/data/utah_house_2022.geojson', 'utf-8');
@@ -13,7 +15,7 @@ const utahCongressCurrent = readFileSync('public/data/utah_congress_2022.geojson
 const utahCongressFuture = readFileSync('public/data/utah_congress_2026.geojson', 'utf-8');
 const utahParties = readFileSync('public/data/utah_parties.json', 'utf-8');
 
-console.log('✓ Read all data files');
+console.log('✓ Read all source files');
 console.log(`  - utah_boundary.geojson: ${(utahBoundary.length / 1024).toFixed(1)} KB`);
 console.log(`  - utah_house_2022.geojson: ${(utahHouse.length / 1024).toFixed(1)} KB`);
 console.log(`  - utah_senate_2022.geojson: ${(utahSenate.length / 1024).toFixed(1)} KB`);
@@ -43,11 +45,9 @@ modifiedAppJs = modifiedAppJs.replace(
 
 console.log('✓ Modified app.js to use embedded data\n');
 
-// Read the template
-const template = readFileSync('utah-political-layers-standalone.html', 'utf-8');
-
 // Build the embedded data script
 const embeddedDataScript = `
+  <script>
 // Embedded GeoJSON and JSON data
 const EMBEDDED_DATA = {
   boundary: ${utahBoundary},
@@ -58,21 +58,27 @@ const EMBEDDED_DATA = {
   parties: ${utahParties}
 };
 console.log('✓ Embedded data loaded');
-`;
+  </script>`;
 
-// Build the final HTML
-let finalHtml = template;
+// Build the application code script
+const applicationCodeScript = `
+  <script>
+${modifiedAppJs}
+  </script>`;
 
-// Replace the data loader placeholder
+// Build the final HTML by modifying index.html
+let finalHtml = indexHtml;
+
+// Replace external CSS with inline CSS
 finalHtml = finalHtml.replace(
-  /<script id="data-loader">[\s\S]*?<\/script>/,
-  `<script id="data-loader">${embeddedDataScript}</script>`
+  /<link rel="stylesheet" href="styles\.css" \/>/,
+  `<style>\n${stylesCSS}\n  </style>`
 );
 
-// Replace the main application code placeholder
+// Replace the app.js script tag with embedded data + application code
 finalHtml = finalHtml.replace(
-  /<script>\s*\/\/ Main application code will be embedded here[\s\S]*?<\/script>/,
-  `<script>\n${modifiedAppJs}\n  </script>`
+  /<script src="app\.js\?v=[^"]+"><\/script>/,
+  `${embeddedDataScript}\n${applicationCodeScript}`
 );
 
 // Write the output file
