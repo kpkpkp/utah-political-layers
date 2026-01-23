@@ -30,7 +30,11 @@ hide_streamlit_style = """
     /* Hide Streamlit's terminal/manage button */
     button[class*="terminal" i] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -99999px !important}
     button[class*="Manage"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
-    [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: hidden !important; width: 100% !important}
+    [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: visible !important; width: 100% !important}
+    /* Ensure map controls stay visible */
+    .leaflet-control {z-index: 999 !important; visibility: visible !important; display: block !important}
+    .leaflet-control-zoom {z-index: 999 !important}
+    .leaflet-control-scale {z-index: 999 !important}
     body {background: white !important; overflow: hidden !important}
     html {background: white !important; overflow: hidden !important}
 </style>
