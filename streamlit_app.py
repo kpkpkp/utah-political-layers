@@ -15,7 +15,7 @@ hide_streamlit_style = """
     header.header {display: none}
     footer {display: none}
     #MainMenu {display: none}
-    section {background: transparent !important; padding: 0 !important; margin: 0 !important; height: 0 !important; min-height: 0 !important; overflow: hidden !important}
+    section {background: transparent !important; padding: 0 !important}
     .stMainBlockContainer {padding: 0 !important; margin: 0 !important}
     .appViewContainer {padding: 0 !important; margin: 0 !important}
     .stElementContainer {padding: 0 !important}
