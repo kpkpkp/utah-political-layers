@@ -33,36 +33,35 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-# Hide manage button with JavaScript
+# Hide manage button by removing it from DOM
 st.markdown("""
 <script>
-function hideButton() {
-  // Target the specific terminal button class
-  var buttons = document.querySelectorAll('[class*="terminalButton"], [class*="Terminal"], [data-testid="manage-app-button"]');
+function removeButton() {
+  // Try to find and delete the button
+  var buttons = document.querySelectorAll('[class*="terminalButton"], [class*="Terminal"], [data-testid="manage-app-button"], button:not([type="button"])');
   buttons.forEach(function(btn) {
-    btn.style.display = 'none';
-    btn.style.visibility = 'hidden';
-    btn.style.width = '0';
-    btn.style.height = '0';
-    btn.style.position = 'absolute';
-    btn.style.left = '-99999px';
-    btn.style.opacity = '0';
-    btn.style.pointerEvents = 'none';
+    // Check if it contains "Manage" text
+    if (btn.textContent.includes('Manage') || btn.className.includes('terminal')) {
+      btn.parentElement.removeChild(btn);
+      return;
+    }
+    // Otherwise just hide it aggressively
+    btn.style.cssText = 'display:none!important;visibility:hidden!important;width:0!important;height:0!important;position:fixed!important;left:-99999px!important;';
   });
 }
-// Try at multiple time intervals
-hideButton();
-setTimeout(hideButton, 50);
-setTimeout(hideButton, 200);
-setTimeout(hideButton, 500);
-setTimeout(hideButton, 1000);
-// Also monitor for dynamic changes
-document.addEventListener('DOMContentLoaded', hideButton);
-window.addEventListener('load', hideButton);
-setTimeout(function() {
-  var observer = new MutationObserver(hideButton);
-  observer.observe(document.body, {childList: true, subtree: true, attributes: true});
-}, 100);
+// Execute immediately and repeatedly
+removeButton();
+setTimeout(removeButton, 10);
+setTimeout(removeButton, 50);
+setTimeout(removeButton, 200);
+setTimeout(removeButton, 500);
+setTimeout(removeButton, 1000);
+setTimeout(removeButton, 2000);
+// Watch for new buttons added dynamically
+window.addEventListener('load', removeButton);
+document.addEventListener('DOMContentLoaded', removeButton);
+var observer = new MutationObserver(removeButton);
+observer.observe(document.documentElement, {childList: true, subtree: true, attributes: false});
 </script>
 """, unsafe_allow_html=True)
 
