@@ -24,7 +24,7 @@ body {
 
 .panel {
   position: absolute;
-  top: 16px;
+  top: 32px;
   left: 16px;
   z-index: 1000;
   background: #ffffff;
