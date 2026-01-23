@@ -8,6 +8,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Hide Streamlit header and footer
+hide_streamlit_style = """
+<style>
+    header {display: none}
+    footer {display: none}
+    #MainMenu {display: none}
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 st.title("🗺️ Utah Political Layers")
 st.markdown("Interactive map of Utah State House, Senate, and Congressional districts with party affiliation and population data.")
 
