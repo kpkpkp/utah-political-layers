@@ -11,20 +11,22 @@ st.set_page_config(
 # Hide Streamlit chrome and maximize map space
 hide_streamlit_style = """
 <style>
-    header {display: none}
-    header.header {display: none}
-    footer {display: none}
-    #MainMenu {display: none}
-    section {background: transparent !important; padding: 0 !important}
-    .stMainBlockContainer {padding: 0 !important; margin: 0 !important}
+    header {display: none !important}
+    header.header {display: none !important}
+    footer {display: none !important}
+    #MainMenu {display: none !important}
+    section {background: transparent !important; padding: 0 !important; margin: 0 !important}
+    .stMainBlockContainer {padding: 0 !important; margin: 0 !important; height: 100vh !important; overflow: hidden !important}
     .appViewContainer {padding: 0 !important; margin: 0 !important}
-    .stElementContainer {padding: 0 !important}
-    main {padding: 0 !important}
-    [data-testid="stAppViewContainer"] {padding: 0 !important}
+    .stElementContainer {padding: 0 !important; margin: 0 !important}
+    main {padding: 0 !important; margin: 0 !important}
+    [data-testid="stAppViewContainer"] {padding: 0 !important; overflow: hidden !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
-    [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
+    [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: absolute !important}
     [class*="Terminal"] {display: none !important}
-    body {background: white !important}
+    [class*="StateContainer"] {overflow: hidden !important}
+    body {background: white !important; overflow: hidden !important}
+    html {background: white !important; overflow: hidden !important}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
