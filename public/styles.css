@@ -278,27 +278,33 @@ body {
 /* Force Leaflet controls to appear above everything */
 .leaflet-control-zoom,
 .leaflet-control-scale {
-  position: fixed !important;
+  position: absolute !important;
   z-index: 9999 !important;
   visibility: visible !important;
   display: block !important;
   opacity: 1 !important;
 }
 
-.leaflet-control-zoom {
-  bottom: 20px !important;
+.leaflet-bottom-left {
+  bottom: 10px !important;
   left: 10px !important;
-  background: white;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+}
+
+.leaflet-control-zoom {
+  bottom: 50px !important;
+  left: 10px !important;
+  background: white !important;
+  border: 2px solid #777 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65) !important;
 }
 
 .leaflet-control-scale {
-  bottom: 5px !important;
-  left: 5px !important;
-  background: white;
-  padding: 5px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+  bottom: 10px !important;
+  left: 10px !important;
+  background: white !important;
+  padding: 5px !important;
+  border: 2px solid #777 !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
 }
