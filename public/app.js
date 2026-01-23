@@ -79,7 +79,6 @@ const enablePopulationCanvasClicks = () => {
 window.populationLayer = populationLayer;
 window.populationRenderer = populationRenderer;
 window.setDistrictPointerEvents = null; // Will be set after function definition
-window.styleState = styleState;
 
 const partyColor = (partyRaw) => {
   const party = (partyRaw || "").toLowerCase();
@@ -247,6 +246,9 @@ const styleState = {
   lineWidth: storedUi.lineWidth ?? 1.2,
   lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1)
 };
+
+// Expose for debugging
+window.styleState = styleState;
 
 const persistUi = (next = {}) => {
   Object.assign(uiState, next, {
