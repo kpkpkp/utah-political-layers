@@ -22,6 +22,8 @@ hide_streamlit_style = """
     main {padding: 0 !important}
     [data-testid="stAppViewContainer"] {padding: 0 !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
+    [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
+    [class*="Terminal"] {display: none !important}
     body {background: white !important}
 </style>
 """
