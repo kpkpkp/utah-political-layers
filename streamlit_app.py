@@ -19,11 +19,11 @@ st.components.v1.html(
         width="100%"
         height="900"
         frameborder="0"
-        style="border: 1px solid #ddd; border-radius: 5px;"
+        scrolling="no"
+        style="border: 1px solid #ddd; border-radius: 5px; overflow: hidden;"
     ></iframe>
     ''',
-    height=920,
-    scrolling=True
+    height=910
 )
 
 # Sidebar info
