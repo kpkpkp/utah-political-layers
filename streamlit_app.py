@@ -26,7 +26,7 @@ hide_streamlit_style = """
     button {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
     [class*="Terminal"] {display: none !important}
     [class*="terminalButton"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
-    [class*="StateContainer"] {overflow: hidden !important}
+    [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: hidden !important}
     body {background: white !important; overflow: hidden !important}
     html {background: white !important; overflow: hidden !important}
 </style>
