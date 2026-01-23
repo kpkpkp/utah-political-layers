@@ -32,9 +32,12 @@ hide_streamlit_style = """
     button[class*="Manage"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
     [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: visible !important; width: 100% !important}
     /* Ensure map controls stay visible */
-    .leaflet-control {z-index: 999 !important; visibility: visible !important; display: block !important}
-    .leaflet-control-zoom {z-index: 999 !important}
-    .leaflet-control-scale {z-index: 999 !important}
+    .leaflet-control {z-index: 999 !important; visibility: visible !important; display: block !important; position: relative !important}
+    .leaflet-control-zoom {z-index: 999 !important; position: absolute !important; bottom: 20px !important; left: 10px !important; visibility: visible !important}
+    .leaflet-control-scale {z-index: 999 !important; position: absolute !important; bottom: 5px !important; left: 5px !important; visibility: visible !important}
+    /* Ensure controls aren't clipped */
+    .leaflet-pane {overflow: visible !important}
+    .leaflet-bottom {z-index: 999 !important; visibility: visible !important}
     body {background: white !important; overflow: hidden !important}
     html {background: white !important; overflow: hidden !important}
 </style>
