@@ -22,11 +22,20 @@ hide_streamlit_style = """
     main {padding: 0 !important}
     [data-testid="stAppViewContainer"] {padding: 0 !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
-    button {display: none !important}
     body {background: white !important}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# Hide manage button with JavaScript
+st.markdown("""
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var button = document.querySelector('[data-testid="manage-app-button"]');
+  if (button) button.style.display = 'none';
+});
+</script>
+""", unsafe_allow_html=True)
 
 # Embed the GitHub Pages map
 st.components.v1.html(
