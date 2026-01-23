@@ -30,10 +30,19 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 # Hide manage button with JavaScript
 st.markdown("""
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  var button = document.querySelector('[data-testid="manage-app-button"]');
-  if (button) button.style.display = 'none';
-});
+function hideButton() {
+  var button = document.querySelector('[data-testid="manage-app-button"]') ||
+               document.querySelector('button[class*="Terminal"]') ||
+               Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Manage'));
+  if (button) {
+    button.style.display = 'none !important';
+  }
+}
+// Try immediately and then periodically
+hideButton();
+setTimeout(hideButton, 500);
+setTimeout(hideButton, 1000);
+setTimeout(hideButton, 2000);
 </script>
 """, unsafe_allow_html=True)
 
