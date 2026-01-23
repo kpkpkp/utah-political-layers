@@ -23,9 +23,9 @@ hide_streamlit_style = """
     [data-testid="stAppViewContainer"] {padding: 0 !important; overflow: hidden !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
     [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: fixed !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important}
-    button {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
-    [class*="Terminal"] {display: none !important}
-    [class*="terminalButton"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
+    /* Hide Streamlit's terminal/manage button */
+    button[class*="terminal" i] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -99999px !important}
+    button[class*="Manage"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
     [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: hidden !important}
     body {background: white !important; overflow: hidden !important}
     html {background: white !important; overflow: hidden !important}
@@ -37,26 +37,32 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.markdown("""
 <script>
 function hideButton() {
-  var buttons = document.querySelectorAll('[data-testid="manage-app-button"], button[class*="Terminal"], button[class*="terminalButton"]');
+  // Target the specific terminal button class
+  var buttons = document.querySelectorAll('[class*="terminalButton"], [class*="Terminal"], [data-testid="manage-app-button"]');
   buttons.forEach(function(btn) {
-    btn.style.cssText = 'display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: fixed !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important;';
-  });
-  // Also hide any button with "Manage" text
-  Array.from(document.querySelectorAll('button')).forEach(function(btn) {
-    if (btn.textContent.includes('Manage')) {
-      btn.style.cssText = 'display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important;';
-    }
+    btn.style.display = 'none';
+    btn.style.visibility = 'hidden';
+    btn.style.width = '0';
+    btn.style.height = '0';
+    btn.style.position = 'absolute';
+    btn.style.left = '-99999px';
+    btn.style.opacity = '0';
+    btn.style.pointerEvents = 'none';
   });
 }
-// Try immediately and then periodically
+// Try at multiple time intervals
 hideButton();
-setTimeout(hideButton, 100);
+setTimeout(hideButton, 50);
+setTimeout(hideButton, 200);
 setTimeout(hideButton, 500);
 setTimeout(hideButton, 1000);
-setTimeout(hideButton, 2000);
-// Also set up observer for dynamically added elements
-var observer = new MutationObserver(hideButton);
-observer.observe(document.body, {childList: true, subtree: true});
+// Also monitor for dynamic changes
+document.addEventListener('DOMContentLoaded', hideButton);
+window.addEventListener('load', hideButton);
+setTimeout(function() {
+  var observer = new MutationObserver(hideButton);
+  observer.observe(document.body, {childList: true, subtree: true, attributes: true});
+}, 100);
 </script>
 """, unsafe_allow_html=True)
 
