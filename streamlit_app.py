@@ -22,7 +22,8 @@ hide_streamlit_style = """
     main {padding: 0 !important; margin: 0 !important}
     [data-testid="stAppViewContainer"] {padding: 0 !important; overflow: hidden !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
-    [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: absolute !important}
+    [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: fixed !important; left: -9999px !important}
+    button {display: none !important}
     [class*="Terminal"] {display: none !important}
     [class*="StateContainer"] {overflow: hidden !important}
     body {background: white !important; overflow: hidden !important}
