@@ -8,12 +8,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Hide Streamlit header and footer
+# Hide Streamlit chrome and maximize map space
 hide_streamlit_style = """
 <style>
     header {display: none}
     footer {display: none}
     #MainMenu {display: none}
+    .stMainBlockContainer {padding: 0 !important; margin: 0 !important}
+    .appViewContainer {padding: 0 !important; margin: 0 !important}
+    .stElementContainer {padding: 0 !important}
+    main {padding: 0 !important}
+    [data-testid="stAppViewContainer"] {padding: 0 !important}
+    div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
