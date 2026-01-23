@@ -22,6 +22,9 @@ hide_streamlit_style = """
     main {padding: 0 !important}
     [data-testid="stAppViewContainer"] {padding: 0 !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
+    button[data-testid="manage-app-button"] {display: none !important}
+    [class*="terminalButton"] {display: none !important}
+    #root > div:nth-child(1) > div > div {overflow: hidden !important; height: fit-content !important}
     body {background: white !important}
 </style>
 """
