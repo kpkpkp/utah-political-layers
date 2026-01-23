@@ -9,39 +9,7 @@ st.set_page_config(
 )
 
 st.title("🗺️ Utah Political Layers")
-st.markdown("View Utah State House and Senate districts with party affiliation colors, population density, and congressional districts.")
-
-with st.expander("ℹ️ About This Project", expanded=True):
-    st.markdown("""
-    **Utah Political Layers** is a transparent, open-source visualization of Utah's electoral districts.
-
-    **What You're Seeing:**
-    - Utah State House districts (75 total)
-    - Utah State Senate districts (29 total)
-    - US Congressional districts (4 total, current and upcoming)
-    - State boundary outline
-    - Population density mapping (44,069 census blocks)
-
-    **Color Coding:**
-    - 🔴 Red = Republican
-    - 🔵 Blue = Democratic
-    - 🟣 Purple = Forward Party
-    - ⚫ Gray = Other/Unaffiliated
-
-    **Data Transparency:**
-    All data comes from official public sources. See sidebar for direct links to:
-    - Utah State Legislature roster (party affiliations)
-    - Utah SGID/ArcGIS services (district boundaries)
-    - US Census/ArcGIS (population density)
-    - Ballotpedia (Congressional delegation)
-
-    **How It Works:**
-    - Districts are loaded as GeoJSON from public SGID services
-    - Party affiliation data comes from official state records
-    - Population data is from Census Bureau via ArcGIS
-    - Everything runs in your browser (no tracking, fully transparent)
-    - Source code available on [GitHub](https://github.com/kpkpkp/utah-political-layers)
-    """)
+st.markdown("Interactive map of Utah State House, Senate, and Congressional districts with party affiliation and population data.")
 
 # Embed the GitHub Pages map
 st.components.v1.html(
