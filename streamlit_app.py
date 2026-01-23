@@ -12,6 +12,7 @@ st.set_page_config(
 hide_streamlit_style = """
 <style>
     header {display: none}
+    header.header {display: none}
     footer {display: none}
     #MainMenu {display: none}
     .stMainBlockContainer {padding: 0 !important; margin: 0 !important}
