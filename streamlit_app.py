@@ -15,18 +15,22 @@ hide_streamlit_style = """
     header.header {display: none !important}
     footer {display: none !important}
     #MainMenu {display: none !important}
-    section {background: transparent !important; padding: 0 !important; margin: 0 !important}
-    .stMainBlockContainer {padding: 0 !important; margin: 0 !important; height: 100vh !important; overflow: hidden !important}
-    .appViewContainer {padding: 0 !important; margin: 0 !important}
+    /* Hide the sidebar */
+    [data-testid="stSidebar"] {display: none !important}
+    aside {display: none !important}
+    [class*="Sidebar"] {display: none !important}
+    section {background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100% !important}
+    .stMainBlockContainer {padding: 0 !important; margin: 0 !important; height: 100vh !important; overflow: hidden !important; width: 100% !important}
+    .appViewContainer {padding: 0 !important; margin: 0 !important; width: 100% !important}
     .stElementContainer {padding: 0 !important; margin: 0 !important}
-    main {padding: 0 !important; margin: 0 !important}
-    [data-testid="stAppViewContainer"] {padding: 0 !important; overflow: hidden !important}
+    main {padding: 0 !important; margin: 0 !important; width: 100% !important}
+    [data-testid="stAppViewContainer"] {padding: 0 !important; overflow: hidden !important; width: 100% !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
     [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: fixed !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important}
     /* Hide Streamlit's terminal/manage button */
     button[class*="terminal" i] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -99999px !important}
     button[class*="Manage"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
-    [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: hidden !important}
+    [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: hidden !important; width: 100% !important}
     body {background: white !important; overflow: hidden !important}
     html {background: white !important; overflow: hidden !important}
 </style>
@@ -65,52 +69,18 @@ observer.observe(document.documentElement, {childList: true, subtree: true, attr
 </script>
 """, unsafe_allow_html=True)
 
-# Embed the GitHub Pages map
+# Embed the GitHub Pages map - full screen
 st.components.v1.html(
     '''
     <iframe
         src="https://kpkpkp.github.io/utah-political-layers/"
         width="100%"
-        height="900"
+        height="100vh"
         frameborder="0"
         scrolling="no"
-        style="border: 1px solid #ddd; border-radius: 5px; overflow: hidden;"
+        style="border: none; overflow: hidden; width: 100%; height: 100vh;"
     ></iframe>
     ''',
-    height=910
+    height=1200
 )
 
-# Sidebar info
-with st.sidebar:
-    st.markdown("## 🗺️ Utah Political Layers")
-    st.markdown("Interactive map of Utah State House, Senate, and Congressional districts with party affiliation and population data.")
-    st.markdown("---")
-    st.markdown("### 📊 About This Map")
-    st.markdown("""
-    **Layers:**
-    - State House districts (75)
-    - State Senate districts (29)
-    - US Congressional districts (4)
-    - Utah state boundary
-    - Population density (44k census blocks)
-
-    **Features:**
-    - Toggle layers on/off
-    - Click districts for details
-    - Zoom to explore
-    - Party affiliation colors
-
-    **Data Sources:**
-    - Districts: Utah SGID ArcGIS
-    - Party info: Utah Legislature
-    - Population: ArcGIS FeatureServer
-    - Congress: Ballotpedia
-    """)
-
-    st.markdown("""
-    ### ℹ️ About
-    - **Source**: [GitHub Repository](https://github.com/kpkpkp/utah-political-layers)
-    - **Map**: [Direct Link](https://kpkpkp.github.io/utah-political-layers/)
-    - **License**: All data sources are public/open
-    - **Updates**: Redrawn after each 2020+ census
-    """)
