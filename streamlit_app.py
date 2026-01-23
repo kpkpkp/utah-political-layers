@@ -24,9 +24,6 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-st.title("🗺️ Utah Political Layers")
-st.markdown("Interactive map of Utah State House, Senate, and Congressional districts with party affiliation and population data.")
-
 # Embed the GitHub Pages map
 st.components.v1.html(
     '''
@@ -44,6 +41,9 @@ st.components.v1.html(
 
 # Sidebar info
 with st.sidebar:
+    st.markdown("## 🗺️ Utah Political Layers")
+    st.markdown("Interactive map of Utah State House, Senate, and Congressional districts with party affiliation and population data.")
+    st.markdown("---")
     st.markdown("### 📊 About This Map")
     st.markdown("""
     **Layers:**
