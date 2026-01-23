@@ -20,17 +20,17 @@ hide_streamlit_style = """
     aside {display: none !important}
     [class*="Sidebar"] {display: none !important}
     section {background: transparent !important; padding: 0 !important; margin: 0 !important; width: 100% !important}
-    .stMainBlockContainer {padding: 0 !important; margin: 0 !important; height: 100vh !important; overflow: hidden !important; width: 100% !important}
-    .appViewContainer {padding: 0 !important; margin: 0 !important; width: 100% !important}
+    .stMainBlockContainer {padding: 0 !important; margin: 0 !important; height: auto !important; overflow: visible !important; width: 100% !important}
+    .appViewContainer {padding: 0 !important; margin: 0 !important; width: 100% !important; overflow: visible !important}
     .stElementContainer {padding: 0 !important; margin: 0 !important}
     main {padding: 0 !important; margin: 0 !important; width: 100% !important}
-    [data-testid="stAppViewContainer"] {padding: 0 !important; overflow: hidden !important; width: 100% !important}
+    [data-testid="stAppViewContainer"] {padding: 0 !important; overflow: visible !important; width: 100% !important; height: auto !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
     [data-testid="manage-app-button"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: fixed !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important}
     /* Hide Streamlit's terminal/manage button */
     button[class*="terminal" i] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; position: absolute !important; left: -99999px !important}
     button[class*="Manage"] {display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important}
-    [class*="StateContainer"] {height: 100vh !important; max-height: 100vh !important; overflow: visible !important; width: 100% !important}
+    [class*="StateContainer"] {height: auto !important; max-height: none !important; overflow: visible !important; width: 100% !important}
     /* Ensure map controls stay visible */
     .leaflet-control {z-index: 999 !important; visibility: visible !important; display: block !important}
     .leaflet-control-zoom {z-index: 999 !important; visibility: visible !important; display: block !important}
@@ -43,8 +43,8 @@ hide_streamlit_style = """
     /* Ensure controls aren't clipped */
     .leaflet-pane {overflow: visible !important}
     .leaflet-control-container {z-index: 999 !important; visibility: visible !important}
-    body {background: white !important; overflow: hidden !important}
-    html {background: white !important; overflow: hidden !important}
+    body {background: white !important; overflow: visible !important}
+    html {background: white !important; overflow: visible !important}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -90,7 +90,7 @@ st.components.v1.html(
         height="100vh"
         frameborder="0"
         scrolling="no"
-        style="border: none; overflow: hidden; width: 100%; height: 100vh;"
+        style="border: none; overflow: visible; width: 100%; height: 100vh; display: block;"
     ></iframe>
     ''',
     height=1200
