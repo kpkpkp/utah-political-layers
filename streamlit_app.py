@@ -15,12 +15,14 @@ hide_streamlit_style = """
     header.header {display: none}
     footer {display: none}
     #MainMenu {display: none}
+    section {background: transparent !important; padding: 0 !important}
     .stMainBlockContainer {padding: 0 !important; margin: 0 !important}
     .appViewContainer {padding: 0 !important; margin: 0 !important}
     .stElementContainer {padding: 0 !important}
     main {padding: 0 !important}
     [data-testid="stAppViewContainer"] {padding: 0 !important}
     div[data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] {padding: 0 !important}
+    body {background: white !important}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
