@@ -18,8 +18,81 @@ const loadStoredView = () => {
 };
 
 const map = L.map("map", {
-  zoomSnap: 0.5,
-  zoomControl: true
+  zoomSnap: 0.25,      // Snap to quarter-zoom levels for smoother transitions
+  zoomDelta: 0.25,     // Each +/- button click zooms by 0.25 levels
+  zoomControl: false   // We'll add it manually at bottomleft
+});
+
+// Add zoom control at bottom-left
+L.control.zoom({
+  position: 'bottomleft',
+  zoomInTitle: 'Zoom in (0.25x)',
+  zoomOutTitle: 'Zoom out (0.25x)'
+}).addTo(map);
+
+// Add scale control at bottom-left
+L.control.scale({
+  position: 'bottomleft',
+  imperial: true,
+  metric: true
+}).addTo(map);
+
+// Ensure Leaflet controls are visible - diagnostic and fix
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const bottomLeft = document.querySelector('.leaflet-bottom-left');
+    const zoomControl = document.querySelector('.leaflet-control-zoom');
+    const scaleControl = document.querySelector('.leaflet-control-scale');
+
+    console.log('Control visibility check:');
+    console.log('bottomLeft exists:', !!bottomLeft);
+    console.log('zoomControl exists:', !!zoomControl);
+    console.log('scaleControl exists:', !!scaleControl);
+
+    if (bottomLeft) {
+      console.log('bottomLeft computed style:', {
+        position: getComputedStyle(bottomLeft).position,
+        bottom: getComputedStyle(bottomLeft).bottom,
+        left: getComputedStyle(bottomLeft).left,
+        zIndex: getComputedStyle(bottomLeft).zIndex,
+        visibility: getComputedStyle(bottomLeft).visibility,
+        display: getComputedStyle(bottomLeft).display
+      });
+
+      // Ensure parent container is properly positioned
+      bottomLeft.style.position = 'absolute';
+      bottomLeft.style.bottom = '0';
+      bottomLeft.style.left = '0';
+      bottomLeft.style.zIndex = '999';
+      bottomLeft.style.visibility = 'visible';
+      bottomLeft.style.display = 'block';
+      bottomLeft.style.overflow = 'visible';
+    }
+
+    if (zoomControl) {
+      // Zoom control should be positioned relative to parent
+      zoomControl.style.position = 'relative';
+      zoomControl.style.bottom = 'auto';
+      zoomControl.style.left = 'auto';
+      zoomControl.style.marginTop = '10px';
+      zoomControl.style.visibility = 'visible';
+      zoomControl.style.display = 'block';
+      zoomControl.style.zIndex = '999';
+      console.log('Fixed zoom control visibility');
+    }
+
+    if (scaleControl) {
+      // Scale control should be positioned relative to parent
+      scaleControl.style.position = 'relative';
+      scaleControl.style.bottom = 'auto';
+      scaleControl.style.left = 'auto';
+      scaleControl.style.marginTop = '5px';
+      scaleControl.style.visibility = 'visible';
+      scaleControl.style.display = 'block';
+      scaleControl.style.zIndex = '999';
+      console.log('Fixed scale control visibility');
+    }
+  }, 500);
 });
 
 // Expose for debugging

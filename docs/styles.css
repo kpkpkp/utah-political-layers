@@ -264,24 +264,28 @@ body {
   position: relative;
 }
 
-/* Force Leaflet controls to appear above everything */
-.leaflet-control-zoom,
-.leaflet-control-scale {
+/* Leaflet bottom-left container - positioned absolutely at bottom-left of map */
+.leaflet-bottom-left {
   position: absolute !important;
-  z-index: 9999 !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  z-index: 999 !important;
+  visibility: visible !important;
+  display: flex !important;
+  flex-direction: column-reverse !important;
+  gap: 5px !important;
+}
+
+/* Leaflet controls positioned relative to their parent container */
+.leaflet-control {
+  z-index: 999 !important;
   visibility: visible !important;
   display: block !important;
   opacity: 1 !important;
 }
 
-.leaflet-bottom-left {
-  bottom: 10px !important;
-  left: 10px !important;
-}
-
 .leaflet-control-zoom {
-  bottom: 50px !important;
-  left: 10px !important;
+  position: relative !important;
   background: white !important;
   border: 2px solid #777 !important;
   border-radius: 4px !important;
@@ -289,8 +293,7 @@ body {
 }
 
 .leaflet-control-scale {
-  bottom: 10px !important;
-  left: 10px !important;
+  position: relative !important;
   background: white !important;
   padding: 5px !important;
   border: 2px solid #777 !important;
