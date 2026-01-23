@@ -33,13 +33,13 @@ st.components.v1.html(
     <iframe
         src="https://kpkpkp.github.io/utah-political-layers/"
         width="100%"
-        height="900"
+        height="1200"
         frameborder="0"
         scrolling="no"
         style="border: 1px solid #ddd; border-radius: 5px; overflow: hidden;"
     ></iframe>
     ''',
-    height=910
+    height=1210
 )
 
 # Sidebar info
