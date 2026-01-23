@@ -92,36 +92,6 @@ with st.sidebar:
     - Congress: Ballotpedia
     """)
 
-    st.markdown("---")
-    st.markdown("### 🔗 Data Sources & Transparency")
-
-    st.markdown("""
-    **District Boundaries:**
-    - [Utah SGID (State Geospatial Information Database)](https://gis.utah.gov/)
-    - [SGID ArcGIS Data Catalog](https://sgid-ugs.opendata.arcgis.com/)
-    - State House & Senate: 2022-2032 redistricting
-
-    **Party Affiliation Data:**
-    - [Utah State Legislature - House Roster](https://le.utah.gov/asp/roster/roster.asp?house=H)
-    - [Utah State Legislature - Senate Roster](https://le.utah.gov/asp/roster/roster.asp?house=S)
-    - Updated from official state records
-
-    **Congressional Districts:**
-    - [Ballotpedia - Utah Congressional Delegation](https://ballotpedia.org/United_States_congressional_delegations_from_Utah)
-    - Current (2022) and upcoming (2026) districts
-
-    **Population Data:**
-    - [ArcGIS Rest Services (ESRI)](https://services1.arcgis.com/)
-    - Utah census block groups with population density
-    - 44,069 census blocks mapped
-
-    **Technology Stack:**
-    - [Leaflet.js - Open Source Map Library](https://leafletjs.com/)
-    - [GeoJSON Specification](https://geojson.org/)
-    - [GitHub - Source Code](https://github.com/kpkpkp/utah-political-layers)
-    """)
-
-    st.markdown("---")
     st.markdown("""
     ### ℹ️ About
     - **Source**: [GitHub Repository](https://github.com/kpkpkp/utah-political-layers)
