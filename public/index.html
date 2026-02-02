@@ -11,6 +11,15 @@
     crossorigin=""
   />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/tour.css" />
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
 </head>
 <body>
   <div class="app">
@@ -22,11 +31,13 @@
     <div id="map"></div>
 
     <aside class="panel control-panel" id="controls">
+      <div class="panel-drag-handle" aria-hidden="true"></div>
       <button class="panel-toggle" id="panel-toggle" aria-expanded="true" title="Hide panel">
         ◀
       </button>
       <div class="panel-section">
         <div class="panel-title">Layers</div>
+        <button class="tour-btn" id="tour-btn">Take Tour</button>
         <label class="toggle">
           <input type="checkbox" id="toggle-boundary" checked />
           <span>Utah boundary</span>
@@ -100,6 +111,52 @@
       </div>
 
       <div class="panel-section">
+        <div class="panel-title">Customize Colors</div>
+
+        <div class="color-subsection">
+          <div class="subsection-header">Party Colors</div>
+          <div class="color-picker-row">
+            <label for="party-color-republican">Republican</label>
+            <input type="color" id="party-color-republican" value="#d73027" aria-label="Republican party color" />
+          </div>
+          <div class="color-picker-row">
+            <label for="party-color-democratic">Democratic</label>
+            <input type="color" id="party-color-democratic" value="#4575b4" aria-label="Democratic party color" />
+          </div>
+          <div class="color-picker-row">
+            <label for="party-color-forward">Forward</label>
+            <input type="color" id="party-color-forward" value="#8b5cf6" aria-label="Forward party color" />
+          </div>
+          <div class="color-picker-row">
+            <label for="party-color-other">Other / Unknown</label>
+            <input type="color" id="party-color-other" value="#9e9e9e" aria-label="Other party color" />
+          </div>
+        </div>
+
+        <div class="color-subsection">
+          <div class="subsection-header">Outline Colors</div>
+          <div class="color-picker-row">
+            <label for="outline-color-house">House</label>
+            <input type="color" id="outline-color-house" value="#ff6f00" aria-label="House district outline color" />
+          </div>
+          <div class="color-picker-row">
+            <label for="outline-color-senate">Senate</label>
+            <input type="color" id="outline-color-senate" value="#00b0ff" aria-label="Senate district outline color" />
+          </div>
+          <div class="color-picker-row">
+            <label for="outline-color-congress-current">Congress (current)</label>
+            <input type="color" id="outline-color-congress-current" value="#8e24aa" aria-label="Congress current outline color" />
+          </div>
+          <div class="color-picker-row">
+            <label for="outline-color-congress-future">Congress (coming)</label>
+            <input type="color" id="outline-color-congress-future" value="#43a047" aria-label="Congress coming outline color" />
+          </div>
+        </div>
+
+        <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
+      </div>
+
+      <div class="panel-section">
         <div class="panel-title">Party legend</div>
         <div class="legend">
           <div class="legend-row"><span class="swatch republican"></span>Republican</div>
@@ -118,5 +175,6 @@
   ></script>
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
   <script src="app.js?v=20260118-clickthrough3"></script>
+  <script src="js/tour.js"></script>
 </body>
 </html>

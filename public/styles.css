@@ -188,10 +188,13 @@ body {
 }
 
 .swatch {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 3px;
-  border: 1px solid #b0b0b0;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .swatch.republican {
@@ -213,6 +216,73 @@ body {
 .source {
   color: #6a6a6a;
   line-height: 1.4;
+}
+
+.color-subsection {
+  margin-bottom: 12px;
+}
+
+.color-subsection:last-of-type {
+  margin-bottom: 10px;
+}
+
+.subsection-header {
+  font-weight: 500;
+  font-size: 12px;
+  color: #3f3f3f;
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.color-picker-row label {
+  font-size: 13px;
+  color: #1b1b1b;
+  flex: 1;
+}
+
+.color-picker-row input[type="color"] {
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.reset-colors-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #3b6ea5;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reset-colors-btn:hover {
+  background: #f5f5f5;
+  border-color: #3b6ea5;
+}
+
+.reset-colors-btn:active {
+  background: #ebebeb;
+}
+
+.reset-colors-btn:focus-visible {
+  outline: 2px solid #3b6ea5;
+  outline-offset: 2px;
 }
 
 /* Ensure Leaflet controls are visible */
@@ -310,4 +380,476 @@ body {
   border: 2px solid #777 !important;
   border-radius: 4px !important;
   font-size: 12px !important;
+}
+
+/* ====================================
+   Mobile Responsiveness Media Queries
+   ==================================== */
+
+/* Tablet: 481px - 768px
+   - Narrower control panel
+   - Adjusted text sizes
+   - Optimized spacing for medium screens
+*/
+@media (max-width: 768px) and (min-width: 481px) {
+  /* Reduce panel width */
+  .control-panel {
+    width: 220px;
+  }
+
+  .panel {
+    font-size: 12px;
+    padding: 11px 13px; /* ~20% reduction from 14px 16px */
+    min-width: 180px;
+  }
+
+  /* Adjust section spacing */
+  .panel-section + .panel-section {
+    margin-top: 11px; /* ~20% reduction from 14px */
+    padding-top: 10px; /* ~20% reduction from 12px */
+  }
+
+  .panel-title {
+    margin-bottom: 6px; /* ~20% reduction from 8px */
+    font-size: 12px;
+  }
+
+  /* Adjust toggle spacing and ensure 44px touch targets */
+  .toggle {
+    gap: 6px; /* ~20% reduction from 8px */
+    margin-bottom: 5px; /* ~20% reduction from 6px */
+    min-height: 44px; /* Ensure touch target height */
+    align-items: center;
+  }
+
+  .toggle input[type="checkbox"] {
+    min-width: 20px;
+    min-height: 20px;
+    flex-shrink: 0;
+  }
+
+  .toggle span {
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Layer row adjustments */
+  .layer-row {
+    gap: 6px; /* ~20% reduction from 8px */
+    margin-bottom: 5px; /* ~20% reduction from 6px */
+    min-height: 44px; /* Ensure touch target height */
+  }
+
+  .layer-row input[type="color"] {
+    width: 28px; /* Slightly smaller but still usable */
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    flex-shrink: 0;
+  }
+
+  /* Tile select dropdown */
+  .tile-select {
+    width: 120px; /* Reduce from 140px */
+    height: 28px; /* Increase from 24px for better touch */
+    min-height: 28px;
+    font-size: 11px;
+  }
+
+  /* Slider adjustments */
+  .slider-row {
+    gap: 5px; /* ~20% reduction from 6px */
+    margin-top: 6px; /* ~20% reduction from 8px */
+  }
+
+  .slider-row label {
+    font-size: 11px;
+  }
+
+  .slider-row input[type="range"] {
+    min-height: 44px; /* Ensure touch target */
+  }
+
+  /* Legend adjustments */
+  .legend {
+    gap: 5px; /* ~20% reduction from 6px */
+  }
+
+  .legend-row {
+    gap: 6px; /* ~20% reduction from 8px */
+    font-size: 11px;
+    min-height: 28px; /* Comfortable spacing */
+  }
+
+  .swatch {
+    width: 14px; /* Slightly smaller from 16px */
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  /* Note text */
+  .note {
+    margin-top: 5px; /* ~20% reduction from 6px */
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  /* Panel toggle button - ensure 44px touch target */
+  .panel-toggle {
+    width: 44px;
+    height: 44px;
+    right: -22px;
+    font-size: 14px;
+  }
+
+  /* Adjust collapsed panel transform */
+  .panel.collapsed {
+    transform: translateX(calc(-100% + 44px));
+  }
+
+  /* Color subsection adjustments */
+  .color-subsection {
+    margin-bottom: 10px; /* ~20% reduction from 12px */
+  }
+
+  .color-subsection:last-of-type {
+    margin-bottom: 8px; /* ~20% reduction from 10px */
+  }
+
+  .subsection-header {
+    font-size: 11px;
+    margin-bottom: 5px; /* ~20% reduction from 6px */
+    margin-top: 3px; /* ~20% reduction from 4px */
+  }
+
+  /* Color picker row adjustments */
+  .color-picker-row {
+    gap: 6px; /* ~20% reduction from 8px */
+    margin-bottom: 5px; /* ~20% reduction from 6px */
+    min-height: 44px; /* Ensure touch target */
+  }
+
+  .color-picker-row label {
+    font-size: 12px;
+  }
+
+  .color-picker-row input[type="color"] {
+    width: 28px; /* Slightly smaller but still usable */
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  /* Reset button adjustments */
+  .reset-colors-btn {
+    padding: 8px 10px; /* Slightly reduce horizontal padding */
+    font-size: 12px;
+    min-height: 44px; /* Ensure touch target */
+  }
+}
+
+/* Phone Portrait: <= 480px
+   - Bottom sheet layout
+   - Touch-friendly spacing
+   - Drag handle for visual affordance
+*/
+@media (max-width: 480px) {
+  .control-panel {
+    /* Transform to bottom sheet */
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 60vh;
+    min-width: unset;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+    padding: 8px 16px 16px;
+    transform: translateY(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Collapsed state shows only drag handle area (~48px) */
+  .control-panel.collapsed {
+    transform: translateY(calc(100% - 48px));
+  }
+
+  /* Hide the side toggle button on mobile */
+  .panel-toggle {
+    display: none;
+  }
+
+  /* Drag handle styling - provides visual affordance for bottom sheet */
+  .panel-drag-handle {
+    width: 40px;
+    height: 4px;
+    background: #d0d0d0;
+    border-radius: 2px;
+    margin: 8px auto 12px;
+    cursor: grab;
+    transition: background 0.2s ease;
+  }
+
+  .panel-drag-handle:hover {
+    background: #a0a0a0;
+  }
+
+  .panel-drag-handle:active {
+    cursor: grabbing;
+    background: #808080;
+  }
+
+  /* Touch-friendly targets (44px minimum) */
+  .toggle {
+    padding: 4px 0;
+    min-height: 44px;
+  }
+
+  .toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Layer row adjustments for wrapping */
+  .layer-row {
+    flex-wrap: wrap;
+    min-height: 44px;
+  }
+
+  .layer-row input[type="color"] {
+    width: 40px;
+    height: 32px;
+  }
+
+  /* Full width tile selector */
+  .tile-select {
+    width: 100%;
+    height: 36px;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  /* Larger slider for better touch control */
+  .slider-row input[type="range"] {
+    height: 32px;
+  }
+
+  /* Panel sections spacing */
+  .panel-section {
+    margin-bottom: 8px;
+  }
+
+  .panel-section + .panel-section {
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+  /* Color picker rows */
+  .color-picker-row {
+    min-height: 44px;
+  }
+
+  .color-picker-row input[type="color"] {
+    width: 40px;
+    height: 32px;
+  }
+
+  /* Reset button */
+  .reset-colors-btn {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  /* Adjust Leaflet controls position to avoid bottom sheet */
+  .leaflet-bottom-left {
+    bottom: calc(60vh + 20px) !important;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* When collapsed, Leaflet controls can be lower */
+  body:has(.control-panel.collapsed) .leaflet-bottom-left {
+    bottom: 70px !important;
+  }
+}
+
+/* Phone Landscape: <= 500px height with landscape orientation
+   - Compact bottom sheet
+   - Minimal vertical space
+   - Optimized for limited screen real estate
+*/
+@media (max-height: 500px) and (orientation: landscape) {
+  .control-panel {
+    /* Keep bottom sheet but more compact for landscape */
+    max-height: 50vh;
+    padding: 6px 12px 12px;
+    font-size: 12px;
+  }
+
+  /* Smaller collapsed state for landscape */
+  .control-panel.collapsed {
+    transform: translateY(calc(100% - 36px));
+  }
+
+  /* Smaller drag handle */
+  .panel-drag-handle {
+    width: 32px;
+    height: 3px;
+    margin: 6px auto 8px;
+  }
+
+  /* Compact panel sections */
+  .panel-section {
+    margin-bottom: 6px;
+  }
+
+  .panel-section + .panel-section {
+    margin-top: 8px;
+    padding-top: 6px;
+  }
+
+  .panel-title {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  /* Smaller touch targets acceptable in landscape */
+  .toggle {
+    padding: 2px 0;
+    min-height: 36px;
+    font-size: 12px;
+  }
+
+  .toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .layer-row {
+    min-height: 36px;
+    margin-bottom: 4px;
+  }
+
+  .layer-row input[type="color"] {
+    width: 36px;
+    height: 28px;
+  }
+
+  .tile-select {
+    height: 32px;
+    font-size: 11px;
+  }
+
+  /* Compact sliders */
+  .slider-row {
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .slider-row label {
+    font-size: 12px;
+  }
+
+  .slider-row input[type="range"] {
+    height: 28px;
+  }
+
+  /* Compact color pickers */
+  .color-picker-row {
+    min-height: 36px;
+  }
+
+  .color-picker-row label {
+    font-size: 12px;
+  }
+
+  .color-picker-row input[type="color"] {
+    width: 36px;
+    height: 28px;
+  }
+
+  .color-subsection {
+    margin-bottom: 8px;
+  }
+
+  .subsection-header {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  /* Compact reset button */
+  .reset-colors-btn {
+    min-height: 36px;
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  /* Compact notes */
+  .note {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  /* Legend compact */
+  .legend-row {
+    font-size: 11px;
+  }
+
+  .swatch {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Adjust Leaflet controls for landscape */
+  .leaflet-bottom-left {
+    bottom: calc(50vh + 15px) !important;
+  }
+
+  body:has(.control-panel.collapsed) .leaflet-bottom-left {
+    bottom: 50px !important;
+  }
+}
+
+/* ===== Tour Button ===== */
+.tour-btn {
+  width: 100%;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.tour-btn:hover {
+  background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+  transform: translateY(-1px);
+}
+
+.tour-btn:active {
+  background: linear-gradient(135deg, #21618c 0%, #1a5276 100%);
+  box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+  transform: translateY(0);
+}
+
+.tour-btn:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .tour-btn {
+    font-size: 13px;
+    padding: 9px 14px;
+  }
 }
