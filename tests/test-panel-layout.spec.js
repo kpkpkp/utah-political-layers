@@ -41,7 +41,7 @@ test.describe('Panel Layout Tests', () => {
     await page.waitForTimeout(1000);
   });
 
-  test('Panel has 2-column grid layout with 360px width', async ({ page }) => {
+  test('Panel has single-column grid layout with approximately 220px width', async ({ page }) => {
     // Get the controls panel element
     const controlsPanel = page.locator('#controls');
     await expect(controlsPanel).toBeVisible();
@@ -50,82 +50,57 @@ test.describe('Panel Layout Tests', () => {
     const boundingBox = await controlsPanel.boundingBox();
     console.log('Panel dimensions:', { width: boundingBox.width, height: boundingBox.height });
 
-    // Check width is approximately 360px (allow 15% variance)
-    expect(boundingBox.width).toBeGreaterThan(306); // 360 * 0.85
-    expect(boundingBox.width).toBeLessThan(414);    // 360 * 1.15
+    // Check width is approximately 220px (allow 15% variance)
+    expect(boundingBox.width).toBeGreaterThan(187); // 220 * 0.85
+    expect(boundingBox.width).toBeLessThan(253);    // 220 * 1.15
 
-    // Verify 2-column grid layout by checking elements are side-by-side
-    const fillsSection = page.locator('.panel-fills');
+    // Verify single-column layout by checking legend is below layers
     const layersSection = page.locator('.panel-layers');
+    const legendSection = page.locator('.panel-legend');
 
-    const fillsBox = await fillsSection.boundingBox();
     const layersBox = await layersSection.boundingBox();
+    const legendBox = await legendSection.boundingBox();
 
-    // In 2-column layout, fills and layers should be at similar Y positions
-    // and fills should be to the right of layers
-    expect(fillsBox.x).toBeGreaterThan(layersBox.x);
-    console.log('Layers X:', layersBox.x, 'Fills X:', fillsBox.x);
+    // In single-column layout, legend should be below layers
+    expect(legendBox.y).toBeGreaterThan(layersBox.y);
+    console.log('Layers Y:', layersBox.y, 'Legend Y:', legendBox.y);
 
-    // They should be roughly at the same Y position (within 50px)
-    expect(Math.abs(fillsBox.y - layersBox.y)).toBeLessThan(50);
-
-    console.log('✓ Panel has 2-column grid layout with 360px width');
+    console.log('✓ Panel has single-column grid layout with ~220px width');
   });
 
-  test('Party fill colors (Republican, Democratic, Forward, Other) are grouped in "fills" section', async ({ page }) => {
-    // Look for the panel-fills section
-    const fillsSection = page.locator('.panel-fills');
-    await expect(fillsSection).toBeVisible();
-    console.log('✓ panel-fills section exists');
+  test('Party legend shows all party swatches', async ({ page }) => {
+    // Look for the panel-legend section
+    const legendSection = page.locator('.panel-legend');
+    await expect(legendSection).toBeVisible();
+    console.log('✓ panel-legend section exists');
 
-    // Find all party color picker elements within the fills section
-    const republicanPicker = page.locator('.panel-fills #party-color-republican');
-    const democraticPicker = page.locator('.panel-fills #party-color-democratic');
-    const forwardPicker = page.locator('.panel-fills #party-color-forward');
-    const otherPicker = page.locator('.panel-fills #party-color-other');
+    // Find all party swatch elements within the legend
+    const republicanSwatch = page.locator('.panel-legend .swatch.republican');
+    const democratSwatch = page.locator('.panel-legend .swatch.democrat');
+    const forwardSwatch = page.locator('.panel-legend .swatch.forward');
+    const otherSwatch = page.locator('.panel-legend .swatch.other');
 
-    // Verify all party color pickers exist and are visible within panel-fills
-    await expect(republicanPicker).toBeVisible();
-    await expect(democraticPicker).toBeVisible();
-    await expect(forwardPicker).toBeVisible();
-    await expect(otherPicker).toBeVisible();
+    // Verify all swatches exist and are visible
+    await expect(republicanSwatch).toBeVisible();
+    await expect(democratSwatch).toBeVisible();
+    await expect(forwardSwatch).toBeVisible();
+    await expect(otherSwatch).toBeVisible();
 
-    // Verify they are all within the same section
-    const republicanBox = await republicanPicker.boundingBox();
-    const democraticBox = await democraticPicker.boundingBox();
-    const forwardBox = await forwardPicker.boundingBox();
-    const otherBox = await otherPicker.boundingBox();
-
-    console.log('Party picker positions:', {
-      republican: republicanBox,
-      democratic: democraticBox,
-      forward: forwardBox,
-      other: otherBox
-    });
-
-    // Check that they are grouped together (within a reasonable vertical distance)
-    const maxTopDifference = Math.max(
-      Math.abs(republicanBox.y - democraticBox.y),
-      Math.abs(democraticBox.y - forwardBox.y),
-      Math.abs(forwardBox.y - otherBox.y)
-    );
-    expect(maxTopDifference).toBeLessThan(200); // All within ~200px vertically
-
-    console.log('✓ Party fill colors are grouped in "fills" section');
+    console.log('✓ Party legend shows all party swatches');
   });
 
-  test('Outline colors (House, Senate, Congress, Population) are grouped in "outlines" section', async ({ page }) => {
-    // Look for the panel-outlines section
-    const outlinesSection = page.locator('.panel-outlines');
-    await expect(outlinesSection).toBeVisible();
-    console.log('✓ panel-outlines section exists');
+  test('Outline colors (House, Senate, Congress, Population) are paired with layer toggles', async ({ page }) => {
+    // Look for the panel-layers section (outlines are now integrated with layers)
+    const layersSection = page.locator('.panel-layers');
+    await expect(layersSection).toBeVisible();
+    console.log('✓ panel-layers section exists with integrated outline colors');
 
-    // Find all outline color picker elements within the outlines section
-    const populationPicker = page.locator('.panel-outlines #color-population');
-    const housePicker = page.locator('.panel-outlines #outline-color-house');
-    const senatePicker = page.locator('.panel-outlines #outline-color-senate');
-    const congressCurrentPicker = page.locator('.panel-outlines #outline-color-congress-current');
-    const congressFuturePicker = page.locator('.panel-outlines #outline-color-congress-future');
+    // Find all outline color picker elements within the layers section
+    const populationPicker = page.locator('.panel-layers #color-population');
+    const housePicker = page.locator('.panel-layers #outline-color-house');
+    const senatePicker = page.locator('.panel-layers #outline-color-senate');
+    const congressCurrentPicker = page.locator('.panel-layers #outline-color-congress-current');
+    const congressFuturePicker = page.locator('.panel-layers #outline-color-congress-future');
 
     // Verify all outline color pickers exist and are visible within panel-outlines
     await expect(populationPicker).toBeVisible();
@@ -161,10 +136,10 @@ test.describe('Panel Layout Tests', () => {
     console.log('✓ Outline colors are grouped in "outlines" section');
   });
 
-  test('Line width and opacity sliders are in "outlines" section', async ({ page }) => {
-    // Look for sliders within the panel-outlines section
-    const lineWidthSlider = page.locator('.panel-outlines #line-width');
-    const opacitySlider = page.locator('.panel-outlines #line-opacity');
+  test('Line width and opacity sliders are in "layers" section', async ({ page }) => {
+    // Look for sliders within the panel-layers section (integrated with layers)
+    const lineWidthSlider = page.locator('.panel-layers #line-width');
+    const opacitySlider = page.locator('.panel-layers #line-opacity');
 
     // Verify sliders exist and are visible
     await expect(lineWidthSlider).toBeVisible();
@@ -198,8 +173,8 @@ test.describe('Panel Layout Tests', () => {
     const pickerCount = await allColorPickers.count();
     console.log('Total color pickers found:', pickerCount);
 
-    // Expected: 4 party colors + 5 outline colors = 9 total
-    expect(pickerCount).toBe(9);
+    // Expected: 5 outline colors (population, house, senate, congress-current, congress-future)
+    expect(pickerCount).toBe(5);
 
     // Collect all IDs
     const ids = [];
@@ -223,7 +198,7 @@ test.describe('Panel Layout Tests', () => {
     console.log('✓ No duplicate color picker IDs exist in the panel');
   });
 
-  test('Mobile layout (375x667 viewport) stacks columns vertically', async ({ page }) => {
+  test('Mobile layout (375x667 viewport) shows bottom sheet panel', async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
 
@@ -235,41 +210,40 @@ test.describe('Panel Layout Tests', () => {
     await expect(controlsPanel).toBeVisible();
 
     // Get positions of key sections
-    const fillsSection = page.locator('.panel-fills');
-    const outlinesSection = page.locator('.panel-outlines');
+    const layersSection = page.locator('.panel-layers');
+    const legendSection = page.locator('.panel-legend');
 
-    await expect(fillsSection).toBeVisible();
-    await expect(outlinesSection).toBeVisible();
+    await expect(layersSection).toBeVisible();
+    await expect(legendSection).toBeVisible();
 
-    const fillsBox = await fillsSection.boundingBox();
-    const outlinesBox = await outlinesSection.boundingBox();
+    const layersBox = await layersSection.boundingBox();
+    const legendBox = await legendSection.boundingBox();
 
     console.log('Mobile layout positions:', {
-      fills: fillsBox,
-      outlines: outlinesBox
+      layers: layersBox,
+      legend: legendBox
     });
 
-    // In vertical stacking, outline section should be below fills section
-    // (outline Y coordinate should be greater than fills Y coordinate)
-    expect(outlinesBox.y).toBeGreaterThan(fillsBox.y);
+    // In vertical stacking, legend section should be below layers section
+    expect(legendBox.y).toBeGreaterThan(layersBox.y);
 
     // Verify panel width is constrained to mobile viewport
     const panelBox = await controlsPanel.boundingBox();
     expect(panelBox.width).toBeLessThanOrEqual(375);
 
-    console.log('✓ Mobile layout stacks columns vertically');
+    console.log('✓ Mobile layout shows bottom sheet panel');
   });
 
-  test('Color changes persist and apply correctly to the map', async ({ page }) => {
-    // Change a party color
-    const newRepublicanColor = '#ff0000'; // Red
-    const republicanPicker = page.locator('.panel-fills #party-color-republican');
-    await republicanPicker.fill(newRepublicanColor);
+  test('Outline color changes persist and apply correctly to the map', async ({ page }) => {
+    // Change an outline color
+    const newHouseColor = '#00ff00'; // Green
+    const housePicker = page.locator('#outline-color-house');
+    await housePicker.fill(newHouseColor);
     await page.waitForTimeout(500);
 
     // Verify the color was changed in the picker
-    const pickerValue = await republicanPicker.inputValue();
-    expect(pickerValue).toBe(newRepublicanColor);
+    const pickerValue = await housePicker.inputValue();
+    expect(pickerValue).toBe(newHouseColor);
     console.log('Color picker updated:', pickerValue);
 
     // Verify color was persisted to localStorage
@@ -279,7 +253,7 @@ test.describe('Panel Layout Tests', () => {
     });
 
     expect(storedConfig).not.toBeNull();
-    expect(storedConfig.party.republican).toBe(newRepublicanColor);
+    expect(storedConfig.outline.house).toBe(newHouseColor);
     console.log('Color persisted to localStorage');
 
     // Verify color is applied to map elements
@@ -294,11 +268,114 @@ test.describe('Panel Layout Tests', () => {
     });
 
     if (configFromAPI) {
-      expect(configFromAPI.party.republican).toBe(newRepublicanColor);
+      expect(configFromAPI.outline.house).toBe(newHouseColor);
       console.log('Color config accessible via API');
     }
 
-    console.log('✓ Color changes persist and apply correctly to the map');
+    console.log('✓ Outline color changes persist and apply correctly to the map');
+  });
+
+  test('Fill on map checkbox is in legend section', async ({ page }) => {
+    // The "Fill on map" checkbox should be in the panel-legend section
+    const fillCheckbox = page.locator('.panel-legend #toggle-party-fill');
+    await expect(fillCheckbox).toBeVisible();
+
+    // Verify the label text
+    const fillLabel = page.locator('.panel-legend .fill-toggle span');
+    await expect(fillLabel).toHaveText('Fill on map');
+
+    console.log('✓ Fill on map checkbox is in legend section');
+  });
+
+  test('Population status is adjacent to Population toggle', async ({ page }) => {
+    // The population status span should be in the same row as the Population toggle
+    const popRow = page.locator('.layer-row:has(#toggle-population)');
+    const status = popRow.locator('.population-status');
+
+    // The element should exist in the DOM (it may be empty/hidden when not loading)
+    await expect(status).toHaveCount(1);
+
+    // Verify the element has the correct id
+    const statusId = await status.getAttribute('id');
+    expect(statusId).toBe('population-status');
+
+    console.log('✓ Population status element exists adjacent to Population toggle');
+  });
+
+  test('Footer has Tour button left and Reset button right', async ({ page }) => {
+    const footer = page.locator('.panel-footer');
+    await expect(footer).toBeVisible();
+
+    const tourBtn = footer.locator('#tour-btn');
+    const resetBtn = footer.locator('#reset-colors-btn');
+
+    await expect(tourBtn).toBeVisible();
+    await expect(resetBtn).toBeVisible();
+
+    // Get bounding boxes to verify positions
+    const tourBox = await tourBtn.boundingBox();
+    const resetBox = await resetBtn.boundingBox();
+
+    // Reset should be to the right of Tour
+    expect(resetBox.x).toBeGreaterThan(tourBox.x);
+
+    console.log('Tour X:', tourBox.x, 'Reset X:', resetBox.x);
+    console.log('✓ Footer has Tour button left and Reset button right');
+  });
+
+  test('Save Defaults button is visible on localhost', async ({ page }) => {
+    // On localhost, the save defaults button should be visible
+    const saveContainer = page.locator('#save-defaults-container');
+    const saveBtn = page.locator('#save-defaults-btn');
+
+    // Check if we're on localhost
+    const isLocalhost = await page.evaluate(() => {
+      return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    });
+
+    if (isLocalhost) {
+      await expect(saveContainer).toBeVisible();
+      await expect(saveBtn).toBeVisible();
+      console.log('✓ Save Defaults button is visible on localhost');
+    } else {
+      // On non-localhost, it should be hidden
+      await expect(saveContainer).not.toBeVisible();
+      console.log('✓ Save Defaults button is hidden on non-localhost');
+    }
+  });
+
+  test('Save Defaults dropdown opens and closes', async ({ page }) => {
+    // On localhost, test the dropdown functionality
+    const isLocalhost = await page.evaluate(() => {
+      return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    });
+
+    if (!isLocalhost) {
+      console.log('Skipping dropdown test on non-localhost');
+      return;
+    }
+
+    const saveBtn = page.locator('#save-defaults-btn');
+    const dropdown = page.locator('#save-defaults-dropdown');
+
+    // Initially dropdown should be closed
+    await expect(dropdown).not.toHaveClass(/open/);
+
+    // Click to open
+    await saveBtn.click();
+    await expect(dropdown).toHaveClass(/open/);
+
+    // Verify options are visible
+    const saveLocal = dropdown.locator('#save-local');
+    const saveDeployed = dropdown.locator('#save-deployed');
+    await expect(saveLocal).toBeVisible();
+    await expect(saveDeployed).toBeVisible();
+
+    // Click outside to close
+    await page.locator('.panel-header').click();
+    await expect(dropdown).not.toHaveClass(/open/);
+
+    console.log('✓ Save Defaults dropdown opens and closes');
   });
 
 });

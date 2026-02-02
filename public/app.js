@@ -1003,37 +1003,12 @@ const loadPopulationPoints = async () => {
 };
 
 const bindColorPickers = (parties) => {
-  // Party color pickers
-  const partyConfig = [
-    { id: "party-color-republican", key: "republican" },
-    { id: "party-color-democratic", key: "democratic" },
-    { id: "party-color-forward", key: "forward" },
-    { id: "party-color-other", key: "other" }
-  ];
-
-  partyConfig.forEach(({ id, key }) => {
-    const input = document.getElementById(id);
-    if (!input) return;
-    // Set initial value from colorConfig
-    input.value = colorConfig.party[key];
-    input.addEventListener("input", () => {
-      // Update colorConfig
-      const updatedConfig = updateColorConfig({ party: { [key]: input.value } });
-      // Update the in-memory colorConfig object
-      Object.assign(colorConfig, updatedConfig);
-      // Refresh map styling
-      refreshPartyFill(parties);
-      // Track color change
-      trackEvent('color_changed', { type: 'party', color: key, value: input.value });
-    });
-  });
-
   // Outline color pickers
   const outlineConfig = [
     { id: "outline-color-house", key: "house" },
     { id: "outline-color-senate", key: "senate" },
-    { id: "outline-color-congressCurrent", key: "congressCurrent" },
-    { id: "outline-color-congressFuture", key: "congressFuture" }
+    { id: "outline-color-congress-current", key: "congressCurrent" },
+    { id: "outline-color-congress-future", key: "congressFuture" }
   ];
 
   outlineConfig.forEach(({ id, key }) => {
@@ -1064,27 +1039,12 @@ const resetColorConfig = (parties) => {
   // Reload default colors into colorConfig
   Object.assign(colorConfig, defaultColorConfig);
 
-  // Update all party color picker inputs
-  const partyInputs = [
-    { id: "party-color-republican", key: "republican" },
-    { id: "party-color-democratic", key: "democratic" },
-    { id: "party-color-forward", key: "forward" },
-    { id: "party-color-other", key: "other" }
-  ];
-
-  partyInputs.forEach(({ id, key }) => {
-    const input = document.getElementById(id);
-    if (input) {
-      input.value = defaultColorConfig.party[key];
-    }
-  });
-
   // Update all outline color picker inputs
   const outlineInputs = [
     { id: "outline-color-house", key: "house" },
     { id: "outline-color-senate", key: "senate" },
-    { id: "outline-color-congressCurrent", key: "congressCurrent" },
-    { id: "outline-color-congressFuture", key: "congressFuture" }
+    { id: "outline-color-congress-current", key: "congressCurrent" },
+    { id: "outline-color-congress-future", key: "congressFuture" }
   ];
 
   outlineInputs.forEach(({ id, key }) => {
@@ -1450,6 +1410,90 @@ init().catch((error) => {
   errorDiv.className = "panel-section";
   errorDiv.textContent = "Failed to load data. Check the console for details.";
   panel.appendChild(errorDiv);
+});
+
+// Localhost detection and Save Defaults functionality
+const isLocalhost = window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1';
+
+if (isLocalhost) {
+  document.body.classList.add('is-localhost');
+}
+
+const getCurrentDefaults = () => ({
+  colors: {
+    party: { ...colorConfig.party },
+    outline: { ...colorConfig.outline }
+  },
+  layers: {
+    boundary: document.getElementById('toggle-boundary')?.checked ?? true,
+    tiles: document.getElementById('toggle-tiles')?.checked ?? true,
+    population: document.getElementById('toggle-population')?.checked ?? false,
+    house: document.getElementById('toggle-house')?.checked ?? true,
+    senate: document.getElementById('toggle-senate')?.checked ?? true,
+    congressCurrent: document.getElementById('toggle-congress-current')?.checked ?? true,
+    congressFuture: document.getElementById('toggle-congress-future')?.checked ?? false,
+    partyFill: document.getElementById('toggle-party-fill')?.checked ?? true
+  },
+  sliders: {
+    lineWidth: document.getElementById('line-width')?.value ?? '0.6',
+    lineOpacity: document.getElementById('line-opacity')?.value ?? '1'
+  },
+  tileStyle: document.getElementById('tile-style-select')?.value ?? 'osm',
+  populationColor: document.getElementById('color-population')?.value ?? '#ff0000'
+});
+
+const saveDefaults = (target) => {
+  const defaults = getCurrentDefaults();
+  const json = JSON.stringify(defaults, null, 2);
+  console.log(`// Defaults for ${target}:`);
+  console.log(json);
+  navigator.clipboard.writeText(json).then(() => {
+    alert(`Defaults copied to clipboard for ${target}.\n\nCheck console for JSON output.`);
+  }).catch((err) => {
+    console.error('Failed to copy to clipboard:', err);
+    alert(`Failed to copy to clipboard. Check console for JSON output.`);
+  });
+  trackEvent('save_defaults', { target });
+};
+
+// Expose for debugging
+window.getCurrentDefaults = getCurrentDefaults;
+window.saveDefaults = saveDefaults;
+
+// Bind save defaults buttons
+window.addEventListener('load', () => {
+  const saveBtn = document.getElementById('save-defaults-btn');
+  const dropdown = document.getElementById('save-defaults-dropdown');
+  const saveLocal = document.getElementById('save-local');
+  const saveDeployed = document.getElementById('save-deployed');
+
+  if (saveBtn && dropdown) {
+    saveBtn.addEventListener('click', () => {
+      dropdown.classList.toggle('open');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!saveBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+  }
+
+  if (saveLocal) {
+    saveLocal.addEventListener('click', () => {
+      saveDefaults('local');
+      dropdown?.classList.remove('open');
+    });
+  }
+
+  if (saveDeployed) {
+    saveDeployed.addEventListener('click', () => {
+      saveDefaults('deployed');
+      dropdown?.classList.remove('open');
+    });
+  }
 });
 
 // Tour initialization
