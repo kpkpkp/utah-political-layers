@@ -11,6 +11,15 @@
     crossorigin=""
   />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/tour.css" />
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
 </head>
 <body>
   <div class="app">
@@ -22,10 +31,15 @@
     <div id="map"></div>
 
     <aside class="panel control-panel" id="controls">
-      <button class="panel-toggle" id="panel-toggle" aria-expanded="true" title="Hide panel">
-        ◀
-      </button>
-      <div class="panel-section">
+      <div class="panel-drag-handle" aria-hidden="true"></div>
+      <button class="panel-toggle" id="panel-toggle">◀</button>
+
+      <div class="panel-header">
+        <div class="panel-title">Utah Political Layers</div>
+      </div>
+
+      <!-- Upper: Layers with paired outline colors -->
+      <div class="panel-layers">
         <div class="panel-title">Layers</div>
         <label class="toggle">
           <input type="checkbox" id="toggle-boundary" checked />
@@ -46,49 +60,42 @@
           </select>
         </div>
         <div class="layer-row">
+          <input type="color" id="color-population" value="#ff0000" aria-label="Population color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-population" />
             <span>Population</span>
           </label>
-          <input type="color" id="color-population" value="#ff0000" aria-label="Population density color" />
+          <span class="population-status" id="population-status"></span>
         </div>
         <div class="layer-row">
+          <input type="color" id="outline-color-house" value="#ff6f00" aria-label="House outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-house" checked />
-            <span>State Legislature House districts</span>
+            <span>House</span>
           </label>
-          <input type="color" id="color-house" value="#ff6f00" aria-label="House outline color" />
         </div>
         <div class="layer-row">
+          <input type="color" id="outline-color-senate" value="#00b0ff" aria-label="Senate outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-senate" checked />
-            <span>State Legislature Senate districts</span>
+            <span>Senate</span>
           </label>
-          <input type="color" id="color-senate" value="#00b0ff" aria-label="Senate outline color" />
         </div>
         <div class="layer-row">
+          <input type="color" id="outline-color-congress-current" value="#8e24aa" aria-label="Congress current outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-current" checked />
-            <span>Federal House districts (current)</span>
+            <span>Congress (current)</span>
           </label>
-          <input type="color" id="color-congress-current" value="#8e24aa" aria-label="Federal House current outline color" />
         </div>
         <div class="layer-row">
+          <input type="color" id="outline-color-congress-future" value="#43a047" aria-label="Congress coming outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-future" />
-            <span>Federal House districts (coming)</span>
+            <span>Congress (coming)</span>
           </label>
-          <input type="color" id="color-congress-future" value="#43a047" aria-label="Federal House coming outline color" />
         </div>
-        <div class="note">Coming federal districts have unknown party until elections.</div>
-      </div>
-
-      <div class="panel-section">
-        <div class="panel-title">Styling</div>
-        <label class="toggle">
-          <input type="checkbox" id="toggle-party-fill" checked />
-          <span>Party fill colors</span>
-        </label>
+        <div class="note">Coming districts have unknown party.</div>
         <div class="slider-row">
           <label for="line-width">Line width</label>
           <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.6" />
@@ -99,12 +106,31 @@
         </div>
       </div>
 
-      <div class="panel-section">
-        <div class="panel-title">Party legend</div>
+      <!-- Lower left: Party legend -->
+      <div class="panel-legend">
+        <div class="panel-title">Party Legend</div>
         <div class="legend">
           <div class="legend-row"><span class="swatch republican"></span>Republican</div>
           <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
+          <div class="legend-row"><span class="swatch forward"></span>Forward</div>
           <div class="legend-row"><span class="swatch other"></span>Other / Unknown</div>
+        </div>
+        <label class="toggle fill-toggle">
+          <input type="checkbox" id="toggle-party-fill" checked />
+          <span>Fill on map</span>
+        </label>
+      </div>
+
+      <!-- Footer: Tour left, Reset right, Save Defaults (localhost only) -->
+      <div class="panel-footer">
+        <button class="tour-btn" id="tour-btn">Take Tour</button>
+        <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
+      </div>
+      <div class="panel-save-defaults localhost-only" id="save-defaults-container">
+        <button class="save-defaults-btn" id="save-defaults-btn">Save as Defaults</button>
+        <div class="save-defaults-dropdown" id="save-defaults-dropdown">
+          <button class="save-option" id="save-local">Save for Local</button>
+          <button class="save-option" id="save-deployed">Save for Deployed</button>
         </div>
       </div>
     </aside>
@@ -116,6 +142,7 @@
     crossorigin=""
   ></script>
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
-  <script src="app.js?v=20260118-fixed5"></script>
+  <script src="app.js?v=20260118-clickthrough3"></script>
+  <script src="js/tour.js"></script>
 </body>
 </html>

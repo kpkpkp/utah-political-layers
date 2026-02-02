@@ -1,3 +1,10 @@
+// Google Analytics 4 tracking helper
+const trackEvent = (eventName, params = {}) => {
+  if (typeof gtag !== 'undefined') {
+    gtag('event', eventName, params);
+  }
+};
+
 const MAP_VIEW_STORAGE_KEY = "utah-map-view";
 const POP_POINT_CACHE_KEY = "utah-pop-point-cache";
 const POP_POINT_CACHE_VERSION_KEY = "utah-pop-point-cache-version";
@@ -89,7 +96,7 @@ window.addEventListener('load', () => {
       scaleControl.style.marginTop = '5px';
       scaleControl.style.visibility = 'visible';
       scaleControl.style.display = 'block';
-      scaleControl.style.zIndex = '999';
+      zoomControl.style.zIndex = '999';
       console.log('Fixed scale control visibility');
     }
   }, 500);
@@ -98,11 +105,17 @@ window.addEventListener('load', () => {
 // Expose for debugging
 window.map = map;
 
+// Utah's approximate bounds: [south, west] to [north, east]
+const utahBounds = [[37.0, -114.05], [42.0, -109.04]];
+
 const storedView = loadStoredView();
 if (storedView) {
   map.setView(storedView.center, storedView.zoom);
 } else {
-  map.setView([39.4, -111.6], 6.5);
+  // Fit Utah to ~90% of viewport height
+  map.fitBounds(utahBounds, {
+    padding: [20, 20]  // 20px padding on all sides
+  });
 }
 
 const populationPane = map.createPane("populationPane");
@@ -130,12 +143,69 @@ const enablePopulationCanvasClicks = () => {
 // Expose for debugging
 window.populationLayer = populationLayer;
 window.populationRenderer = populationRenderer;
+window.setDistrictPointerEvents = null; // Will be set after function definition
+
+// Color configuration schema
+const COLOR_CONFIG_STORAGE_KEY = "utah-color-config";
+
+const defaultColorConfig = {
+  // Party colors for fill
+  party: {
+    republican: "#d73027",
+    democratic: "#4575b4",
+    forward: "#8b5cf6",
+    other: "#9e9e9e"
+  },
+  // Outline colors for districts
+  outline: {
+    house: "#ff6f00",
+    senate: "#00b0ff",
+    congressCurrent: "#8e24aa",
+    congressFuture: "#43a047"
+  }
+};
+
+const loadColorConfig = () => {
+  try {
+    const raw = localStorage.getItem(COLOR_CONFIG_STORAGE_KEY);
+    if (!raw) return { ...defaultColorConfig };
+    const parsed = JSON.parse(raw);
+    return {
+      party: { ...defaultColorConfig.party, ...parsed.party },
+      outline: { ...defaultColorConfig.outline, ...parsed.outline }
+    };
+  } catch (error) {
+    console.warn("Failed to load color config", error);
+    return { ...defaultColorConfig };
+  }
+};
+
+const persistColorConfig = (config) => {
+  try {
+    localStorage.setItem(COLOR_CONFIG_STORAGE_KEY, JSON.stringify(config));
+  } catch (error) {
+    console.warn("Failed to persist color config", error);
+  }
+};
+
+const updateColorConfig = (updates) => {
+  const current = loadColorConfig();
+  const updated = {
+    party: { ...current.party, ...updates.party },
+    outline: { ...current.outline, ...updates.outline }
+  };
+  persistColorConfig(updated);
+  return updated;
+};
+
+const colorConfig = loadColorConfig();
 
 const partyColor = (partyRaw) => {
   const party = (partyRaw || "").toLowerCase();
-  if (party.startsWith("rep")) return "#d73027";
-  if (party.startsWith("dem")) return "#4575b4";
-  return "#9e9e9e";
+  if (party.startsWith("rep")) return colorConfig.party.republican;
+  if (party.startsWith("dem")) return colorConfig.party.democratic;
+  if (party.startsWith("forward") || party.startsWith("fwd")) return colorConfig.party.forward;
+  return colorConfig.party.other;
 };
 
 const boundaryStyle = {
@@ -148,10 +218,10 @@ const COLOR_STORAGE_KEY = "utah-layer-colors";
 const UI_STORAGE_KEY = "utah-view-settings";
 
 const defaultLineColors = {
-  house: "#ff6f00",
-  senate: "#00b0ff",
-  congressCurrent: "#8e24aa",
-  congressFuture: "#43a047"
+  house: colorConfig.outline.house,
+  senate: colorConfig.outline.senate,
+  congressCurrent: colorConfig.outline.congressCurrent,
+  congressFuture: colorConfig.outline.congressFuture
 };
 
 const loadStoredColors = () => {
@@ -297,6 +367,13 @@ const styleState = {
   lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1)
 };
 
+// Expose for debugging
+window.styleState = styleState;
+
+// Expose color configuration API for external use
+window.getColorConfig = loadColorConfig;
+window.updateColorConfig = updateColorConfig;
+
 const persistUi = (next = {}) => {
   Object.assign(uiState, next, {
     partyFill: styleState.partyFill,
@@ -408,12 +485,42 @@ const attachToggle = (checkboxId, layerKey) => {
         if (populationState.loaded && populationRenderer && populationRenderer._reset) {
           populationRenderer._reset();
         }
+        // Track population toggle
+        trackEvent('population_toggle', { enabled: true });
+      } else {
+        // Track layer toggle
+        trackEvent('layer_toggle', { layer: layerKey, enabled: true });
       }
     } else {
       map.removeLayer(layer);
+      // Track layer/population toggle off
+      if (layerKey === "population") {
+        trackEvent('population_toggle', { enabled: false });
+      } else {
+        trackEvent('layer_toggle', { layer: layerKey, enabled: false });
+      }
     }
   });
 };
+
+const setDistrictPointerEvents = () => {
+  // When party fill is disabled, only the stroke should be clickable
+  // This allows clicking on population dots underneath the district outlines
+  const pointerEvents = styleState.partyFill ? "auto" : "stroke";
+
+  [layerState.house, layerState.senate, layerState.congressCurrent, layerState.congressFuture].forEach((layer) => {
+    if (layer) {
+      layer.eachLayer((sublayer) => {
+        if (sublayer._path) {
+          sublayer._path.style.pointerEvents = pointerEvents;
+        }
+      });
+    }
+  });
+};
+
+// Expose for debugging
+window.setDistrictPointerEvents = setDistrictPointerEvents;
 
 const refreshPartyFill = (parties) => {
   const houseLayer = layerState.house;
@@ -452,6 +559,12 @@ const refreshPartyFill = (parties) => {
       return congressFutureStyle(info?.party);
     });
   }
+
+  // Set pointer-events after styles are applied
+  // Use requestAnimationFrame to ensure DOM is updated
+  requestAnimationFrame(() => {
+    setDistrictPointerEvents();
+  });
 };
 
 const densityScale = (value) => {
@@ -822,7 +935,7 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
     }
     received += features.length;
     if (status) {
-      status.textContent = `Population: ${received.toLocaleString()} loaded (REST)`;
+      status.textContent = `Population: ${received.toLocaleString()} blocks loaded (REST)`;
     }
     offset += pageSize;
     if (features.length < pageSize) {
@@ -865,7 +978,7 @@ const loadPopulationPoints = async () => {
     }
     if (status) {
       status.textContent = restCount
-        ? `Population: ready (${restCount.toLocaleString()})`
+        ? `Population: ready (${restCount.toLocaleString()} blocks)`
         : "Population: ready (no features)";
     }
     const populationToggle = document.getElementById("toggle-population");
@@ -890,23 +1003,63 @@ const loadPopulationPoints = async () => {
 };
 
 const bindColorPickers = (parties) => {
-  const config = [
-    { id: "color-house", key: "house" },
-    { id: "color-senate", key: "senate" },
-    { id: "color-congress-current", key: "congressCurrent" },
-    { id: "color-congress-future", key: "congressFuture" }
+  // Outline color pickers
+  const outlineConfig = [
+    { id: "outline-color-house", key: "house" },
+    { id: "outline-color-senate", key: "senate" },
+    { id: "outline-color-congress-current", key: "congressCurrent" },
+    { id: "outline-color-congress-future", key: "congressFuture" }
   ];
 
-  config.forEach(({ id, key }) => {
+  outlineConfig.forEach(({ id, key }) => {
     const input = document.getElementById(id);
     if (!input) return;
-    input.value = styleState.lineColors[key];
+    // Set initial value from colorConfig
+    input.value = colorConfig.outline[key];
     input.addEventListener("input", () => {
+      // Update colorConfig
+      const updatedConfig = updateColorConfig({ outline: { [key]: input.value } });
+      // Update the in-memory colorConfig object
+      Object.assign(colorConfig, updatedConfig);
+      // Update styleState lineColors to match
       styleState.lineColors[key] = input.value;
       persistColors();
+      // Refresh map styling
       refreshPartyFill(parties);
+      // Track color change
+      trackEvent('color_changed', { type: 'outline', color: key, value: input.value });
     });
   });
+};
+
+const resetColorConfig = (parties) => {
+  // Clear localStorage for color config
+  localStorage.removeItem(COLOR_CONFIG_STORAGE_KEY);
+
+  // Reload default colors into colorConfig
+  Object.assign(colorConfig, defaultColorConfig);
+
+  // Update all outline color picker inputs
+  const outlineInputs = [
+    { id: "outline-color-house", key: "house" },
+    { id: "outline-color-senate", key: "senate" },
+    { id: "outline-color-congress-current", key: "congressCurrent" },
+    { id: "outline-color-congress-future", key: "congressFuture" }
+  ];
+
+  outlineInputs.forEach(({ id, key }) => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.value = defaultColorConfig.outline[key];
+    }
+  });
+
+  // Update styleState lineColors to match defaults
+  Object.assign(styleState.lineColors, defaultColorConfig.outline);
+  persistColors();
+
+  // Refresh map styling
+  refreshPartyFill(parties);
 };
 
 const bindPopulationColor = () => {
@@ -920,6 +1073,8 @@ const bindPopulationColor = () => {
     uiState.populationColor = input.value;
     persistUi({ populationColor: input.value });
     updatePopulationStyles();
+    // Track color change
+    trackEvent('color_changed', { type: 'population', color: 'tint', value: input.value });
   });
 };
 
@@ -941,6 +1096,8 @@ const bindTileStylePicker = () => {
     if (!tilesToggle || tilesToggle.checked) {
       baseTiles.addTo(map);
     }
+    // Track tile source change
+    trackEvent('tile_source_changed', { source: styleKey });
   });
 };
 
@@ -998,6 +1155,10 @@ const init = async () => {
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${info.name}` : "";
       layer.bindPopup(`House District ${district}<br />${partyLabel}${nameLabel}`);
+      // Track district clicks
+      layer.on('click', () => {
+        trackEvent('district_click', { type: 'house', district: district });
+      });
     }
   }).addTo(map);
 
@@ -1013,6 +1174,10 @@ const init = async () => {
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${info.name}` : "";
       layer.bindPopup(`Senate District ${district}<br />${partyLabel}${nameLabel}`);
+      // Track district clicks
+      layer.on('click', () => {
+        trackEvent('district_click', { type: 'senate', district: district });
+      });
     }
   }).addTo(map);
 
@@ -1028,6 +1193,10 @@ const init = async () => {
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${info.name}` : "";
       layer.bindPopup(`Federal House District ${district}<br />${partyLabel}${nameLabel}`);
+      // Track district clicks
+      layer.on('click', () => {
+        trackEvent('district_click', { type: 'congress_current', district: district });
+      });
     }
   }).addTo(map);
 
@@ -1043,6 +1212,10 @@ const init = async () => {
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name && info?.name !== "TBD" ? ` — ${info.name}` : "";
       layer.bindPopup(`Federal House District ${district} (coming)<br />${partyLabel}${nameLabel}`);
+      // Track district clicks
+      layer.on('click', () => {
+        trackEvent('district_click', { type: 'congress_future', district: district });
+      });
     }
   });
 
@@ -1067,6 +1240,8 @@ const init = async () => {
       map.removeLayer(layerState[key]);
     } else if (key === "population") {
       layerState.population.addTo(map);
+      // Load population data if checkbox is initially checked
+      loadPopulationPoints().catch((error) => console.error(error));
     }
   });
 
@@ -1080,10 +1255,21 @@ const init = async () => {
     });
   }
 
+  // Set initial pointer-events based on party fill state
+  refreshPartyFill(parties);
+
   bindColorPickers(parties);
   bindLineControls(parties);
   bindPopulationColor();
   bindTileStylePicker();
+
+  // Bind reset colors button
+  const resetColorsBtn = document.getElementById("reset-colors-btn");
+  if (resetColorsBtn) {
+    resetColorsBtn.addEventListener("click", () => {
+      resetColorConfig(parties);
+    });
+  }
 
   // Don't load population points during init - only load when user checks the toggle
   // This ensures markers are added after the layer is on the map
@@ -1102,6 +1288,85 @@ const init = async () => {
       const collapsed = panel.classList.toggle("collapsed");
       panelToggle.textContent = collapsed ? "▶" : "◀";
       panelToggle.setAttribute("aria-expanded", String(!collapsed));
+      // Track panel toggle
+      trackEvent('panel_toggle', { expanded: !collapsed });
+    });
+  }
+
+  // Mobile touch gesture handling for bottom sheet panel
+  const dragHandle = document.querySelector(".panel-drag-handle");
+  if (panel && dragHandle) {
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isDragging = false;
+
+    // Check if we're on mobile viewport
+    const isMobile = () => window.innerWidth <= 480;
+
+    // Handle touch start
+    dragHandle.addEventListener("touchstart", (e) => {
+      if (!isMobile()) return;
+
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+      isDragging = true;
+    }, { passive: true });
+
+    // Handle touch move
+    dragHandle.addEventListener("touchmove", (e) => {
+      if (!isMobile() || !isDragging) return;
+
+      // Prevent default scroll behavior during swipe
+      e.preventDefault();
+    }, { passive: false });
+
+    // Handle touch end
+    dragHandle.addEventListener("touchend", (e) => {
+      if (!isMobile() || !isDragging) return;
+
+      const touchEndY = e.changedTouches[0].clientY;
+      const touchEndTime = Date.now();
+      const deltaY = touchEndY - touchStartY;
+      const deltaTime = touchEndTime - touchStartTime;
+      const velocity = Math.abs(deltaY) / deltaTime;
+
+      isDragging = false;
+
+      // Threshold: 50px swipe or fast velocity
+      const swipeThreshold = 50;
+      const velocityThreshold = 0.5; // px/ms
+
+      const isSwipeUp = deltaY < -swipeThreshold || (deltaY < -20 && velocity > velocityThreshold);
+      const isSwipeDown = deltaY > swipeThreshold || (deltaY > 20 && velocity > velocityThreshold);
+
+      if (isSwipeUp && panel.classList.contains("collapsed")) {
+        // Swipe up: expand panel
+        panel.classList.remove("collapsed");
+        trackEvent("panel_swipe_expand");
+      } else if (isSwipeDown && !panel.classList.contains("collapsed")) {
+        // Swipe down: collapse panel
+        panel.classList.add("collapsed");
+        trackEvent("panel_swipe_collapse");
+      }
+
+      // Reset
+      touchStartY = 0;
+      touchStartTime = 0;
+    }, { passive: true });
+
+    // Handle touch cancel
+    dragHandle.addEventListener("touchcancel", () => {
+      isDragging = false;
+      touchStartY = 0;
+      touchStartTime = 0;
+    }, { passive: true });
+
+    // Make drag handle tappable to toggle
+    dragHandle.addEventListener("click", () => {
+      if (!isMobile()) return;
+
+      const wasCollapsed = panel.classList.toggle("collapsed");
+      trackEvent(wasCollapsed ? "panel_tap_collapse" : "panel_tap_expand");
     });
   }
 
@@ -1124,6 +1389,15 @@ const init = async () => {
     );
   };
 
+  // Debounced zoom tracking
+  let zoomTrackTimeout = null;
+  map.on("zoomend", () => {
+    clearTimeout(zoomTrackTimeout);
+    zoomTrackTimeout = setTimeout(() => {
+      trackEvent('map_zoom', { zoom_level: map.getZoom() });
+    }, 300);
+  });
+
   storeView();
   map.on("moveend", storeView);
   map.on("zoomend", storeView);
@@ -1136,4 +1410,136 @@ init().catch((error) => {
   errorDiv.className = "panel-section";
   errorDiv.textContent = "Failed to load data. Check the console for details.";
   panel.appendChild(errorDiv);
+});
+
+// Localhost detection and Save Defaults functionality
+const isLocalhost = window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1';
+
+if (isLocalhost) {
+  document.body.classList.add('is-localhost');
+}
+
+const getCurrentDefaults = () => ({
+  colors: {
+    party: { ...colorConfig.party },
+    outline: { ...colorConfig.outline }
+  },
+  layers: {
+    boundary: document.getElementById('toggle-boundary')?.checked ?? true,
+    tiles: document.getElementById('toggle-tiles')?.checked ?? true,
+    population: document.getElementById('toggle-population')?.checked ?? false,
+    house: document.getElementById('toggle-house')?.checked ?? true,
+    senate: document.getElementById('toggle-senate')?.checked ?? true,
+    congressCurrent: document.getElementById('toggle-congress-current')?.checked ?? true,
+    congressFuture: document.getElementById('toggle-congress-future')?.checked ?? false,
+    partyFill: document.getElementById('toggle-party-fill')?.checked ?? true
+  },
+  sliders: {
+    lineWidth: document.getElementById('line-width')?.value ?? '0.6',
+    lineOpacity: document.getElementById('line-opacity')?.value ?? '1'
+  },
+  tileStyle: document.getElementById('tile-style-select')?.value ?? 'osm',
+  populationColor: document.getElementById('color-population')?.value ?? '#ff0000'
+});
+
+const saveDefaults = (target) => {
+  const defaults = getCurrentDefaults();
+  const json = JSON.stringify(defaults, null, 2);
+  console.log(`// Defaults for ${target}:`);
+  console.log(json);
+  navigator.clipboard.writeText(json).then(() => {
+    alert(`Defaults copied to clipboard for ${target}.\n\nCheck console for JSON output.`);
+  }).catch((err) => {
+    console.error('Failed to copy to clipboard:', err);
+    alert(`Failed to copy to clipboard. Check console for JSON output.`);
+  });
+  trackEvent('save_defaults', { target });
+};
+
+// Expose for debugging
+window.getCurrentDefaults = getCurrentDefaults;
+window.saveDefaults = saveDefaults;
+
+// Bind save defaults buttons
+window.addEventListener('load', () => {
+  const saveBtn = document.getElementById('save-defaults-btn');
+  const dropdown = document.getElementById('save-defaults-dropdown');
+  const saveLocal = document.getElementById('save-local');
+  const saveDeployed = document.getElementById('save-deployed');
+
+  if (saveBtn && dropdown) {
+    saveBtn.addEventListener('click', () => {
+      dropdown.classList.toggle('open');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!saveBtn.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+  }
+
+  if (saveLocal) {
+    saveLocal.addEventListener('click', () => {
+      saveDefaults('local');
+      dropdown?.classList.remove('open');
+    });
+  }
+
+  if (saveDeployed) {
+    saveDeployed.addEventListener('click', () => {
+      saveDefaults('deployed');
+      dropdown?.classList.remove('open');
+    });
+  }
+});
+
+// Tour initialization
+// Wait for tour.js to load and map to be initialized
+window.addEventListener('load', () => {
+  // Give a small delay to ensure all scripts are fully loaded
+  setTimeout(() => {
+    if (typeof TourController !== 'undefined' && typeof tourSteps !== 'undefined' && window.map && window.layerState) {
+      // Initialize tour controller
+      const tour = new TourController(window.map, window.layerState);
+
+      // Expose for debugging
+      window.tour = tour;
+
+      // Bind "Take Tour" button
+      const tourBtn = document.getElementById('tour-btn');
+      if (tourBtn) {
+        tourBtn.addEventListener('click', () => {
+          tour.start();
+
+          // Track button click
+          if (typeof trackEvent !== 'undefined') {
+            trackEvent('tour_button_clicked');
+          }
+        });
+      }
+
+      // Auto-start tour for first-time visitors
+      if (tour.shouldShowTour()) {
+        // Wait a bit longer for first-time users to see the map
+        setTimeout(() => {
+          tour.start();
+
+          // Track auto-start
+          if (typeof trackEvent !== 'undefined') {
+            trackEvent('tour_auto_started');
+          }
+        }, 1500);
+      }
+    } else {
+      console.warn('Tour system not available:', {
+        TourController: typeof TourController,
+        tourSteps: typeof tourSteps,
+        map: !!window.map,
+        layerState: !!window.layerState
+      });
+    }
+  }, 500);
 });
