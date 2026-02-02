@@ -1055,31 +1055,6 @@ const bindColorPickers = (parties) => {
       trackEvent('color_changed', { type: 'outline', color: key, value: input.value });
     });
   });
-
-  // Legacy color pickers (if they still exist)
-  const legacyConfig = [
-    { id: "color-house", key: "house", configKey: "outline" },
-    { id: "color-senate", key: "senate", configKey: "outline" },
-    { id: "color-congress-current", key: "congressCurrent", configKey: "outline" },
-    { id: "color-congress-future", key: "congressFuture", configKey: "outline" }
-  ];
-
-  legacyConfig.forEach(({ id, key, configKey }) => {
-    const input = document.getElementById(id);
-    if (!input) return;
-    input.value = styleState.lineColors[key];
-    input.addEventListener("input", () => {
-      styleState.lineColors[key] = input.value;
-      persistColors();
-      // Update color config for outline colors
-      if (configKey === "outline") {
-        updateColorConfig({ outline: { [key]: input.value } });
-      }
-      refreshPartyFill(parties);
-      // Track color change
-      trackEvent('color_changed', { type: 'outline', color: key, value: input.value });
-    });
-  });
 };
 
 const resetColorConfig = (parties) => {

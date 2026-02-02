@@ -32,12 +32,14 @@
 
     <aside class="panel control-panel" id="controls">
       <div class="panel-drag-handle" aria-hidden="true"></div>
-      <button class="panel-toggle" id="panel-toggle" aria-expanded="true" title="Hide panel">
-        ◀
-      </button>
-      <div class="panel-section">
-        <div class="panel-title">Layers</div>
+      <button class="panel-toggle" id="panel-toggle">◀</button>
+
+      <div class="panel-header">
+        <div class="panel-title">Utah Political Layers</div>
         <button class="tour-btn" id="tour-btn">Take Tour</button>
+      </div>
+
+      <div class="panel-layers">
         <label class="toggle">
           <input type="checkbox" id="toggle-boundary" checked />
           <span>Utah boundary</span>
@@ -56,50 +58,84 @@
             <option value="opentopo">OpenTopoMap</option>
           </select>
         </div>
-        <div class="layer-row">
-          <label class="toggle">
-            <input type="checkbox" id="toggle-population" />
-            <span>Population</span>
-          </label>
-          <input type="color" id="color-population" value="#ff0000" aria-label="Population density color" />
-        </div>
-        <div class="layer-row">
-          <label class="toggle">
-            <input type="checkbox" id="toggle-house" checked />
-            <span>State Legislature House districts</span>
-          </label>
-          <input type="color" id="color-house" value="#ff6f00" aria-label="House outline color" />
-        </div>
-        <div class="layer-row">
-          <label class="toggle">
-            <input type="checkbox" id="toggle-senate" checked />
-            <span>State Legislature Senate districts</span>
-          </label>
-          <input type="color" id="color-senate" value="#00b0ff" aria-label="Senate outline color" />
-        </div>
-        <div class="layer-row">
-          <label class="toggle">
-            <input type="checkbox" id="toggle-congress-current" checked />
-            <span>Federal House districts (current)</span>
-          </label>
-          <input type="color" id="color-congress-current" value="#8e24aa" aria-label="Federal House current outline color" />
-        </div>
-        <div class="layer-row">
-          <label class="toggle">
-            <input type="checkbox" id="toggle-congress-future" />
-            <span>Federal House districts (coming)</span>
-          </label>
-          <input type="color" id="color-congress-future" value="#43a047" aria-label="Federal House coming outline color" />
-        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-population" />
+          <span>Population</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-house" checked />
+          <span>State Legislature House districts</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-senate" checked />
+          <span>State Legislature Senate districts</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-congress-current" checked />
+          <span>Federal House districts (current)</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-congress-future" />
+          <span>Federal House districts (coming)</span>
+        </label>
         <div class="note">Coming federal districts have unknown party until elections.</div>
       </div>
 
-      <div class="panel-section">
-        <div class="panel-title">Styling</div>
+      <div class="panel-legend">
+        <div class="legend">
+          <div class="legend-row"><span class="swatch republican"></span>Republican</div>
+          <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
+          <div class="legend-row"><span class="swatch forward"></span>Forward</div>
+          <div class="legend-row"><span class="swatch other"></span>Other / Unknown</div>
+        </div>
+      </div>
+
+      <div class="panel-fills">
+        <div class="panel-title">Party Fills</div>
         <label class="toggle">
           <input type="checkbox" id="toggle-party-fill" checked />
           <span>Party fill colors</span>
         </label>
+        <div class="color-picker-row">
+          <label for="party-color-republican">Republican</label>
+          <input type="color" id="party-color-republican" value="#d73027" aria-label="Republican party color" />
+        </div>
+        <div class="color-picker-row">
+          <label for="party-color-democratic">Democratic</label>
+          <input type="color" id="party-color-democratic" value="#4575b4" aria-label="Democratic party color" />
+        </div>
+        <div class="color-picker-row">
+          <label for="party-color-forward">Forward</label>
+          <input type="color" id="party-color-forward" value="#8b5cf6" aria-label="Forward party color" />
+        </div>
+        <div class="color-picker-row">
+          <label for="party-color-other">Other / Unknown</label>
+          <input type="color" id="party-color-other" value="#9e9e9e" aria-label="Other party color" />
+        </div>
+      </div>
+
+      <div class="panel-outlines">
+        <div class="panel-title">Outlines</div>
+        <div class="color-picker-row">
+          <label for="color-population">Population</label>
+          <input type="color" id="color-population" value="#ff0000" aria-label="Population density color" />
+        </div>
+        <div class="color-picker-row">
+          <label for="outline-color-house">House</label>
+          <input type="color" id="outline-color-house" value="#ff6f00" aria-label="House district outline color" />
+        </div>
+        <div class="color-picker-row">
+          <label for="outline-color-senate">Senate</label>
+          <input type="color" id="outline-color-senate" value="#00b0ff" aria-label="Senate district outline color" />
+        </div>
+        <div class="color-picker-row">
+          <label for="outline-color-congress-current">Congress (current)</label>
+          <input type="color" id="outline-color-congress-current" value="#8e24aa" aria-label="Congress current outline color" />
+        </div>
+        <div class="color-picker-row">
+          <label for="outline-color-congress-future">Congress (coming)</label>
+          <input type="color" id="outline-color-congress-future" value="#43a047" aria-label="Congress coming outline color" />
+        </div>
         <div class="slider-row">
           <label for="line-width">Line width</label>
           <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.6" />
@@ -110,60 +146,8 @@
         </div>
       </div>
 
-      <div class="panel-section">
-        <div class="panel-title">Customize Colors</div>
-
-        <div class="color-subsection">
-          <div class="subsection-header">Party Colors</div>
-          <div class="color-picker-row">
-            <label for="party-color-republican">Republican</label>
-            <input type="color" id="party-color-republican" value="#d73027" aria-label="Republican party color" />
-          </div>
-          <div class="color-picker-row">
-            <label for="party-color-democratic">Democratic</label>
-            <input type="color" id="party-color-democratic" value="#4575b4" aria-label="Democratic party color" />
-          </div>
-          <div class="color-picker-row">
-            <label for="party-color-forward">Forward</label>
-            <input type="color" id="party-color-forward" value="#8b5cf6" aria-label="Forward party color" />
-          </div>
-          <div class="color-picker-row">
-            <label for="party-color-other">Other / Unknown</label>
-            <input type="color" id="party-color-other" value="#9e9e9e" aria-label="Other party color" />
-          </div>
-        </div>
-
-        <div class="color-subsection">
-          <div class="subsection-header">Outline Colors</div>
-          <div class="color-picker-row">
-            <label for="outline-color-house">House</label>
-            <input type="color" id="outline-color-house" value="#ff6f00" aria-label="House district outline color" />
-          </div>
-          <div class="color-picker-row">
-            <label for="outline-color-senate">Senate</label>
-            <input type="color" id="outline-color-senate" value="#00b0ff" aria-label="Senate district outline color" />
-          </div>
-          <div class="color-picker-row">
-            <label for="outline-color-congress-current">Congress (current)</label>
-            <input type="color" id="outline-color-congress-current" value="#8e24aa" aria-label="Congress current outline color" />
-          </div>
-          <div class="color-picker-row">
-            <label for="outline-color-congress-future">Congress (coming)</label>
-            <input type="color" id="outline-color-congress-future" value="#43a047" aria-label="Congress coming outline color" />
-          </div>
-        </div>
-
+      <div class="panel-reset">
         <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
-      </div>
-
-      <div class="panel-section">
-        <div class="panel-title">Party legend</div>
-        <div class="legend">
-          <div class="legend-row"><span class="swatch republican"></span>Republican</div>
-          <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
-          <div class="legend-row"><span class="swatch forward"></span>Forward</div>
-          <div class="legend-row"><span class="swatch other"></span>Other / Unknown</div>
-        </div>
       </div>
     </aside>
   </div>

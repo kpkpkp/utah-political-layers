@@ -35,8 +35,8 @@ body {
 
 .panel {
   position: absolute;
-  top: 32px;
-  left: 16px;
+  top: 16px;
+  right: 16px;
   z-index: 1000;
   background: #ffffff;
   border-radius: 10px;
@@ -49,17 +49,25 @@ body {
 }
 
 .control-panel {
-  width: 265px;
+  width: 360px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "header header"
+    "layers fills"
+    "legend outlines"
+    "reset reset";
+  gap: 12px;
 }
 
 .panel.collapsed {
-  transform: translateX(calc(-100% + 28px));
+  transform: translateX(calc(100% - 28px));
 }
 
 .panel-toggle {
   position: absolute;
   top: 8px;
-  right: -16px;
+  left: -16px;
   width: 28px;
   height: 28px;
   border-radius: 999px;
@@ -74,27 +82,68 @@ body {
   outline-offset: 2px;
 }
 
-.panel-section + .panel-section {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #efefef;
+/* Grid area assignments */
+.panel-header {
+  grid-area: header;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-layers {
+  grid-area: layers;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #efefef;
+  padding-right: 8px;
+}
+
+.panel-fills {
+  grid-area: fills;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-legend {
+  grid-area: legend;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #efefef;
+  padding-right: 8px;
+}
+
+.panel-outlines {
+  grid-area: outlines;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-reset {
+  grid-area: reset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .panel-title {
   font-weight: 600;
+  font-size: 12px;
   margin-bottom: 8px;
+  color: #3f3f3f;
 }
 
 .toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 6px;
+  margin-bottom: 4px;
   cursor: pointer;
+  font-size: 12px;
 }
 
 .toggle input {
   accent-color: #3b6ea5;
+  flex-shrink: 0;
 }
 
 .note {
@@ -108,21 +157,23 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .layer-row .toggle {
   margin-bottom: 0;
+  flex: 1;
 }
 
 .layer-row input[type="color"] {
   border: none;
   background: transparent;
-  width: 32px;
-  height: 24px;
+  width: 28px;
+  height: 22px;
   padding: 0;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .tile-select {
@@ -163,12 +214,13 @@ body {
 .slider-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 .slider-row label {
   color: #3f3f3f;
+  font-size: 11px;
 }
 
 .slider-row input[type="range"] {
@@ -178,18 +230,19 @@ body {
 .legend {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .legend-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: 11px;
 }
 
 .swatch {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 3px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   display: inline-block;
@@ -219,31 +272,31 @@ body {
 }
 
 .color-subsection {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .color-subsection:last-of-type {
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .subsection-header {
   font-weight: 500;
-  font-size: 12px;
+  font-size: 11px;
   color: #3f3f3f;
-  margin-bottom: 6px;
-  margin-top: 4px;
+  margin-bottom: 5px;
+  margin-top: 0;
 }
 
 .color-picker-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .color-picker-row label {
-  font-size: 13px;
+  font-size: 11px;
   color: #1b1b1b;
   flex: 1;
 }
@@ -251,21 +304,20 @@ body {
 .color-picker-row input[type="color"] {
   border: none;
   background: transparent;
-  width: 32px;
-  height: 24px;
+  width: 28px;
+  height: 22px;
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .reset-colors-btn {
-  width: 100%;
-  padding: 8px 12px;
+  padding: 8px 16px;
   border: 1px solid #bdbdbd;
   border-radius: 6px;
   background: #ffffff;
   color: #3b6ea5;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -387,31 +439,37 @@ body {
    ==================================== */
 
 /* Tablet: 481px - 768px
-   - Narrower control panel
+   - Narrower control panel (2-column grid maintained)
    - Adjusted text sizes
    - Optimized spacing for medium screens
 */
 @media (max-width: 768px) and (min-width: 481px) {
-  /* Reduce panel width */
+  /* Reduce panel width for tablet - maintain 2-column grid */
   .control-panel {
-    width: 220px;
+    width: 320px;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "header header"
+      "layers fills"
+      "legend outlines"
+      "reset reset";
   }
 
   .panel {
-    font-size: 12px;
-    padding: 11px 13px; /* ~20% reduction from 14px 16px */
-    min-width: 180px;
-  }
-
-  /* Adjust section spacing */
-  .panel-section + .panel-section {
-    margin-top: 11px; /* ~20% reduction from 14px */
-    padding-top: 10px; /* ~20% reduction from 12px */
+    font-size: 11px;
+    padding: 12px 14px;
+    min-width: 280px;
   }
 
   .panel-title {
-    margin-bottom: 6px; /* ~20% reduction from 8px */
-    font-size: 12px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+
+  .panel-layers,
+  .panel-legend {
+    padding-right: 6px;
   }
 
   /* Adjust toggle spacing and ensure 44px touch targets */
@@ -551,12 +609,13 @@ body {
 
 /* Phone Portrait: <= 480px
    - Bottom sheet layout
+   - Single column grid layout
    - Touch-friendly spacing
    - Drag handle for visual affordance
 */
 @media (max-width: 480px) {
   .control-panel {
-    /* Transform to bottom sheet */
+    /* Transform to bottom sheet with single column grid */
     position: fixed;
     top: auto;
     bottom: 0;
@@ -572,11 +631,28 @@ body {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
     overflow-x: hidden;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "layers"
+      "legend"
+      "fills"
+      "outlines"
+      "reset";
+    gap: 12px;
+  }
+
+  /* Remove borders on mobile - column borders not needed in single column */
+  .panel-layers,
+  .panel-legend {
+    border-right: none;
+    padding-right: 0;
   }
 
   /* Collapsed state shows only drag handle area (~48px) */
   .control-panel.collapsed {
-    transform: translateY(calc(100% - 48px));
+    transform: translateY(calc(100% - 48px)) !important;
   }
 
   /* Hide the side toggle button on mobile */
@@ -679,20 +755,38 @@ body {
 
 /* Phone Landscape: <= 500px height with landscape orientation
    - Compact bottom sheet
+   - Single column grid layout
    - Minimal vertical space
    - Optimized for limited screen real estate
 */
 @media (max-height: 500px) and (orientation: landscape) {
   .control-panel {
-    /* Keep bottom sheet but more compact for landscape */
+    /* Keep bottom sheet but more compact for landscape with single column grid */
     max-height: 50vh;
     padding: 6px 12px 12px;
     font-size: 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "layers"
+      "legend"
+      "fills"
+      "outlines"
+      "reset";
+    gap: 8px;
+  }
+
+  /* Remove borders on landscape mobile - column borders not needed in single column */
+  .panel-layers,
+  .panel-legend {
+    border-right: none;
+    padding-right: 0;
   }
 
   /* Smaller collapsed state for landscape */
   .control-panel.collapsed {
-    transform: translateY(calc(100% - 36px));
+    transform: translateY(calc(100% - 36px)) !important;
   }
 
   /* Smaller drag handle */
@@ -817,13 +911,13 @@ body {
 /* ===== Tour Button ===== */
 .tour-btn {
   width: 100%;
-  padding: 10px 16px;
-  margin-bottom: 12px;
+  padding: 8px 14px;
+  margin-bottom: 0;
   background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -847,9 +941,17 @@ body {
   outline-offset: 2px;
 }
 
+/* Header title styling */
+.panel-header h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: #1b1b1b;
+}
+
 @media (max-width: 768px) {
   .tour-btn {
-    font-size: 13px;
-    padding: 9px 14px;
+    font-size: 11px;
+    padding: 7px 12px;
   }
 }
