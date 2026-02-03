@@ -139,8 +139,7 @@ const tourSteps = [
     `,
     position: 'top-left',
     mapView: {
-      center: [39.3210, -111.0937],
-      zoom: 7.5
+      bounds: [[36.9, -114.1], [42.1, -109.0]]
     },
     layers: {
       boundary: true,
@@ -162,8 +161,7 @@ const tourSteps = [
     `,
     position: 'top-left',
     mapView: {
-      center: [39.3210, -111.0937],
-      zoom: 7.5
+      bounds: [[36.9, -114.1], [42.1, -109.0]]
     },
     layers: {
       boundary: true,

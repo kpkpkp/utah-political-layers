@@ -1891,7 +1891,7 @@ const tourSteps = [
     title: 'Federal Congressional Districts',
     content: '<p>Utah currently has <strong>4 Congressional districts</strong> (shown in purple outlines).</p><p>These are for U.S. House of Representatives seats in Washington, D.C.</p><p>Congressional districts are much larger than state legislative districts, as they represent significantly more people.</p><p>Let\\'s zoom out to see all four districts across the entire state.</p>',
     position: 'top-left',
-    mapView: {{ center: [39.3210, -111.0937], zoom: 7.5 }},
+    mapView: {{ bounds: [[36.9, -114.1], [42.1, -109.0]] }},
     layers: {{ boundary: true, house: false, senate: false, congressCurrent: true, congressFuture: false, population: false }}
   }},
   {{
@@ -1899,7 +1899,7 @@ const tourSteps = [
     title: 'Future Congressional Districts',
     content: '<p>After the 2020 Census, Utah\\'s <strong>4 Congressional districts</strong> were redrawn to reflect population shifts (shown with green dashed lines).</p><p>Compare these boundaries with the current districts to see how representation areas have changed.</p><p>Notice the dashed style - this helps distinguish the redrawn districts from current ones.</p>',
     position: 'top-left',
-    mapView: {{ center: [39.3210, -111.0937], zoom: 7.5 }},
+    mapView: {{ bounds: [[36.9, -114.1], [42.1, -109.0]] }},
     layers: {{ boundary: true, house: false, senate: false, congressCurrent: true, congressFuture: true, population: false }}
   }},
   {{
