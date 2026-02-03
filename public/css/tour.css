@@ -10,9 +10,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparent;
   z-index: 9998;
-  animation: tour-overlay-fade-in 0.3s ease-out;
+  pointer-events: none;
 }
 
 @keyframes tour-overlay-fade-in {
