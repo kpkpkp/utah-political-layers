@@ -674,7 +674,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           </select>
         </div>
         <div class="layer-row">
-          <input type="color" id="color-population" value="#ff0000" aria-label="Population color" />
+          <input type="color" id="color-population" value="#686916" aria-label="Population color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-population" />
             <span>Population</span>
@@ -684,26 +684,26 @@ body.is-localhost .panel-save-defaults.localhost-only {{
         <div class="layer-row">
           <input type="color" id="outline-color-house" value="#ff6f00" aria-label="House outline color" />
           <label class="toggle">
-            <input type="checkbox" id="toggle-house" checked />
+            <input type="checkbox" id="toggle-house" />
             <span>House</span>
           </label>
         </div>
         <div class="layer-row">
-          <input type="color" id="outline-color-senate" value="#00b0ff" aria-label="Senate outline color" />
+          <input type="color" id="outline-color-senate" value="#66777f" aria-label="Senate outline color" />
           <label class="toggle">
-            <input type="checkbox" id="toggle-senate" checked />
+            <input type="checkbox" id="toggle-senate" />
             <span>Senate</span>
           </label>
         </div>
         <div class="layer-row">
-          <input type="color" id="outline-color-congress-current" value="#8e24aa" aria-label="Congress current outline color" />
+          <input type="color" id="outline-color-congress-current" value="#77b1a5" aria-label="Congress current outline color" />
           <label class="toggle">
-            <input type="checkbox" id="toggle-congress-current" checked />
+            <input type="checkbox" id="toggle-congress-current" />
             <span>Congress (current)</span>
           </label>
         </div>
         <div class="layer-row">
-          <input type="color" id="outline-color-congress-future" value="#43a047" aria-label="Congress coming outline color" />
+          <input type="color" id="outline-color-congress-future" value="#126da5" aria-label="Congress coming outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-future" />
             <span>Congress (coming)</span>
@@ -712,7 +712,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
         <div class="note">Coming districts have unknown party.</div>
         <div class="slider-row">
           <label for="line-width">Line width</label>
-          <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.6" />
+          <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.83" />
         </div>
         <div class="slider-row">
           <label for="line-opacity">Line opacity</label>
@@ -843,9 +843,9 @@ const defaultColorConfig = {{
   }},
   outline: {{
     house: "#ff6f00",
-    senate: "#00b0ff",
-    congressCurrent: "#8e24aa",
-    congressFuture: "#43a047"
+    senate: "#66777f",
+    congressCurrent: "#77b1a5",
+    congressFuture: "#126da5"
   }}
 }};
 
@@ -927,7 +927,7 @@ const loadStoredUi = () => {{
 
 const storedUi = loadStoredUi();
 const uiState = {{ ...storedUi }};
-const defaultPopulationColor = "#ff0000";
+const defaultPopulationColor = "#686916";
 let populationTintColor = storedUi.populationColor ?? defaultPopulationColor;
 let populationPointCache = null;
 
