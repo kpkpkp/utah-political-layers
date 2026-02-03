@@ -1,6 +1,24 @@
 node_modules/
 test-results/
 screenshots/
-.claude/
 playwright-report/
 .DS_Store
+
+# Claude Code settings (keep commands tracked)
+.claude/settings.local.json
+
+# Environment files
+.env
+.env.local
+
+# ADW execution output
+agents/
+
+# Git worktrees (created dynamically)
+trees/*
+!trees/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

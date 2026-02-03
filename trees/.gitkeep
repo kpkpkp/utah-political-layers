@@ -1,0 +1,2 @@
+# Git worktrees for isolated agent execution
+# Each subdirectory is a separate worktree created by /init_worktree
