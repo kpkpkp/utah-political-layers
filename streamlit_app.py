@@ -494,7 +494,6 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 9998;
-  backdrop-filter: blur(2px);
   animation: tour-overlay-fade-in 0.3s ease-out;
 }}
 
