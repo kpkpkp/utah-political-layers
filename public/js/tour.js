@@ -66,7 +66,7 @@ const tourSteps = [
       <p>Utah is the 13th largest state by area (84,899 square miles) and stretches from the Colorado Plateau in the south to the Wasatch Range in the north.</p>
       <p>Notice how the state's borders follow longitude and latitude lines, creating a distinctive rectangular shape.</p>
     `,
-    position: 'top-right',
+    position: 'top-left',
     mapView: {
       bounds: [[37.0, -114.05], [42.0, -109.04]]
     },
@@ -137,7 +137,7 @@ const tourSteps = [
       <p>Congressional districts are much larger than state legislative districts, as they represent significantly more people.</p>
       <p>Let's zoom out to see all four districts across the entire state.</p>
     `,
-    position: 'top-right',
+    position: 'top-left',
     mapView: {
       center: [39.3210, -111.0937],
       zoom: 7.5
@@ -160,7 +160,7 @@ const tourSteps = [
       <p>Compare these boundaries with the current districts to see how representation areas have changed.</p>
       <p>Notice the dashed style - this helps distinguish the redrawn districts from current ones.</p>
     `,
-    position: 'top-right',
+    position: 'top-left',
     mapView: {
       center: [39.3210, -111.0937],
       zoom: 7.5
@@ -185,7 +185,7 @@ const tourSteps = [
       <p>Notice how most of Utah's population clusters along the Wasatch Front (the I-15 corridor from Provo to Ogden).</p>
       <p><em>Tip: Click any dot to see the population and area of that census block!</em></p>
     `,
-    position: 'top-right',
+    position: 'top-left',
     mapView: {
       center: [40.2338, -111.6585],
       zoom: 8.5
@@ -242,7 +242,7 @@ const tourSteps = [
       </ul>
       <p>Click the collapse button (◀) to hide the panel and expand your map view.</p>
     `,
-    position: 'left',
+    position: 'top-left',
     mapView: {
       bounds: [[37.0, -114.05], [42.0, -109.04]]
     },
@@ -272,7 +272,7 @@ const tourSteps = [
       <p>Your view settings are automatically saved, so you can pick up where you left off.</p>
       <p><em>Enjoy exploring!</em></p>
     `,
-    position: 'center',
+    position: 'top-left',
     mapView: {
       bounds: [[37.0, -114.05], [42.0, -109.04]]
     },
