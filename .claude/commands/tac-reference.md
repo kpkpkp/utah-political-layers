@@ -183,13 +183,13 @@ Reference repos are located at `/home/kpkpk/tac-1` through `/home/kpkpk/tac-8`.
 | TAC-1 | Permissions, `.env.sample` | ✅ Complete |
 | TAC-2 | Commands, Specs | ✅ Complete |
 | TAC-3 | ADWs, Plan->Implement | ✅ Complete |
-| TAC-4 | Hooks | ❌ Not started |
+| TAC-4 | Hooks | ✅ Complete |
 | TAC-5 | MCP Servers | ✅ Complete (Kapture) |
 | TAC-6 | Git Worktrees | ✅ Complete |
-| TAC-7 | Consolidated Docs | ⚠️ Partial |
+| TAC-7 | Consolidated Docs | ✅ Complete |
 | TAC-8 | Multi-Agent | ✅ Complete |
 
-**Current Level: TAC-8 (Multi-Agent Orchestration)**
+**Current Level: TAC-8 Complete (Full Agentic Coding Infrastructure)**
 
 ### TAC-8 Implementation Details
 
@@ -234,14 +234,21 @@ Utah Political Layers now has full TAC-8 multi-agent orchestration:
 5. Opus reviews results and integrates
 6. E2E verification via `npm test`
 
-### Remaining for Full Capability
+### TAC-4 Hooks Implementation
 
-**TAC-4 (Hooks):**
-- Add `.claude/hooks/pre_tool_use.py` for logging
-- Add `.claude/hooks/stop.py` for session summaries
+Lifecycle hooks in `.claude/hooks/`:
+- `pre_tool_use.py` - Blocks dangerous commands, logs tool usage
+- `stop.py` - Session summary, transcript archival
+- `utils/constants.py` - Log directory helpers
 
-**TAC-7 (Docs):**
-- Add `ai_docs/` with Leaflet.js and ArcGIS API references
+Configured in `.claude/settings.local.json` with hooks section.
+
+### TAC-7 Documentation
+
+AI reference docs in `ai_docs/`:
+- `leaflet_reference.md` - Leaflet.js map rendering
+- `arcgis_reference.md` - Utah SGID FeatureService API
+- `playwright_reference.md` - E2E testing guide
 
 ---
 
@@ -279,19 +286,23 @@ All TAC repos use `.claude/settings.json` to explicitly allow/deny tools:
 
 ---
 
-## Upgrading Utah Political Layers
+## Utah Political Layers TAC Implementation
 
-**Completed:**
-- ✅ TAC-3 (ADWs): `adws/adw_plan_implement.py` and modules
-- ✅ TAC-6 (Isolation): `trees/` directory and `/init_worktree` command
-- ✅ TAC-8 (Multi-Agent): `tasks.md` task board and orchestration
+**All TAC levels complete:**
 
-**Remaining:**
+| Level | Implementation |
+|-------|----------------|
+| TAC-1 | `.claude/settings.local.json`, `.env.sample` |
+| TAC-2 | `.claude/commands/` (12 commands), `specs/` |
+| TAC-3 | `adws/adw_plan_implement.py`, `adws/adw_modules/` |
+| TAC-4 | `.claude/hooks/pre_tool_use.py`, `stop.py` |
+| TAC-5 | Kapture MCP for browser automation |
+| TAC-6 | `trees/`, `/init_worktree` command |
+| TAC-7 | `ai_docs/` (Leaflet, ArcGIS, Playwright) |
+| TAC-8 | `tasks.md`, multi-agent orchestration |
 
-**TAC-4 (Hooks):**
-- Add `.claude/hooks/pre_tool_use.py` for logging
-- Add `.claude/hooks/stop.py` for session summaries
-
-**TAC-7 (Docs):**
-- Add `ai_docs/` with Leaflet.js and ArcGIS API references
+**Future Enhancements:**
+- Add `PostToolUse` hook for post-action logging
+- Add `Notification` hook for alerts
+- Expand `ai_docs/` with more API references
 - Consolidate data source documentation

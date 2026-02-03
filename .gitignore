@@ -4,8 +4,8 @@ screenshots/
 playwright-report/
 .DS_Store
 
-# Claude Code settings (keep commands tracked)
-.claude/settings.local.json
+# Claude Code settings
+# Note: settings.local.json is tracked to share hooks config
 
 # Environment files
 .env
@@ -13,6 +13,9 @@ playwright-report/
 
 # ADW execution output
 agents/
+
+# Hook logs
+logs/
 
 # Git worktrees (created dynamically)
 trees/*

@@ -1,0 +1,110 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npx playwright test:*)",
+      "Bash(npx eslint:*)",
+      "Bash(node:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(gh auth status:*)",
+      "Bash(gh --version:*)",
+      "Bash(gh api:*)",
+      "Bash(gh repo create:*)",
+      "Bash(gh run:*)",
+      "Bash(git init:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git rebase:*)",
+      "Bash(git restore:*)",
+      "Bash(git reset:*)",
+      "Bash(git worktree:*)",
+      "Bash(git sparse-checkout:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(tee:*)",
+      "Bash(lsof:*)",
+      "Bash(netstat:*)",
+      "Bash(ss:*)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(xargs kill -9)",
+      "WebSearch",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:utah-political-layers.streamlit.app)",
+      "WebFetch(domain:www.facebook.com)",
+      "WebFetch(domain:www.unitedutah.org)",
+      "WebFetch(domain:www.utahforwardparty.org)",
+      "mcp__kapture__new_tab",
+      "mcp__kapture__close",
+      "mcp__kapture__list_tabs",
+      "mcp__kapture__tab_detail",
+      "mcp__kapture__navigate",
+      "mcp__kapture__back",
+      "mcp__kapture__forward",
+      "mcp__kapture__reload",
+      "mcp__kapture__show",
+      "mcp__kapture__screenshot",
+      "mcp__kapture__dom",
+      "mcp__kapture__elements",
+      "mcp__kapture__elementsFromPoint",
+      "mcp__kapture__console_logs",
+      "mcp__kapture__click",
+      "mcp__kapture__hover",
+      "mcp__kapture__focus",
+      "mcp__kapture__blur",
+      "mcp__kapture__fill",
+      "mcp__kapture__select",
+      "mcp__kapture__keypress"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(rm -rf:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/pre_tool_use.py || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/stop.py --chat || true"
+          }
+        ]
+      }
+    ]
+  }
+}
