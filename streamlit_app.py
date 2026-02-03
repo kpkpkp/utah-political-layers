@@ -673,7 +673,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           </select>
         </div>
         <div class="layer-row">
-          <input type="color" id="color-population" value="#686916" aria-label="Population color" />
+          <input type="color" id="color-population" value="#8b6bff" aria-label="Population color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-population" />
             <span>Population</span>
@@ -695,14 +695,14 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           </label>
         </div>
         <div class="layer-row">
-          <input type="color" id="outline-color-congress-current" value="#77b1a5" aria-label="Congress current outline color" />
+          <input type="color" id="outline-color-congress-current" value="#fbd037" aria-label="Congress current outline color" />
           <label class="toggle">
-            <input type="checkbox" id="toggle-congress-current" />
+            <input type="checkbox" id="toggle-congress-current" checked />
             <span>Congress (current)</span>
           </label>
         </div>
         <div class="layer-row">
-          <input type="color" id="outline-color-congress-future" value="#126da5" aria-label="Congress coming outline color" />
+          <input type="color" id="outline-color-congress-future" value="#f68a0e" aria-label="Congress coming outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-future" />
             <span>Congress (coming)</span>
@@ -728,7 +728,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           <div class="legend-row"><span class="swatch other"></span>Other / Unknown</div>
         </div>
         <label class="toggle fill-toggle">
-          <input type="checkbox" id="toggle-party-fill" checked />
+          <input type="checkbox" id="toggle-party-fill" />
           <span>Fill on map</span>
         </label>
       </div>
@@ -843,8 +843,8 @@ const defaultColorConfig = {{
   outline: {{
     house: "#ff6f00",
     senate: "#66777f",
-    congressCurrent: "#77b1a5",
-    congressFuture: "#126da5"
+    congressCurrent: "#fbd037",
+    congressFuture: "#f68a0e"
   }}
 }};
 
@@ -927,7 +927,7 @@ const loadStoredUi = () => {{
 
 const storedUi = loadStoredUi();
 const uiState = {{ ...storedUi }};
-const defaultPopulationColor = "#686916";
+const defaultPopulationColor = "#8b6bff";
 let populationTintColor = storedUi.populationColor ?? defaultPopulationColor;
 let populationPointCache = null;
 
@@ -983,7 +983,7 @@ const populationState = {{
 }};
 
 const styleState = {{
-  partyFill: storedUi.partyFill ?? true,
+  partyFill: storedUi.partyFill ?? false,
   lineColors: loadStoredColors(),
   lineWidth: storedUi.lineWidth ?? 1.2,
   lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1)
