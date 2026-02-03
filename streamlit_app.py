@@ -898,6 +898,11 @@ const boundaryStyle = {{
 const COLOR_STORAGE_KEY = "utah-layer-colors";
 const UI_STORAGE_KEY = "utah-view-settings";
 
+// Clear stored settings on Streamlit so hardcoded defaults always apply
+localStorage.removeItem(COLOR_STORAGE_KEY);
+localStorage.removeItem(UI_STORAGE_KEY);
+localStorage.removeItem(COLOR_CONFIG_STORAGE_KEY);
+
 const defaultLineColors = {{
   house: colorConfig.outline.house,
   senate: colorConfig.outline.senate,
