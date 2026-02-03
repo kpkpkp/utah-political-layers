@@ -1865,7 +1865,7 @@ const tourSteps = [
   {{
     id: 'utah-boundary',
     title: 'Utah State Boundary',
-    content: '<p>The dark outline shows Utah\\'s state boundary.</p><p>Utah is the 13th largest state by area (84,899 square miles) and stretches from the Colorado Plateau in the south to the Wasatch Range in the north.</p>',
+    content: '<p>The dark outline shows Utah\\'s state boundary.</p><p>Utah is the 13th largest state by area (84,899 square miles) and stretches from the Colorado Plateau in the south to the Wasatch Range in the north.</p><p>Notice how the state\\'s borders follow longitude and latitude lines, creating a distinctive rectangular shape.</p>',
     position: 'top-right',
     mapView: {{ bounds: [[37.0, -114.05], [42.0, -109.04]] }},
     layers: {{ boundary: true, house: false, senate: false, congressCurrent: false, congressFuture: false, population: false }}
@@ -1873,7 +1873,7 @@ const tourSteps = [
   {{
     id: 'state-house',
     title: 'State House Districts',
-    content: '<p>Utah\\'s House of Representatives has <strong>75 districts</strong>, shown here in orange outlines.</p><p>Each district elects one representative to the state legislature.</p><p><em>Tip: Click any district to see details about its representative!</em></p>',
+    content: '<p>Utah\\'s House of Representatives has <strong>75 districts</strong>, shown here in orange outlines.</p><p>Each district elects one representative to the state legislature.</p><p>We\\'re zoomed in on the Salt Lake City area, where districts are smaller due to higher population density.</p><p><em>Tip: Click any district to see details about its representative!</em></p>',
     position: 'top-left',
     mapView: {{ center: [40.7608, -111.8910], zoom: 11 }},
     layers: {{ boundary: true, house: true, senate: false, congressCurrent: false, congressFuture: false, population: false }}
@@ -1881,7 +1881,7 @@ const tourSteps = [
   {{
     id: 'state-senate',
     title: 'State Senate Districts',
-    content: '<p>Utah\\'s Senate has <strong>29 districts</strong>, shown in blue outlines.</p><p>Senate districts are larger than House districts, as each senator represents more constituents.</p>',
+    content: '<p>Utah\\'s Senate has <strong>29 districts</strong>, shown in blue outlines.</p><p>Senate districts are larger than House districts, as each senator represents more constituents.</p><p>Notice how the districts are layered - you can see both House and Senate boundaries at the same time!</p><p>The color fills show which party currently holds each seat.</p>',
     position: 'top-left',
     mapView: {{ center: [40.7608, -111.8910], zoom: 10.5 }},
     layers: {{ boundary: true, house: true, senate: true, congressCurrent: false, congressFuture: false, population: false }}
@@ -1889,15 +1889,47 @@ const tourSteps = [
   {{
     id: 'congress-current',
     title: 'Federal Congressional Districts',
-    content: '<p>Utah currently has <strong>4 Congressional districts</strong> (shown in purple outlines).</p><p>These are for U.S. House of Representatives seats in Washington, D.C.</p>',
+    content: '<p>Utah currently has <strong>4 Congressional districts</strong> (shown in purple outlines).</p><p>These are for U.S. House of Representatives seats in Washington, D.C.</p><p>Congressional districts are much larger than state legislative districts, as they represent significantly more people.</p><p>Let\\'s zoom out to see all four districts across the entire state.</p>',
     position: 'top-right',
     mapView: {{ center: [39.3210, -111.0937], zoom: 7.5 }},
     layers: {{ boundary: true, house: false, senate: false, congressCurrent: true, congressFuture: false, population: false }}
   }},
   {{
+    id: 'congress-future',
+    title: 'Future Congressional Districts',
+    content: '<p>After the 2020 Census, Utah\\'s <strong>4 Congressional districts</strong> were redrawn to reflect population shifts (shown with green dashed lines).</p><p>Compare these boundaries with the current districts to see how representation areas have changed.</p><p>Notice the dashed style - this helps distinguish the redrawn districts from current ones.</p>',
+    position: 'top-right',
+    mapView: {{ center: [39.3210, -111.0937], zoom: 7.5 }},
+    layers: {{ boundary: true, house: false, senate: false, congressCurrent: true, congressFuture: true, population: false }}
+  }},
+  {{
+    id: 'population',
+    title: 'Population Density',
+    content: '<p>The red dots show <strong>population density</strong> across Utah.</p><p>Each dot represents a census block with 5 or more residents.</p><p>Larger, darker dots indicate higher population density.</p><p>Notice how most of Utah\\'s population clusters along the Wasatch Front (the I-15 corridor from Provo to Ogden).</p><p><em>Tip: Click any dot to see the population and area of that census block!</em></p>',
+    position: 'top-right',
+    mapView: {{ center: [40.2338, -111.6585], zoom: 8.5 }},
+    layers: {{ boundary: true, house: false, senate: false, congressCurrent: true, congressFuture: false, population: true }}
+  }},
+  {{
+    id: 'layering',
+    title: 'Combining Layers',
+    content: '<p>The real power comes from viewing multiple layers together!</p><p>Here you can see how House districts, Senate districts, and population density all interact.</p><p>This helps you understand:</p><ul><li>How district boundaries align with population centers</li><li>Which areas are more densely represented</li><li>How state and federal districts overlap</li></ul>',
+    position: 'top-left',
+    mapView: {{ center: [40.7608, -111.8910], zoom: 11 }},
+    layers: {{ boundary: true, house: true, senate: true, congressCurrent: false, congressFuture: false, population: true }}
+  }},
+  {{
+    id: 'controls',
+    title: 'Interactive Controls',
+    content: '<p>Use the control panel on the right to:</p><ul><li><strong>Toggle layers</strong> on/off with checkboxes</li><li><strong>Change colors</strong> for each layer type</li><li><strong>Adjust line width & opacity</strong> for better visibility</li><li><strong>Enable/disable party colors</strong> to focus on boundaries</li><li><strong>Switch base map styles</strong> (street, terrain, satellite, etc.)</li></ul><p>Click the collapse button (◀) to hide the panel and expand your map view.</p>',
+    position: 'left',
+    mapView: {{ bounds: [[37.0, -114.05], [42.0, -109.04]] }},
+    layers: {{ boundary: true, house: true, senate: true, congressCurrent: true, congressFuture: false, population: false }}
+  }},
+  {{
     id: 'conclusion',
     title: 'Start Exploring!',
-    content: '<p>You\\'re all set to explore Utah\\'s political landscape!</p><p><strong>Try these actions:</strong></p><ul><li>Pan and zoom to explore different regions</li><li>Click districts to see representatives</li><li>Toggle layers to compare boundaries</li><li>Adjust colors and styles to your preference</li></ul>',
+    content: '<p>You\\'re all set to explore Utah\\'s political landscape!</p><p><strong>Try these actions:</strong></p><ul><li>Pan and zoom to explore different regions</li><li>Click districts to see representatives</li><li>Toggle layers to compare boundaries</li><li>Adjust colors and styles to your preference</li><li>Click population dots to see census block details</li></ul><p>Your view settings are automatically saved, so you can pick up where you left off.</p><p><em>Enjoy exploring!</em></p>',
     position: 'center',
     mapView: {{ bounds: [[37.0, -114.05], [42.0, -109.04]] }},
     layers: {{ boundary: true, house: true, senate: true, congressCurrent: true, congressFuture: false, population: false }}

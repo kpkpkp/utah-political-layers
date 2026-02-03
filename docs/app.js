@@ -1278,16 +1278,6 @@ const init = async () => {
     });
   }
 
-  // Don't load population points during init - only load when user checks the toggle
-  // This ensures markers are added after the layer is on the map
-  // loadPopulationPoints().catch((error) => {
-  //   console.error(error);
-  //   const status = ensurePopulationStatus();
-  //   if (status) {
-  //     status.textContent = "Population: failed to load (check console).";
-  //   }
-  // });
-
   // Start loading population data in background for instant toggle
   loadPopulationPoints().catch((error) => {
     console.error('Background population load failed:', error);
