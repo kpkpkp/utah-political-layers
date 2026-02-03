@@ -160,8 +160,8 @@ const defaultColorConfig = {
   outline: {
     house: "#ff6f00",
     senate: "#66777f",
-    congressCurrent: "#77b1a5",
-    congressFuture: "#126da5"
+    congressCurrent: "#fbd037",
+    congressFuture: "#f68a0e"
   }
 };
 
@@ -250,7 +250,7 @@ const loadStoredUi = () => {
 
 const storedUi = loadStoredUi();
 const uiState = { ...storedUi };
-const defaultPopulationColor = "#686916";
+const defaultPopulationColor = "#8b6bff";
 let populationTintColor = storedUi.populationColor ?? defaultPopulationColor;
 let populationPointCache = null;
 
@@ -365,7 +365,7 @@ const ensurePopulationStatus = () => {
 };
 
 const styleState = {
-  partyFill: storedUi.partyFill ?? true,
+  partyFill: storedUi.partyFill ?? false,
   lineColors: loadStoredColors(),
   lineWidth: storedUi.lineWidth ?? 1.2,
   lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1)
