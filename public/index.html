@@ -36,28 +36,26 @@
 
       <div class="panel-header">
         <div class="panel-title">Utah Political Layers</div>
+        <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
       </div>
 
       <!-- Upper: Layers with paired outline colors -->
       <div class="panel-layers">
         <div class="panel-title">Layers</div>
-        <label class="toggle">
-          <input type="checkbox" id="toggle-boundary" checked />
-          <span>Utah boundary</span>
-        </label>
         <div class="layer-row">
+          <input type="color" id="outline-color-boundary" value="#2c3e50" aria-label="Boundary color" />
+          <label class="toggle">
+            <input type="checkbox" id="toggle-boundary" checked />
+            <span>Utah boundary</span>
+          </label>
+        </div>
+        <div class="layer-row">
+          <div class="tile-swatch" id="tile-swatch" role="button" tabindex="0" aria-label="Map tile appearance"></div>
           <label class="toggle">
             <input type="checkbox" id="toggle-tiles" checked />
             <span>Map tiles</span>
           </label>
-          <select class="tile-select" id="tile-style-select" aria-label="Map tile style">
-            <option value="osm">OSM</option>
-            <option value="carto-light">Carto Light</option>
-            <option value="carto-voyager">Carto Voyager</option>
-            <option value="carto-dark">Carto Dark</option>
-            <option value="osm-hot">OSM HOT</option>
-            <option value="opentopo">OpenTopoMap</option>
-          </select>
+          <span class="tile-caption" id="tile-caption">Open Street Map</span>
         </div>
         <div class="layer-row">
           <input type="color" id="color-population" value="#8b6bff" aria-label="Population color" />
@@ -88,27 +86,19 @@
             <span>Congress (current)</span>
           </label>
         </div>
-        <div class="layer-row">
+        <div class="layer-row has-note">
           <input type="color" id="outline-color-congress-future" value="#f68a0e" aria-label="Congress coming outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-future" />
             <span>Congress (coming)</span>
           </label>
-        </div>
-        <div class="note">Coming districts have unknown party.</div>
-        <div class="slider-row">
-          <label for="line-width">Line width</label>
-          <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.83" />
-        </div>
-        <div class="slider-row">
-          <label for="line-opacity">Line opacity</label>
-          <input type="range" id="line-opacity" min="0" max="1" step="0.01" value="1" />
+          <div class="note">Parties to be determined.</div>
         </div>
       </div>
 
-      <!-- Lower left: Party legend -->
+      <!-- Right column: Party legend + sliders -->
       <div class="panel-legend">
-        <div class="panel-title">Party Legend</div>
+        <div class="panel-title">Party</div>
         <div class="legend">
           <div class="legend-row"><span class="swatch republican"></span>Republican</div>
           <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
@@ -119,12 +109,36 @@
           <input type="checkbox" id="toggle-party-fill" />
           <span>Fill on map</span>
         </label>
+        <details class="appearance-group">
+          <summary>Appearance</summary>
+          <div class="appearance-content">
+            <div class="slider-row">
+              <label for="line-width">Line width</label>
+              <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.83" />
+            </div>
+            <div class="slider-row">
+              <label for="line-opacity">Line opacity</label>
+              <input type="range" id="line-opacity" min="0" max="1" step="0.01" value="1" />
+            </div>
+            <div class="slider-row">
+              <label for="fill-opacity">Fill opacity</label>
+              <input type="range" id="fill-opacity" min="0" max="1" step="0.01" value="1" />
+            </div>
+            <select class="tile-select" id="tile-style-select" aria-label="Map tile style">
+              <option value="osm">Open Street Map</option>
+              <option value="opentopo">OpenTopoMap</option>
+              <option value="carto-light">Carto Light</option>
+              <option value="carto-voyager">Carto Voyager</option>
+              <option value="carto-dark">Carto Dark</option>
+              <option value="osm-hot">OSM Humanitarian</option>
+            </select>
+          </div>
+        </details>
       </div>
 
       <!-- Footer: Tour left, Reset right, Save Defaults (localhost only) -->
       <div class="panel-footer">
         <button class="tour-btn" id="tour-btn">Take Tour</button>
-        <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
       </div>
       <div class="panel-save-defaults localhost-only" id="save-defaults-container">
         <button class="save-defaults-btn" id="save-defaults-btn">Save as Defaults</button>

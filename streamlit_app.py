@@ -93,15 +93,14 @@ body {{
 }}
 
 .control-panel {{
-  width: 220px;
+  width: 440px;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-areas:
-    "header"
-    "layers"
-    "legend"
-    "footer"
-    "save";
+    "header  header"
+    "layers  legend"
+    "footer  footer"
+    "save    save";
   gap: 12px;
 }}
 
@@ -125,7 +124,8 @@ body {{
 .panel-header {{
   grid-area: header;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }}
 
@@ -133,8 +133,8 @@ body {{
   grid-area: layers;
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid #efefef;
-  padding-bottom: 8px;
+  border-right: 1px solid #efefef;
+  padding-right: 8px;
   overflow: hidden;
 }}
 
@@ -188,10 +188,18 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   flex-shrink: 0;
 }}
 
+.layer-row.has-note {{
+  flex-wrap: wrap;
+}}
+
+.layer-row .note {{
+  flex-basis: 100%;
+  margin: -4px 0 0 50px;
+}}
+
 .note {{
-  margin-top: 6px;
   color: #6b6b6b;
-  font-size: 12px;
+  font-size: 10px;
   line-height: 1.3;
 }}
 
@@ -200,7 +208,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 1px;
 }}
 
 .layer-row .toggle {{
@@ -218,10 +226,31 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   flex-shrink: 0;
 }}
 
+.tile-swatch {{
+  width: 28px;
+  height: 22px;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+  display: inline-block;
+  border: 1px solid #777;
+  border-radius: 1px;
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px),
+    repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px),
+    #e8e0d0;
+}}
+
+.tile-caption {{
+  font-size: 10px;
+  color: #6b6b6b;
+  white-space: nowrap;
+}}
+
 .tile-select {{
   width: auto;
-  min-width: 70px;
-  max-width: 85px;
+  min-width: 100px;
+  max-width: 150px;
   height: 24px;
   border-radius: 4px;
   border: 1px solid #bdbdbd;
@@ -244,6 +273,48 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 
 .leaflet-interactive {{
   outline: none;
+}}
+
+.appearance-group {{
+  margin-top: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0;
+}}
+
+.appearance-group summary {{
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3f3f3f;
+  padding: 5px 8px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}}
+
+.appearance-group summary::-webkit-details-marker {{
+  display: none;
+}}
+
+.appearance-group summary::after {{
+  content: "\\25BC";
+  font-size: 8px;
+  transition: transform 0.2s;
+}}
+
+.appearance-group[open] summary::after {{
+  transform: rotate(180deg);
+}}
+
+.appearance-group .appearance-content {{
+  padding: 2px 8px 8px;
+}}
+
+.appearance-group .tile-select {{
+  margin-top: 6px;
 }}
 
 .slider-row {{
@@ -471,6 +542,11 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     display: none;
   }}
 
+  .panel-layers {{
+    border-right: none;
+    padding-right: 0;
+  }}
+
   .panel-drag-handle {{
     width: 40px;
     height: 4px;
@@ -650,27 +726,25 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 
       <div class="panel-header">
         <div class="panel-title">Utah Political Layers</div>
+        <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
       </div>
 
       <div class="panel-layers">
         <div class="panel-title">Layers</div>
-        <label class="toggle">
-          <input type="checkbox" id="toggle-boundary" checked />
-          <span>Utah boundary</span>
-        </label>
         <div class="layer-row">
+          <input type="color" id="outline-color-boundary" value="#2c3e50" aria-label="Boundary color" />
+          <label class="toggle">
+            <input type="checkbox" id="toggle-boundary" checked />
+            <span>Utah boundary</span>
+          </label>
+        </div>
+        <div class="layer-row">
+          <div class="tile-swatch" id="tile-swatch" role="button" tabindex="0" aria-label="Map tile appearance"></div>
           <label class="toggle">
             <input type="checkbox" id="toggle-tiles" checked />
             <span>Map tiles</span>
           </label>
-          <select class="tile-select" id="tile-style-select" aria-label="Map tile style">
-            <option value="osm">OSM</option>
-            <option value="carto-light">Carto Light</option>
-            <option value="carto-voyager">Carto Voyager</option>
-            <option value="carto-dark">Carto Dark</option>
-            <option value="osm-hot">OSM HOT</option>
-            <option value="opentopo">OpenTopoMap</option>
-          </select>
+          <span class="tile-caption" id="tile-caption">Open Street Map</span>
         </div>
         <div class="layer-row">
           <input type="color" id="color-population" value="#8b6bff" aria-label="Population color" />
@@ -701,26 +775,18 @@ body.is-localhost .panel-save-defaults.localhost-only {{
             <span>Congress (current)</span>
           </label>
         </div>
-        <div class="layer-row">
+        <div class="layer-row has-note">
           <input type="color" id="outline-color-congress-future" value="#f68a0e" aria-label="Congress coming outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-future" />
             <span>Congress (coming)</span>
           </label>
-        </div>
-        <div class="note">Coming districts have unknown party.</div>
-        <div class="slider-row">
-          <label for="line-width">Line width</label>
-          <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.83" />
-        </div>
-        <div class="slider-row">
-          <label for="line-opacity">Line opacity</label>
-          <input type="range" id="line-opacity" min="0" max="1" step="0.01" value="1" />
+          <div class="note">Parties to be determined.</div>
         </div>
       </div>
 
       <div class="panel-legend">
-        <div class="panel-title">Party Legend</div>
+        <div class="panel-title">Party</div>
         <div class="legend">
           <div class="legend-row"><span class="swatch republican"></span>Republican</div>
           <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
@@ -731,11 +797,35 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           <input type="checkbox" id="toggle-party-fill" />
           <span>Fill on map</span>
         </label>
+        <details class="appearance-group">
+          <summary>Appearance</summary>
+          <div class="appearance-content">
+            <div class="slider-row">
+              <label for="line-width">Line width</label>
+              <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.83" />
+            </div>
+            <div class="slider-row">
+              <label for="line-opacity">Line opacity</label>
+              <input type="range" id="line-opacity" min="0" max="1" step="0.01" value="1" />
+            </div>
+            <div class="slider-row">
+              <label for="fill-opacity">Fill opacity</label>
+              <input type="range" id="fill-opacity" min="0" max="1" step="0.01" value="1" />
+            </div>
+            <select class="tile-select" id="tile-style-select" aria-label="Map tile style">
+              <option value="osm">Open Street Map</option>
+              <option value="opentopo">OpenTopoMap</option>
+              <option value="carto-light">Carto Light</option>
+              <option value="carto-voyager">Carto Voyager</option>
+              <option value="carto-dark">Carto Dark</option>
+              <option value="osm-hot">OSM Humanitarian</option>
+            </select>
+          </div>
+        </details>
       </div>
 
       <div class="panel-footer">
         <button class="tour-btn" id="tour-btn">Take Tour</button>
-        <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
       </div>
       <div class="panel-save-defaults localhost-only" id="save-defaults-container">
         <button class="save-defaults-btn" id="save-defaults-btn">Save as Defaults</button>
@@ -809,11 +899,11 @@ if (storedView) {{
 }}
 
 const populationPane = map.createPane("populationPane");
-populationPane.style.zIndex = "250";
+populationPane.style.zIndex = "450";
 populationPane.style.pointerEvents = "none";
 
 const populationOutlinePane = map.createPane("populationOutlinePane");
-populationOutlinePane.style.zIndex = "260";
+populationOutlinePane.style.zIndex = "460";
 populationOutlinePane.style.pointerEvents = "auto";
 
 const populationRenderer = L.canvas({{ padding: 0.5, pane: "populationPane" }});
@@ -841,6 +931,7 @@ const defaultColorConfig = {{
     other: "#9e9e9e"
   }},
   outline: {{
+    boundary: "#2c3e50",
     house: "#ff6f00",
     senate: "#66777f",
     congressCurrent: "#fbd037",
@@ -889,7 +980,7 @@ const partyColor = (partyRaw) => {{
 }};
 
 const boundaryStyle = {{
-  color: "#2c3e50",
+  color: colorConfig.outline.boundary,
   weight: 2,
   fillOpacity: 0,
   interactive: false  // Allow clicks to pass through to population dots
@@ -991,7 +1082,8 @@ const styleState = {{
   partyFill: storedUi.partyFill ?? false,
   lineColors: loadStoredColors(),
   lineWidth: storedUi.lineWidth ?? 1.2,
-  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1)
+  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1),
+  fillOpacity: storedUi.fillOpacity ?? 1.0
 }};
 
 window.styleState = styleState;
@@ -1002,7 +1094,8 @@ const persistUi = (next = {{}}) => {{
   Object.assign(uiState, next, {{
     partyFill: styleState.partyFill,
     lineWidth: styleState.lineWidth,
-    lineOpacity: styleState.lineOpacity
+    lineOpacity: styleState.lineOpacity,
+    fillOpacity: styleState.fillOpacity
   }});
   localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiState));
 }};
@@ -1043,7 +1136,7 @@ const lineWeight = (base) => base * styleState.lineWidth;
 const withPartyFill = (fillColor, fillOpacity) => ({{
   fill: styleState.partyFill,
   fillColor: styleState.partyFill ? fillColor : fillColor,
-  fillOpacity: styleState.partyFill ? fillOpacity : 0
+  fillOpacity: styleState.partyFill ? fillOpacity * styleState.fillOpacity : 0
 }});
 
 const houseStyle = (party) => ({{
@@ -1571,6 +1664,7 @@ const loadPopulationPoints = async () => {{
 
 const bindColorPickers = (parties) => {{
   const outlineConfig = [
+    {{ id: "outline-color-boundary", key: "boundary" }},
     {{ id: "outline-color-house", key: "house" }},
     {{ id: "outline-color-senate", key: "senate" }},
     {{ id: "outline-color-congress-current", key: "congressCurrent" }},
@@ -1583,9 +1677,13 @@ const bindColorPickers = (parties) => {{
     input.addEventListener("input", () => {{
       const updatedConfig = updateColorConfig({{ outline: {{ [key]: input.value }} }});
       Object.assign(colorConfig, updatedConfig);
-      styleState.lineColors[key] = input.value;
-      persistColors();
-      refreshPartyFill(parties);
+      if (key === "boundary" && layerState.boundary) {{
+        layerState.boundary.setStyle({{ color: input.value }});
+      }} else {{
+        styleState.lineColors[key] = input.value;
+        persistColors();
+        refreshPartyFill(parties);
+      }}
     }});
   }});
 }};
@@ -1594,6 +1692,7 @@ const resetColorConfig = (parties) => {{
   localStorage.removeItem(COLOR_CONFIG_STORAGE_KEY);
   Object.assign(colorConfig, defaultColorConfig);
   const outlineInputs = [
+    {{ id: "outline-color-boundary", key: "boundary" }},
     {{ id: "outline-color-house", key: "house" }},
     {{ id: "outline-color-senate", key: "senate" }},
     {{ id: "outline-color-congress-current", key: "congressCurrent" }},
@@ -1605,6 +1704,9 @@ const resetColorConfig = (parties) => {{
   }});
   Object.assign(styleState.lineColors, defaultColorConfig.outline);
   persistColors();
+  if (layerState.boundary) {{
+    layerState.boundary.setStyle({{ color: defaultColorConfig.outline.boundary }});
+  }}
   refreshPartyFill(parties);
   map.fitBounds([[36.9, -114.1], [42.1, -109.0]], {{
     padding: [20, 20],
@@ -1627,10 +1729,25 @@ const bindPopulationColor = () => {{
   }});
 }};
 
+const tileNames = {{
+  osm: "Open Street Map",
+  opentopo: "OpenTopoMap",
+  "carto-light": "Carto Light",
+  "carto-voyager": "Carto Voyager",
+  "carto-dark": "Carto Dark",
+  "osm-hot": "OSM Humanitarian"
+}};
+
+const updateTileCaption = (styleKey) => {{
+  const caption = document.getElementById("tile-caption");
+  if (caption) caption.textContent = tileNames[styleKey] ?? styleKey;
+}};
+
 const bindTileStylePicker = () => {{
   const select = document.getElementById("tile-style-select");
   if (!select) return;
   select.value = uiState.tileStyle ?? "osm";
+  updateTileCaption(select.value);
   select.addEventListener("change", () => {{
     const styleKey = select.value;
     if (!tileSources[styleKey]) return;
@@ -1641,12 +1758,14 @@ const bindTileStylePicker = () => {{
     layerState.tiles = baseTiles;
     const tilesToggle = document.getElementById("toggle-tiles");
     if (!tilesToggle || tilesToggle.checked) baseTiles.addTo(map);
+    updateTileCaption(styleKey);
   }});
 }};
 
 const bindLineControls = (parties) => {{
   const widthInput = document.getElementById("line-width");
   const opacityInput = document.getElementById("line-opacity");
+  const fillOpacityInput = document.getElementById("fill-opacity");
   if (widthInput) {{
     widthInput.value = String(storedUi.widthSlider ?? 0.6);
     widthInput.addEventListener("input", () => {{
@@ -1667,6 +1786,15 @@ const bindLineControls = (parties) => {{
     }});
     styleState.lineOpacity = expScale(parseFloat(opacityInput.value), opacityRange.min, opacityRange.max, opacityRange.exponent);
   }}
+  if (fillOpacityInput) {{
+    fillOpacityInput.value = String(storedUi.fillOpacity ?? 1);
+    fillOpacityInput.addEventListener("input", () => {{
+      styleState.fillOpacity = parseFloat(fillOpacityInput.value);
+      persistUi({{ fillOpacity: styleState.fillOpacity }});
+      refreshPartyFill(parties);
+    }});
+    styleState.fillOpacity = parseFloat(fillOpacityInput.value);
+  }}
 }};
 
 const init = async () => {{
@@ -1682,6 +1810,29 @@ const init = async () => {{
   layerState.boundary = L.geoJSON(boundary, {{ style: boundaryStyle }}).addTo(map);
   if (!storedView) map.fitBounds(layerState.boundary.getBounds(), {{ padding: [20, 20] }});
 
+  const buildCombinedPopup = (latlng) => {{
+    const point = [latlng.lng, latlng.lat];
+    const sections = [];
+    const checkLayer = (layerGroup, label, partyMap, districtProp, suffix) => {{
+      if (!layerGroup || !map.hasLayer(layerGroup)) return;
+      layerGroup.eachLayer((sublayer) => {{
+        if (!sublayer.feature) return;
+        if (pointInGeometry(point, sublayer.feature.geometry)) {{
+          const district = String(sublayer.feature.properties[districtProp]);
+          const info = partyMap?.[district];
+          const partyLabel = info?.party || "Unknown";
+          const nameLabel = info?.name && info.name !== "TBD" ? ` — ${{info.name}}` : "";
+          sections.push(`${{label}} ${{district}}${{suffix}}<br />${{partyLabel}}${{nameLabel}}`);
+        }}
+      }});
+    }};
+    checkLayer(layerState.house, "House District", parties.house, "DIST", "");
+    checkLayer(layerState.senate, "Senate District", parties.senate, "DIST", "");
+    checkLayer(layerState.congressCurrent, "Federal House District", parties.congress_current, "DISTRICT", "");
+    checkLayer(layerState.congressFuture, "Federal House District", parties.congress_future, "DISTRICT", " (coming)");
+    return sections.length > 0 ? sections.join('<hr style="margin:6px 0;border:none;border-top:1px solid #ddd">') : null;
+  }};
+
   layerState.house = L.geoJSON(house, {{
     style: (feature) => {{
       const district = String(feature.properties.DIST);
@@ -1693,7 +1844,11 @@ const init = async () => {{
       const info = parties.house[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${{info.name}}` : "";
-      layer.bindPopup(`House District ${{district}}<br />${{partyLabel}}${{nameLabel}}`);
+      const popupContent = `House District ${{district}}<br />${{partyLabel}}${{nameLabel}}`;
+      layer.on('click', (e) => {{
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+      }});
     }}
   }}).addTo(map);
 
@@ -1708,7 +1863,11 @@ const init = async () => {{
       const info = parties.senate[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${{info.name}}` : "";
-      layer.bindPopup(`Senate District ${{district}}<br />${{partyLabel}}${{nameLabel}}`);
+      const popupContent = `Senate District ${{district}}<br />${{partyLabel}}${{nameLabel}}`;
+      layer.on('click', (e) => {{
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+      }});
     }}
   }}).addTo(map);
 
@@ -1723,7 +1882,11 @@ const init = async () => {{
       const info = parties.congress_current?.[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${{info.name}}` : "";
-      layer.bindPopup(`Federal House District ${{district}}<br />${{partyLabel}}${{nameLabel}}`);
+      const popupContent = `Federal House District ${{district}}<br />${{partyLabel}}${{nameLabel}}`;
+      layer.on('click', (e) => {{
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+      }});
     }}
   }}).addTo(map);
 
@@ -1738,7 +1901,11 @@ const init = async () => {{
       const info = parties.congress_future?.[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name && info?.name !== "TBD" ? ` — ${{info.name}}` : "";
-      layer.bindPopup(`Federal House District ${{district}} (coming)<br />${{partyLabel}}${{nameLabel}}`);
+      const popupContent = `Federal House District ${{district}} (coming)<br />${{partyLabel}}${{nameLabel}}`;
+      layer.on('click', (e) => {{
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+      }});
     }}
   }});
 
@@ -1779,6 +1946,18 @@ const init = async () => {{
   bindLineControls(parties);
   bindPopulationColor();
   bindTileStylePicker();
+
+  const tileSwatch = document.getElementById("tile-swatch");
+  if (tileSwatch) {{
+    tileSwatch.addEventListener("click", () => {{
+      const details = document.querySelector(".appearance-group");
+      if (details) {{
+        details.open = true;
+        const tileSelect = document.getElementById("tile-style-select");
+        if (tileSelect) tileSelect.focus();
+      }}
+    }});
+  }}
 
   const resetColorsBtn = document.getElementById("reset-colors-btn");
   if (resetColorsBtn) resetColorsBtn.addEventListener("click", () => resetColorConfig(parties));

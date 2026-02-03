@@ -244,8 +244,8 @@ test.describe('Mobile Responsive Panel - Bottom Sheet Behavior', () => {
       // Bottom should not be 0px (which would indicate bottom sheet)
       expect(styles.bottom).not.toBe('0px');
 
-      // Should have fixed width, not 100%
-      expect(parseFloat(styles.width)).toBeLessThan(400);
+      // Should have fixed width, not 100% (two-column layout is ~440px + padding)
+      expect(parseFloat(styles.width)).toBeLessThan(600);
 
       console.log('✓ Panel is side panel at desktop viewport:', styles);
     });

@@ -14,10 +14,10 @@ import { test, expect } from '@playwright/test';
  * - Debug mode: npx playwright test test-panel-layout --debug
  *
  * Test coverage:
- * 1. Panel has approximately 4:3 aspect ratio (width ~360px, height ~270px)
- * 2. Party fill colors (Republican, Democratic, Forward, Other) are grouped in "fills" section
- * 3. Outline colors (House, Senate, Congress, Population) are grouped in "outlines" section
- * 4. Line width and opacity sliders are in "outlines" section
+ * 1. Panel has two-column grid layout (width ~440px)
+ * 2. Party legend shows all party swatches
+ * 3. Outline colors (House, Senate, Congress, Population) are paired with layer toggles
+ * 4. Line width, line opacity, and fill opacity sliders are in "legend" section
  * 5. No duplicate color picker IDs exist in the panel
  * 6. Mobile layout (375x667 viewport) stacks columns vertically
  * 7. Color changes persist and apply correctly to the map
@@ -41,7 +41,7 @@ test.describe('Panel Layout Tests', () => {
     await page.waitForTimeout(1000);
   });
 
-  test('Panel has single-column grid layout with approximately 220px width', async ({ page }) => {
+  test('Panel has two-column grid layout with approximately 440px width', async ({ page }) => {
     // Get the controls panel element
     const controlsPanel = page.locator('#controls');
     await expect(controlsPanel).toBeVisible();
@@ -50,22 +50,24 @@ test.describe('Panel Layout Tests', () => {
     const boundingBox = await controlsPanel.boundingBox();
     console.log('Panel dimensions:', { width: boundingBox.width, height: boundingBox.height });
 
-    // Check width is approximately 220px (allow 15% variance)
-    expect(boundingBox.width).toBeGreaterThan(187); // 220 * 0.85
-    expect(boundingBox.width).toBeLessThan(253);    // 220 * 1.15
+    // Check width is approximately 440px (allow 15% variance)
+    expect(boundingBox.width).toBeGreaterThan(374); // 440 * 0.85
+    expect(boundingBox.width).toBeLessThan(506);    // 440 * 1.15
 
-    // Verify single-column layout by checking legend is below layers
+    // Verify two-column layout by checking legend is beside layers (same Y)
     const layersSection = page.locator('.panel-layers');
     const legendSection = page.locator('.panel-legend');
 
     const layersBox = await layersSection.boundingBox();
     const legendBox = await legendSection.boundingBox();
 
-    // In single-column layout, legend should be below layers
-    expect(legendBox.y).toBeGreaterThan(layersBox.y);
-    console.log('Layers Y:', layersBox.y, 'Legend Y:', legendBox.y);
+    // In two-column layout, legend should be at roughly the same Y as layers
+    expect(Math.abs(legendBox.y - layersBox.y)).toBeLessThan(20);
+    // And legend should be to the right of layers
+    expect(legendBox.x).toBeGreaterThan(layersBox.x);
+    console.log('Layers Y:', layersBox.y, 'Legend Y:', legendBox.y, 'Layers X:', layersBox.x, 'Legend X:', legendBox.x);
 
-    console.log('✓ Panel has single-column grid layout with ~220px width');
+    console.log('✓ Panel has two-column grid layout with ~440px width');
   });
 
   test('Party legend shows all party swatches', async ({ page }) => {
@@ -136,34 +138,44 @@ test.describe('Panel Layout Tests', () => {
     console.log('✓ Outline colors are grouped in "outlines" section');
   });
 
-  test('Line width and opacity sliders are in "layers" section', async ({ page }) => {
-    // Look for sliders within the panel-layers section (integrated with layers)
-    const lineWidthSlider = page.locator('.panel-layers #line-width');
-    const opacitySlider = page.locator('.panel-layers #line-opacity');
+  test('Line width, line opacity, and fill opacity sliders are in "legend" section', async ({ page }) => {
+    // Open the Appearance details group first (starts collapsed)
+    await page.locator('.appearance-group summary').click();
+
+    // Look for sliders within the panel-legend section
+    const lineWidthSlider = page.locator('.panel-legend #line-width');
+    const opacitySlider = page.locator('.panel-legend #line-opacity');
+    const fillOpacitySlider = page.locator('.panel-legend #fill-opacity');
 
     // Verify sliders exist and are visible
     await expect(lineWidthSlider).toBeVisible();
     await expect(opacitySlider).toBeVisible();
+    await expect(fillOpacitySlider).toBeVisible();
 
     // Verify slider attributes
     await expect(lineWidthSlider).toHaveAttribute('type', 'range');
     await expect(opacitySlider).toHaveAttribute('type', 'range');
+    await expect(fillOpacitySlider).toHaveAttribute('type', 'range');
 
     const widthBox = await lineWidthSlider.boundingBox();
     const opacityBox = await opacitySlider.boundingBox();
+    const fillOpacityBox = await fillOpacitySlider.boundingBox();
 
     console.log('Slider positions:', {
       lineWidth: widthBox,
-      lineOpacity: opacityBox
+      lineOpacity: opacityBox,
+      fillOpacity: fillOpacityBox
     });
 
     // Verify they are vertically aligned (same left position +/- small margin)
     expect(Math.abs(widthBox.x - opacityBox.x)).toBeLessThan(5);
+    expect(Math.abs(opacityBox.x - fillOpacityBox.x)).toBeLessThan(5);
 
-    // Verify opacity slider is below width slider
+    // Verify ordering: width, then opacity, then fill opacity
     expect(opacityBox.y).toBeGreaterThan(widthBox.y);
+    expect(fillOpacityBox.y).toBeGreaterThan(opacityBox.y);
 
-    console.log('✓ Line width and opacity sliders are present in outlines section');
+    console.log('✓ Line width, line opacity, and fill opacity sliders are in legend section');
   });
 
   test('No duplicate color picker IDs exist in the panel', async ({ page }) => {
@@ -173,8 +185,8 @@ test.describe('Panel Layout Tests', () => {
     const pickerCount = await allColorPickers.count();
     console.log('Total color pickers found:', pickerCount);
 
-    // Expected: 5 outline colors (population, house, senate, congress-current, congress-future)
-    expect(pickerCount).toBe(5);
+    // Expected: 6 color pickers (boundary, population, house, senate, congress-current, congress-future)
+    expect(pickerCount).toBe(6);
 
     // Collect all IDs
     const ids = [];
@@ -302,25 +314,25 @@ test.describe('Panel Layout Tests', () => {
     console.log('✓ Population status element exists adjacent to Population toggle');
   });
 
-  test('Footer has Tour button left and Reset button right', async ({ page }) => {
+  test('Tour button in footer, Reset button in header', async ({ page }) => {
     const footer = page.locator('.panel-footer');
+    const header = page.locator('.panel-header');
     await expect(footer).toBeVisible();
+    await expect(header).toBeVisible();
 
     const tourBtn = footer.locator('#tour-btn');
-    const resetBtn = footer.locator('#reset-colors-btn');
+    const resetBtn = header.locator('#reset-colors-btn');
 
     await expect(tourBtn).toBeVisible();
     await expect(resetBtn).toBeVisible();
 
-    // Get bounding boxes to verify positions
+    // Reset should be in header (above footer)
     const tourBox = await tourBtn.boundingBox();
     const resetBox = await resetBtn.boundingBox();
+    expect(resetBox.y).toBeLessThan(tourBox.y);
 
-    // Reset should be to the right of Tour
-    expect(resetBox.x).toBeGreaterThan(tourBox.x);
-
-    console.log('Tour X:', tourBox.x, 'Reset X:', resetBox.x);
-    console.log('✓ Footer has Tour button left and Reset button right');
+    console.log('Reset Y:', resetBox.y, 'Tour Y:', tourBox.y);
+    console.log('✓ Tour button in footer, Reset button in header');
   });
 
   test('Save Defaults button is visible on localhost', async ({ page }) => {

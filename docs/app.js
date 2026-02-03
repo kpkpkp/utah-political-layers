@@ -119,11 +119,11 @@ if (storedView) {
 }
 
 const populationPane = map.createPane("populationPane");
-populationPane.style.zIndex = "250";  // Above tiles (200), below overlays (400)
+populationPane.style.zIndex = "450";  // Above overlays (400) so dots aren't hidden by party fill
 populationPane.style.pointerEvents = "none";  // Allow clicks to pass through to districts
 
 const populationOutlinePane = map.createPane("populationOutlinePane");
-populationOutlinePane.style.zIndex = "260";  // Just above population pane
+populationOutlinePane.style.zIndex = "460";  // Just above population pane
 populationOutlinePane.style.pointerEvents = "auto";  // Allow clicks on outline to dismiss it
 
 const populationRenderer = L.canvas({ padding: 0.5, pane: "populationPane" });
@@ -158,6 +158,7 @@ const defaultColorConfig = {
   },
   // Outline colors for districts
   outline: {
+    boundary: "#2c3e50",
     house: "#ff6f00",
     senate: "#66777f",
     congressCurrent: "#fbd037",
@@ -209,7 +210,7 @@ const partyColor = (partyRaw) => {
 };
 
 const boundaryStyle = {
-  color: "#2c3e50",
+  color: colorConfig.outline.boundary,
   weight: 2,
   fillOpacity: 0,
   interactive: false  // Allow clicks to pass through to population dots
@@ -359,7 +360,8 @@ const styleState = {
   partyFill: storedUi.partyFill ?? false,
   lineColors: loadStoredColors(),
   lineWidth: storedUi.lineWidth ?? 1.2,
-  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1)
+  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1),
+  fillOpacity: storedUi.fillOpacity ?? 1.0
 };
 
 // Expose for debugging
@@ -373,7 +375,8 @@ const persistUi = (next = {}) => {
   Object.assign(uiState, next, {
     partyFill: styleState.partyFill,
     lineWidth: styleState.lineWidth,
-    lineOpacity: styleState.lineOpacity
+    lineOpacity: styleState.lineOpacity,
+    fillOpacity: styleState.fillOpacity
   });
   localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiState));
 };
@@ -414,7 +417,7 @@ const lineWeight = (base) => base * styleState.lineWidth;
 const withPartyFill = (fillColor, fillOpacity) => ({
   fill: styleState.partyFill,
   fillColor: styleState.partyFill ? fillColor : fillColor,
-  fillOpacity: styleState.partyFill ? fillOpacity : 0
+  fillOpacity: styleState.partyFill ? fillOpacity * styleState.fillOpacity : 0
 });
 
 const houseStyle = (party) => ({
@@ -1002,6 +1005,7 @@ const loadPopulationPoints = async () => {
 const bindColorPickers = (parties) => {
   // Outline color pickers
   const outlineConfig = [
+    { id: "outline-color-boundary", key: "boundary" },
     { id: "outline-color-house", key: "house" },
     { id: "outline-color-senate", key: "senate" },
     { id: "outline-color-congress-current", key: "congressCurrent" },
@@ -1018,11 +1022,16 @@ const bindColorPickers = (parties) => {
       const updatedConfig = updateColorConfig({ outline: { [key]: input.value } });
       // Update the in-memory colorConfig object
       Object.assign(colorConfig, updatedConfig);
-      // Update styleState lineColors to match
-      styleState.lineColors[key] = input.value;
-      persistColors();
-      // Refresh map styling
-      refreshPartyFill(parties);
+      // Update boundary layer style directly
+      if (key === "boundary" && layerState.boundary) {
+        layerState.boundary.setStyle({ color: input.value });
+      } else {
+        // Update styleState lineColors to match
+        styleState.lineColors[key] = input.value;
+        persistColors();
+        // Refresh map styling
+        refreshPartyFill(parties);
+      }
       // Track color change
       trackEvent('color_changed', { type: 'outline', color: key, value: input.value });
     });
@@ -1038,6 +1047,7 @@ const resetColorConfig = (parties) => {
 
   // Update all outline color picker inputs
   const outlineInputs = [
+    { id: "outline-color-boundary", key: "boundary" },
     { id: "outline-color-house", key: "house" },
     { id: "outline-color-senate", key: "senate" },
     { id: "outline-color-congress-current", key: "congressCurrent" },
@@ -1054,6 +1064,11 @@ const resetColorConfig = (parties) => {
   // Update styleState lineColors to match defaults
   Object.assign(styleState.lineColors, defaultColorConfig.outline);
   persistColors();
+
+  // Reset boundary layer color
+  if (layerState.boundary) {
+    layerState.boundary.setStyle({ color: defaultColorConfig.outline.boundary });
+  }
 
   // Refresh map styling
   refreshPartyFill(parties);
@@ -1082,10 +1097,25 @@ const bindPopulationColor = () => {
   });
 };
 
+const tileNames = {
+  osm: "Open Street Map",
+  opentopo: "OpenTopoMap",
+  "carto-light": "Carto Light",
+  "carto-voyager": "Carto Voyager",
+  "carto-dark": "Carto Dark",
+  "osm-hot": "OSM Humanitarian"
+};
+
+const updateTileCaption = (styleKey) => {
+  const caption = document.getElementById("tile-caption");
+  if (caption) caption.textContent = tileNames[styleKey] ?? styleKey;
+};
+
 const bindTileStylePicker = () => {
   const select = document.getElementById("tile-style-select");
   if (!select) return;
   select.value = uiState.tileStyle ?? "osm";
+  updateTileCaption(select.value);
   select.addEventListener("change", () => {
     const styleKey = select.value;
     if (!tileSources[styleKey]) return;
@@ -1100,6 +1130,7 @@ const bindTileStylePicker = () => {
     if (!tilesToggle || tilesToggle.checked) {
       baseTiles.addTo(map);
     }
+    updateTileCaption(styleKey);
     // Track tile source change
     trackEvent('tile_source_changed', { source: styleKey });
   });
@@ -1108,6 +1139,7 @@ const bindTileStylePicker = () => {
 const bindLineControls = (parties) => {
   const widthInput = document.getElementById("line-width");
   const opacityInput = document.getElementById("line-opacity");
+  const fillOpacityInput = document.getElementById("fill-opacity");
 
   if (widthInput) {
     widthInput.value = String(storedUi.widthSlider ?? 0.6);
@@ -1130,6 +1162,16 @@ const bindLineControls = (parties) => {
     });
     styleState.lineOpacity = expScale(parseFloat(opacityInput.value), opacityRange.min, opacityRange.max, opacityRange.exponent);
   }
+
+  if (fillOpacityInput) {
+    fillOpacityInput.value = String(storedUi.fillOpacity ?? 1);
+    fillOpacityInput.addEventListener("input", () => {
+      styleState.fillOpacity = parseFloat(fillOpacityInput.value);
+      persistUi({ fillOpacity: styleState.fillOpacity });
+      refreshPartyFill(parties);
+    });
+    styleState.fillOpacity = parseFloat(fillOpacityInput.value);
+  }
 };
 
 const init = async () => {
@@ -1147,6 +1189,29 @@ const init = async () => {
     map.fitBounds(layerState.boundary.getBounds(), { padding: [20, 20] });
   }
 
+  const buildCombinedPopup = (latlng) => {
+    const point = [latlng.lng, latlng.lat];
+    const sections = [];
+    const checkLayer = (layerGroup, label, partyMap, districtProp, suffix) => {
+      if (!layerGroup || !map.hasLayer(layerGroup)) return;
+      layerGroup.eachLayer((sublayer) => {
+        if (!sublayer.feature) return;
+        if (pointInGeometry(point, sublayer.feature.geometry)) {
+          const district = String(sublayer.feature.properties[districtProp]);
+          const info = partyMap?.[district];
+          const partyLabel = info?.party || "Unknown";
+          const nameLabel = info?.name && info.name !== "TBD" ? ` — ${info.name}` : "";
+          sections.push(`${label} ${district}${suffix}<br />${partyLabel}${nameLabel}`);
+        }
+      });
+    };
+    checkLayer(layerState.house, "House District", parties.house, "DIST", "");
+    checkLayer(layerState.senate, "Senate District", parties.senate, "DIST", "");
+    checkLayer(layerState.congressCurrent, "Federal House District", parties.congress_current, "DISTRICT", "");
+    checkLayer(layerState.congressFuture, "Federal House District", parties.congress_future, "DISTRICT", " (coming)");
+    return sections.length > 0 ? sections.join('<hr style="margin:6px 0;border:none;border-top:1px solid #ddd">') : null;
+  };
+
   layerState.house = L.geoJSON(house, {
     style: (feature) => {
       const district = String(feature.properties.DIST);
@@ -1158,9 +1223,10 @@ const init = async () => {
       const info = parties.house[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${info.name}` : "";
-      layer.bindPopup(`House District ${district}<br />${partyLabel}${nameLabel}`);
-      // Track district clicks
-      layer.on('click', () => {
+      const popupContent = `House District ${district}<br />${partyLabel}${nameLabel}`;
+      layer.on('click', (e) => {
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
         trackEvent('district_click', { type: 'house', district: district });
       });
     }
@@ -1177,9 +1243,10 @@ const init = async () => {
       const info = parties.senate[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${info.name}` : "";
-      layer.bindPopup(`Senate District ${district}<br />${partyLabel}${nameLabel}`);
-      // Track district clicks
-      layer.on('click', () => {
+      const popupContent = `Senate District ${district}<br />${partyLabel}${nameLabel}`;
+      layer.on('click', (e) => {
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
         trackEvent('district_click', { type: 'senate', district: district });
       });
     }
@@ -1196,9 +1263,10 @@ const init = async () => {
       const info = parties.congress_current?.[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name ? ` — ${info.name}` : "";
-      layer.bindPopup(`Federal House District ${district}<br />${partyLabel}${nameLabel}`);
-      // Track district clicks
-      layer.on('click', () => {
+      const popupContent = `Federal House District ${district}<br />${partyLabel}${nameLabel}`;
+      layer.on('click', (e) => {
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
         trackEvent('district_click', { type: 'congress_current', district: district });
       });
     }
@@ -1215,9 +1283,10 @@ const init = async () => {
       const info = parties.congress_future?.[district];
       const partyLabel = info?.party || "Unknown";
       const nameLabel = info?.name && info?.name !== "TBD" ? ` — ${info.name}` : "";
-      layer.bindPopup(`Federal House District ${district} (coming)<br />${partyLabel}${nameLabel}`);
-      // Track district clicks
-      layer.on('click', () => {
+      const popupContent = `Federal House District ${district} (coming)<br />${partyLabel}${nameLabel}`;
+      layer.on('click', (e) => {
+        const content = styleState.partyFill ? buildCombinedPopup(e.latlng) : popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
         trackEvent('district_click', { type: 'congress_future', district: district });
       });
     }
@@ -1265,6 +1334,19 @@ const init = async () => {
   bindLineControls(parties);
   bindPopulationColor();
   bindTileStylePicker();
+
+  // Tile swatch opens Appearance group and focuses tile dropdown
+  const tileSwatch = document.getElementById("tile-swatch");
+  if (tileSwatch) {
+    tileSwatch.addEventListener("click", () => {
+      const details = document.querySelector(".appearance-group");
+      if (details) {
+        details.open = true;
+        const tileSelect = document.getElementById("tile-style-select");
+        if (tileSelect) tileSelect.focus();
+      }
+    });
+  }
 
   // Bind reset colors button
   const resetColorsBtn = document.getElementById("reset-colors-btn");
@@ -1421,7 +1503,7 @@ if (isLocalhost) {
 const getCurrentDefaults = () => ({
   colors: {
     party: { ...colorConfig.party },
-    outline: { ...colorConfig.outline }
+    outline: { ...colorConfig.outline, boundary: colorConfig.outline.boundary }
   },
   layers: {
     boundary: document.getElementById('toggle-boundary')?.checked ?? true,
@@ -1435,7 +1517,8 @@ const getCurrentDefaults = () => ({
   },
   sliders: {
     lineWidth: document.getElementById('line-width')?.value ?? '0.6',
-    lineOpacity: document.getElementById('line-opacity')?.value ?? '1'
+    lineOpacity: document.getElementById('line-opacity')?.value ?? '1',
+    fillOpacity: document.getElementById('fill-opacity')?.value ?? '1'
   },
   tileStyle: document.getElementById('tile-style-select')?.value ?? 'osm',
   populationColor: document.getElementById('color-population')?.value ?? '#ff0000'

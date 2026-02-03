@@ -152,6 +152,10 @@ test('Map tiles toggling works', async ({ page }) => {
   console.log(`Tiles initially checked: ${initialChecked}`);
   expect(initialChecked).toBe(true);
 
+  // Open Appearance group (collapsed by default)
+  await page.locator('.appearance-group summary').click();
+  await page.waitForTimeout(300);
+
   // Try different tile styles
   const styles = ['osm', 'carto-light', 'carto-voyager'];
   for (const style of styles) {
@@ -255,6 +259,10 @@ test('Styling controls work (party fill, line width, opacity)', async ({ page })
   await partyFillCheckbox.check();
   await page.waitForTimeout(300);
   console.log('✓ Party fill re-enabled');
+
+  // Open Appearance group (collapsed by default)
+  await page.locator('.appearance-group summary').click();
+  await page.waitForTimeout(300);
 
   // Test line width slider
   const lineWidthSlider = page.locator('#line-width');
