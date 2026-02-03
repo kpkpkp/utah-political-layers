@@ -891,7 +891,8 @@ const partyColor = (partyRaw) => {{
 const boundaryStyle = {{
   color: "#2c3e50",
   weight: 2,
-  fillOpacity: 0
+  fillOpacity: 0,
+  interactive: false  // Allow clicks to pass through to population dots
 }};
 
 const COLOR_STORAGE_KEY = "utah-layer-colors";
