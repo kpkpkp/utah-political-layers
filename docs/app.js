@@ -352,15 +352,6 @@ const fetchPopulationCount = async () => {
 
 const ensurePopulationStatus = () => {
   let status = document.getElementById("population-status");
-  if (!status) {
-    const panel = document.getElementById("controls");
-    if (!panel) return null;
-    status = document.createElement("div");
-    status.id = "population-status";
-    status.className = "panel-section";
-    status.textContent = "Population: preparing...";
-    panel.appendChild(status);
-  }
   return status;
 };
 
@@ -943,7 +934,7 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
     }
     received += features.length;
     if (status) {
-      status.textContent = `Population: ${received.toLocaleString()} blocks loaded (REST)`;
+      status.textContent = `${received.toLocaleString()} blocks`;
     }
     offset += pageSize;
     if (features.length < pageSize) {
@@ -961,10 +952,10 @@ const loadPopulationPoints = async () => {
   let loadingDots = 0;
   let loadingTimer = null;
   if (status) {
-    status.textContent = "Population: loading";
+    status.textContent = "loading";
     loadingTimer = setInterval(() => {
       loadingDots = (loadingDots + 1) % 6;
-      status.textContent = `Population: loading${".".repeat(loadingDots)}`;
+      status.textContent = `loading${".".repeat(loadingDots)}`;
     }, 5000);
   }
   try {
@@ -985,9 +976,7 @@ const loadPopulationPoints = async () => {
       clearInterval(loadingTimer);
     }
     if (status) {
-      status.textContent = restCount
-        ? `Population: ready (${restCount.toLocaleString()} blocks)`
-        : "Population: ready (no features)";
+      status.textContent = restCount ? `${restCount.toLocaleString()} blocks` : "ready";
     }
     const populationToggle = document.getElementById("toggle-population");
     if (populationToggle && populationToggle.checked && !map.hasLayer(populationLayer)) {
