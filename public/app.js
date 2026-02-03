@@ -159,9 +159,9 @@ const defaultColorConfig = {
   // Outline colors for districts
   outline: {
     house: "#ff6f00",
-    senate: "#00b0ff",
-    congressCurrent: "#8e24aa",
-    congressFuture: "#43a047"
+    senate: "#66777f",
+    congressCurrent: "#77b1a5",
+    congressFuture: "#126da5"
   }
 };
 
@@ -249,7 +249,7 @@ const loadStoredUi = () => {
 
 const storedUi = loadStoredUi();
 const uiState = { ...storedUi };
-const defaultPopulationColor = "#ff0000";
+const defaultPopulationColor = "#686916";
 let populationTintColor = storedUi.populationColor ?? defaultPopulationColor;
 let populationPointCache = null;
 
