@@ -1606,6 +1606,11 @@ const resetColorConfig = (parties) => {{
   Object.assign(styleState.lineColors, defaultColorConfig.outline);
   persistColors();
   refreshPartyFill(parties);
+  map.fitBounds([[36.9, -114.1], [42.1, -109.0]], {{
+    padding: [20, 20],
+    animate: true,
+    duration: 1.0
+  }});
 }};
 
 const bindPopulationColor = () => {{

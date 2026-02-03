@@ -1057,6 +1057,13 @@ const resetColorConfig = (parties) => {
 
   // Refresh map styling
   refreshPartyFill(parties);
+
+  // Reset map view to fit Utah
+  map.fitBounds([[36.9, -114.1], [42.1, -109.0]], {
+    padding: [20, 20],
+    animate: true,
+    duration: 1.0
+  });
 };
 
 const bindPopulationColor = () => {
