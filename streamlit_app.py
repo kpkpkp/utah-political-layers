@@ -135,6 +135,7 @@ body {{
   flex-direction: column;
   border-bottom: 1px solid #efefef;
   padding-bottom: 8px;
+  overflow: hidden;
 }}
 
 .panel-legend {{
@@ -218,7 +219,9 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 }}
 
 .tile-select {{
-  width: 140px;
+  width: auto;
+  min-width: 70px;
+  max-width: 85px;
   height: 24px;
   border-radius: 4px;
   border: 1px solid #bdbdbd;
@@ -226,6 +229,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   padding: 0 2px;
   font-size: 10px;
   cursor: pointer;
+  flex-shrink: 1;
 }}
 
 .population-tooltip {{
@@ -256,6 +260,8 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 
 .slider-row input[type="range"] {{
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }}
 
 .legend {{
@@ -333,15 +339,16 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 }}
 
 .reset-colors-btn {{
-  padding: 8px 16px;
+  padding: 8px 10px;
   border: 1px solid #bdbdbd;
   border-radius: 6px;
   background: #ffffff;
   color: #3b6ea5;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }}
 
 .reset-colors-btn:hover {{
