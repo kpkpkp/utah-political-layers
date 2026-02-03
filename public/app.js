@@ -305,6 +305,9 @@ const populationState = {
   totalCount: 0
 };
 
+// Expose for debugging and testing
+window.populationState = populationState;
+
 const loadPopulationPointCache = () => {
   if (populationPointCache) return populationPointCache;
   try {
@@ -481,12 +484,16 @@ const attachToggle = (checkboxId, layerKey) => {
     if (checkbox.checked) {
       layer.addTo(map);
       if (layerKey === "population") {
-        loadPopulationPoints().catch((error) => console.error(error));
-        // Force canvas renderer to redraw if markers already loaded
+        // Data is loaded in background - just ensure layer is on map
+        // If still loading, the status indicator will show progress
+        if (!populationState.loaded && !populationState.loading) {
+          // Fallback: start load if somehow not started
+          loadPopulationPoints().catch((error) => console.error(error));
+        }
+        // Force redraw if data already loaded
         if (populationState.loaded && populationRenderer && populationRenderer._reset) {
           populationRenderer._reset();
         }
-        // Track population toggle
         trackEvent('population_toggle', { enabled: true });
       } else {
         // Track layer toggle
@@ -1241,9 +1248,8 @@ const init = async () => {
       map.removeLayer(layerState[key]);
     } else if (key === "population") {
       layerState.population.addTo(map);
-      // Load population data if checkbox is initially checked
-      loadPopulationPoints().catch((error) => console.error(error));
     }
+    // Background load is started separately in init, don't call here
   });
 
   const partyFillToggle = document.getElementById("toggle-party-fill");
@@ -1272,15 +1278,10 @@ const init = async () => {
     });
   }
 
-  // Don't load population points during init - only load when user checks the toggle
-  // This ensures markers are added after the layer is on the map
-  // loadPopulationPoints().catch((error) => {
-  //   console.error(error);
-  //   const status = ensurePopulationStatus();
-  //   if (status) {
-  //     status.textContent = "Population: failed to load (check console).";
-  //   }
-  // });
+  // Start loading population data in background for instant toggle
+  loadPopulationPoints().catch((error) => {
+    console.error('Background population load failed:', error);
+  });
 
   const panel = document.getElementById("controls");
   const panelToggle = document.getElementById("panel-toggle");

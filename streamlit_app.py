@@ -1098,7 +1098,17 @@ const attachToggle = (checkboxId, layerKey) => {{
     if (checkbox.checked) {{
       layer.addTo(map);
       if (layerKey === "population") {{
-        loadPopulationPoints().catch((error) => console.error(error));
+        // Data is loaded in background - just ensure layer is on map
+        // If still loading, the status indicator will show progress
+        if (!populationState.loaded && !populationState.loading) {{
+          // Fallback: start load if somehow not started
+          loadPopulationPoints().catch((error) => console.error(error));
+        }}
+        // Force redraw if data already loaded
+        if (populationState.loaded && populationRenderer && populationRenderer._reset) {{
+          populationRenderer._reset();
+        }}
+        trackEvent('population_toggle', {{ enabled: true }});
       }}
     }} else {{
       map.removeLayer(layer);
@@ -1740,8 +1750,8 @@ const init = async () => {{
     if (!checkbox.checked) map.removeLayer(layerState[key]);
     else if (key === "population") {{
       layerState.population.addTo(map);
-      loadPopulationPoints().catch((error) => console.error(error));
     }}
+    // Background load is started separately in init, don't call here
   }});
 
   const partyFillToggle = document.getElementById("toggle-party-fill");
@@ -1818,6 +1828,11 @@ const init = async () => {{
   storeView();
   map.on("moveend", storeView);
   map.on("zoomend", storeView);
+
+  // Start loading population data in background for instant toggle
+  loadPopulationPoints().catch((error) => {{
+    console.error('Background population load failed:', error);
+  }});
 }};
 
 init().catch((error) => {{

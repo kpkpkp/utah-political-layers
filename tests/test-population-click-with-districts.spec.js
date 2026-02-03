@@ -22,7 +22,7 @@ test('Population click works with district layers enabled', async ({ page }) => 
   await page.waitForFunction(() => window.populationLayer?.getLayers()?.length > 3000, { timeout: 30000 });
 
   // Zoom to populated area
-  await page.evaluate(() => window.map.setView([40.76, -111.89], 11));
+  await page.evaluate(() => { window.map.setView([40.76, -111.89], 11); });
   await page.waitForTimeout(500);
 
   // Find a population marker and click it
