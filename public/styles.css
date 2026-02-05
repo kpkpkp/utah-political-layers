@@ -180,7 +180,7 @@ body {
   grid-area: layers;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
   border-right: 1px solid #efefef;
   padding-right: 8px;
   overflow: hidden;
@@ -225,10 +225,12 @@ body.is-localhost .panel-save-defaults.localhost-only {
 .toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 4px;
+  margin-bottom: 0;
   cursor: pointer;
   font-size: 12px;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .toggle input {
@@ -255,8 +257,9 @@ body.is-localhost .panel-save-defaults.localhost-only {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 0;
+  gap: 4px;
+  margin-bottom: -2px;
+  line-height: 1.2;
 }
 
 .layer-row .toggle {
@@ -281,12 +284,11 @@ body.is-localhost .panel-save-defaults.localhost-only {
   cursor: pointer;
   padding: 0;
   display: inline-block;
-  border: 1px solid #777;
-  border-radius: 1px;
-  background:
-    repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px),
-    repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px),
-    #e8e0d0;
+  box-sizing: border-box;
+  background: #e8e0d0;
+  /* Match browser color input appearance */
+  border: 1px solid #767676;
+  border-radius: 4px;
 }
 
 .tile-caption {
