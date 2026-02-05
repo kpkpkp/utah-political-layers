@@ -5,10 +5,78 @@ const trackEvent = (eventName, params = {}) => {
   }
 };
 
+// Corner position management
+const loadCornerPosition = () => {
+  const saved = localStorage.getItem(CORNER_STORAGE_KEY);
+  if (saved && CORNERS.includes(saved)) {
+    currentCornerIndex = CORNERS.indexOf(saved);
+  }
+  applyCornerPosition();
+};
+
+const applyCornerPosition = () => {
+  const panel = document.getElementById("controls");
+  if (!panel) return;
+  CORNERS.forEach(c => panel.classList.remove(`corner-${c}`));
+  panel.classList.add(`corner-${CORNERS[currentCornerIndex]}`);
+  updateToggleDirection();
+  updateControlsPosition();
+};
+
+const rotateCorner = () => {
+  currentCornerIndex = (currentCornerIndex + 1) % CORNERS.length;
+  localStorage.setItem(CORNER_STORAGE_KEY, CORNERS[currentCornerIndex]);
+  applyCornerPosition();
+  trackEvent('panel_corner_change', { corner: CORNERS[currentCornerIndex] });
+};
+
+const updateControlsPosition = () => {
+  // Controls stay one corner AHEAD of panel (clockwise)
+  const controlsCornerIndex = (currentCornerIndex + 1) % CORNERS.length;
+  const controlsCorner = CORNERS[controlsCornerIndex];
+
+  // Parse corner into vertical and horizontal parts
+  const [vertical, horizontal] = controlsCorner.split("-");
+
+  // Leaflet containers use classes like "leaflet-top leaflet-left"
+  const newContainer = document.querySelector(`.leaflet-${vertical}.leaflet-${horizontal}`);
+
+  // Move zoom and scale controls to new corner
+  const zoomControl = document.querySelector(".leaflet-control-zoom");
+  const scaleControl = document.querySelector(".leaflet-control-scale");
+
+  if (zoomControl && newContainer) {
+    newContainer.appendChild(zoomControl);
+  }
+  if (scaleControl && newContainer) {
+    newContainer.appendChild(scaleControl);
+  }
+};
+
+const updateToggleDirection = () => {
+  const toggle = document.getElementById("panel-toggle");
+  const panel = document.getElementById("controls");
+  if (!toggle || !panel) return;
+
+  const corner = CORNERS[currentCornerIndex];
+  const collapsed = panel.classList.contains("collapsed");
+
+  // For right-side corners, arrow points left when expanded, right when collapsed
+  // For left-side corners, arrow points right when expanded, left when collapsed
+  if (corner.includes("right")) {
+    toggle.textContent = collapsed ? "▶" : "◀";
+  } else {
+    toggle.textContent = collapsed ? "◀" : "▶";
+  }
+};
+
 const MAP_VIEW_STORAGE_KEY = "utah-map-view";
 const POP_POINT_CACHE_KEY = "utah-pop-point-cache";
 const POP_POINT_CACHE_VERSION_KEY = "utah-pop-point-cache-version";
 const POP_POINT_CACHE_VERSION = 2;
+const CORNER_STORAGE_KEY = "utah-panel-corner";
+const CORNERS = ["top-right", "bottom-right", "bottom-left", "top-left"];
+let currentCornerIndex = 0;
 
 const loadStoredView = () => {
   try {
@@ -1365,13 +1433,23 @@ const init = async () => {
   const panelToggle = document.getElementById("panel-toggle");
   if (panel && panelToggle) {
     panelToggle.addEventListener("click", () => {
-      const collapsed = panel.classList.toggle("collapsed");
-      panelToggle.textContent = collapsed ? "▶" : "◀";
+      panel.classList.toggle("collapsed");
+      const collapsed = panel.classList.contains("collapsed");
       panelToggle.setAttribute("aria-expanded", String(!collapsed));
+      updateToggleDirection();
       // Track panel toggle
       trackEvent('panel_toggle', { expanded: !collapsed });
     });
   }
+
+  // Corner rotation button
+  const cornerBtn = document.getElementById("panel-corner-btn");
+  if (cornerBtn) {
+    cornerBtn.addEventListener("click", rotateCorner);
+  }
+
+  // Load saved corner position
+  loadCornerPosition();
 
   // Mobile touch gesture handling for bottom sheet panel
   const dragHandle = document.querySelector(".panel-drag-handle");

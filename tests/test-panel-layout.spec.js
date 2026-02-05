@@ -314,25 +314,25 @@ test.describe('Panel Layout Tests', () => {
     console.log('✓ Population status element exists adjacent to Population toggle');
   });
 
-  test('Tour button in footer, Reset button in header', async ({ page }) => {
-    const footer = page.locator('.panel-footer');
+  test('Tour and Reset buttons in header row', async ({ page }) => {
     const header = page.locator('.panel-header');
-    await expect(footer).toBeVisible();
     await expect(header).toBeVisible();
 
-    const tourBtn = footer.locator('#tour-btn');
+    const tourBtn = header.locator('#tour-btn');
     const resetBtn = header.locator('#reset-colors-btn');
 
     await expect(tourBtn).toBeVisible();
     await expect(resetBtn).toBeVisible();
 
-    // Reset should be in header (above footer)
+    // Both should be in header at approximately same Y position
     const tourBox = await tourBtn.boundingBox();
     const resetBox = await resetBtn.boundingBox();
-    expect(resetBox.y).toBeLessThan(tourBox.y);
+
+    // Verify both are at roughly the same vertical position (within 10px)
+    expect(Math.abs(resetBox.y - tourBox.y)).toBeLessThan(10);
 
     console.log('Reset Y:', resetBox.y, 'Tour Y:', tourBox.y);
-    console.log('✓ Tour button in footer, Reset button in header');
+    console.log('✓ Tour and Reset buttons both in header row');
   });
 
   test('Save Defaults button is visible on localhost', async ({ page }) => {
@@ -388,6 +388,133 @@ test.describe('Panel Layout Tests', () => {
     await expect(dropdown).not.toHaveClass(/open/);
 
     console.log('✓ Save Defaults dropdown opens and closes');
+  });
+
+  test('Corner rotation button exists and rotates panel through corners', async ({ page }) => {
+    const panel = page.locator('#controls');
+    const cornerBtn = page.locator('#panel-corner-btn');
+
+    await expect(cornerBtn).toBeVisible();
+    await expect(cornerBtn).toHaveAttribute('title', 'Move to next corner');
+
+    // Initially should be in top-right (default)
+    await expect(panel).toHaveClass(/corner-top-right/);
+
+    // Click to rotate to bottom-right
+    await cornerBtn.click();
+    await expect(panel).toHaveClass(/corner-bottom-right/);
+
+    // Click to rotate to bottom-left
+    await cornerBtn.click();
+    await expect(panel).toHaveClass(/corner-bottom-left/);
+
+    // Click to rotate to top-left
+    await cornerBtn.click();
+    await expect(panel).toHaveClass(/corner-top-left/);
+
+    // Click to rotate back to top-right
+    await cornerBtn.click();
+    await expect(panel).toHaveClass(/corner-top-right/);
+
+    console.log('✓ Corner rotation button cycles through all 4 corners');
+  });
+
+  test('Corner position persists across page reload', async ({ page }) => {
+    const cornerBtn = page.locator('#panel-corner-btn');
+
+    // Click twice to move to bottom-left
+    await cornerBtn.click();
+    await cornerBtn.click();
+    await expect(page.locator('#controls')).toHaveClass(/corner-bottom-left/);
+
+    // Reload page
+    await page.reload();
+    await page.waitForSelector('#controls');
+
+    // Should still be in bottom-left
+    await expect(page.locator('#controls')).toHaveClass(/corner-bottom-left/);
+
+    console.log('✓ Corner position persists across reload');
+  });
+
+  test('Toggle button direction changes based on corner position', async ({ page }) => {
+    const panel = page.locator('#controls');
+    const toggle = page.locator('#panel-toggle');
+    const cornerBtn = page.locator('#panel-corner-btn');
+
+    // In top-right corner, expanded panel shows ◀ (pointing away from edge)
+    await expect(panel).toHaveClass(/corner-top-right/);
+    await expect(toggle).toHaveText('◀');
+
+    // Collapse the panel
+    await toggle.click();
+    await expect(panel).toHaveClass(/collapsed/);
+    await expect(toggle).toHaveText('▶');
+
+    // Expand again
+    await toggle.click();
+    await expect(panel).not.toHaveClass(/collapsed/);
+
+    // Move to bottom-left corner
+    await cornerBtn.click();
+    await cornerBtn.click();
+    await expect(panel).toHaveClass(/corner-bottom-left/);
+
+    // In left-side corners, expanded panel shows ▶
+    await expect(toggle).toHaveText('▶');
+
+    // Collapse
+    await toggle.click();
+    await expect(panel).toHaveClass(/collapsed/);
+    await expect(toggle).toHaveText('◀');
+
+    console.log('✓ Toggle button direction is correct for each corner');
+  });
+
+  test('Zoom controls move when panel rotates', async ({ page }) => {
+    const cornerBtn = page.locator('#panel-corner-btn');
+    const zoomControl = page.locator('.leaflet-control-zoom');
+
+    // Helper to check zoom control position
+    const getZoomPosition = async () => {
+      return await zoomControl.evaluate(el => {
+        const parent = el.parentElement?.className || '';
+        const hasBottom = parent.includes('bottom');
+        const hasTop = parent.includes('top');
+        const hasLeft = parent.includes('left');
+        const hasRight = parent.includes('right');
+        if (hasBottom && hasLeft) return 'bottomleft';
+        if (hasBottom && hasRight) return 'bottomright';
+        if (hasTop && hasLeft) return 'topleft';
+        if (hasTop && hasRight) return 'topright';
+        return parent;
+      });
+    };
+
+    // Initially panel at top-right
+    await expect(page.locator('#controls')).toHaveClass(/corner-top-right/);
+
+    // Rotate panel to bottom-right, zoom goes to bottom-left
+    await cornerBtn.click();
+    await page.waitForTimeout(100);
+    expect(await getZoomPosition()).toBe('bottomleft');
+
+    // Rotate panel to bottom-left, zoom goes to top-left
+    await cornerBtn.click();
+    await page.waitForTimeout(100);
+    expect(await getZoomPosition()).toBe('topleft');
+
+    // Rotate panel to top-left, zoom goes to top-right
+    await cornerBtn.click();
+    await page.waitForTimeout(100);
+    expect(await getZoomPosition()).toBe('topright');
+
+    // Rotate panel back to top-right, zoom goes to bottom-right
+    await cornerBtn.click();
+    await page.waitForTimeout(100);
+    expect(await getZoomPosition()).toBe('bottomright');
+
+    console.log('✓ Zoom controls chase ahead of panel through corners');
   });
 
 });
