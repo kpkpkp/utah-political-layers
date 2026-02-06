@@ -275,29 +275,31 @@ test.describe('Tour Feature', () => {
     await page.locator('#tour-btn').click();
     await page.waitForTimeout(500);
 
-    // Get initial map view
-    let mapCenter = await page.evaluate(() => {
+    // Get initial map view (step 1: Welcome)
+    let mapView = await page.evaluate(() => {
       const center = window.map.getCenter();
-      return { lat: center.lat, lng: center.lng };
+      return { lat: center.lat, lng: center.lng, zoom: window.map.getZoom() };
     });
 
-    console.log('Initial map center:', mapCenter);
+    console.log('Initial map view:', mapView);
 
-    // Advance to next step (Utah State Boundary)
+    // Advance past step 2 (same bounds as step 1) to step 3 (State House - different view)
+    await page.locator('.tour-next').click();
+    await page.waitForTimeout(500);
     await page.locator('.tour-next').click();
     await page.waitForTimeout(1500); // Wait for map animation
 
-    // Get new map view
-    const newMapCenter = await page.evaluate(() => {
+    // Get new map view (step 3: State House zoomed into SLC)
+    const newMapView = await page.evaluate(() => {
       const center = window.map.getCenter();
-      return { lat: center.lat, lng: center.lng };
+      return { lat: center.lat, lng: center.lng, zoom: window.map.getZoom() };
     });
 
-    console.log('New map center:', newMapCenter);
+    console.log('New map view:', newMapView);
 
-    // Verify map view changed (lat/lng should be different or zoom changed)
-    const centerChanged = mapCenter.lat !== newMapCenter.lat || mapCenter.lng !== newMapCenter.lng;
-    expect(centerChanged).toBeTruthy();
+    // Verify map view changed (step 3 zooms into SLC at zoom 11)
+    const viewChanged = mapView.lat !== newMapView.lat || mapView.lng !== newMapView.lng || mapView.zoom !== newMapView.zoom;
+    expect(viewChanged).toBeTruthy();
 
     console.log('✅ Tour updates map view for each step');
   });
@@ -403,50 +405,47 @@ test.describe('Tour Feature', () => {
   });
 
   test('Tour restores original map state after completion', async ({ page }) => {
-    // Set specific layers before starting tour
-    await page.evaluate(() => {
-      // Turn on house and senate layers
-      const houseCheckbox = document.getElementById('toggle-house');
-      const senateCheckbox = document.getElementById('toggle-senate');
-      if (houseCheckbox) houseCheckbox.checked = true;
-      if (senateCheckbox) senateCheckbox.checked = true;
+    // Dismiss auto-started tour first (localStorage was cleared in beforeEach)
+    const autoTourOverlay = page.locator('.tour-overlay');
+    if (await autoTourOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await page.locator('.tour-skip').click();
+      await page.waitForTimeout(500);
+    }
 
-      // Trigger change events
-      if (houseCheckbox) houseCheckbox.dispatchEvent(new Event('change'));
-      if (senateCheckbox) senateCheckbox.dispatchEvent(new Event('change'));
-    });
+    // Enable house and senate layers and wait for GeoJSON to load
+    await page.locator('#toggle-house').check();
+    await page.locator('#toggle-senate').check();
 
-    await page.waitForTimeout(1000);
+    // Wait until layers actually appear on the map
+    await page.waitForFunction(() => {
+      return window.layerState?.house && window.map.hasLayer(window.layerState.house)
+          && window.layerState?.senate && window.map.hasLayer(window.layerState.senate);
+    }, { timeout: 15000 });
 
-    // Get initial layer state
-    const initialLayerState = await page.evaluate(() => {
-      return {
-        house: window.layerState?.house && window.map.hasLayer(window.layerState.house),
-        senate: window.layerState?.senate && window.map.hasLayer(window.layerState.senate)
-      };
-    });
+    console.log('Initial layer state: house=true, senate=true');
 
-    console.log('Initial layer state:', initialLayerState);
-
-    // Start and skip the tour
+    // Start a fresh tour and skip it
     await page.locator('#tour-btn').click();
     await page.waitForTimeout(500);
     await page.locator('.tour-skip').click();
     await page.waitForTimeout(1000);
 
-    // Get final layer state
-    const finalLayerState = await page.evaluate(() => {
+    // Verify layers and checkboxes were restored
+    const finalState = await page.evaluate(() => {
       return {
-        house: window.layerState?.house && window.map.hasLayer(window.layerState.house),
-        senate: window.layerState?.senate && window.map.hasLayer(window.layerState.senate)
+        houseLayer: window.layerState?.house && window.map.hasLayer(window.layerState.house),
+        senateLayer: window.layerState?.senate && window.map.hasLayer(window.layerState.senate),
+        houseCheckbox: document.getElementById('toggle-house')?.checked,
+        senateCheckbox: document.getElementById('toggle-senate')?.checked
       };
     });
 
-    console.log('Final layer state:', finalLayerState);
+    console.log('Final state:', finalState);
 
-    // Verify layers were restored
-    expect(finalLayerState.house).toBe(initialLayerState.house);
-    expect(finalLayerState.senate).toBe(initialLayerState.senate);
+    expect(finalState.houseLayer).toBe(true);
+    expect(finalState.senateLayer).toBe(true);
+    expect(finalState.houseCheckbox).toBe(true);
+    expect(finalState.senateCheckbox).toBe(true);
 
     console.log('✅ Tour restores original map state after completion');
   });
