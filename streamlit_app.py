@@ -1732,7 +1732,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
       <div class="panel-header">
         <div class="panel-title">Utah Political Layers</div>
         <button class="tour-btn" id="tour-btn">Take Tour</button>
-        <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
+        <button class="reset-colors-btn" id="reset-colors-btn">Recenter Map</button>
       </div>
 
       <!-- Upper: Layers with paired outline colors -->
