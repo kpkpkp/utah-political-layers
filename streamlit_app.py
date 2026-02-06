@@ -3995,7 +3995,7 @@ class TourController {{
    * Restore original layer and map state
    */
   restoreOriginalState() {{
-    // Restore layer visibility
+    // Restore layer visibility and sync checkboxes
     Object.keys(this.originalLayerState).forEach(layerKey => {{
       const layer = this.layerState[layerKey];
       const shouldShow = this.originalLayerState[layerKey];
@@ -4006,6 +4006,15 @@ class TourController {{
         }} else if (!shouldShow && this.map.hasLayer(layer)) {{
           this.map.removeLayer(layer);
         }}
+      }}
+
+      // Sync checkbox to match restored layer state
+      const checkboxId = `toggle-${{layerKey === 'congressCurrent' ? 'congress-current' :
+                                    layerKey === 'congressFuture' ? 'congress-future' :
+                                    layerKey}}`;
+      const checkbox = document.getElementById(checkboxId);
+      if (checkbox) {{
+        checkbox.checked = shouldShow;
       }}
     }});
 
