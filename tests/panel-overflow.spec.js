@@ -43,6 +43,6 @@ test.describe('Control Panel Layout', () => {
     }
 
     // Check reset button
-    await checkWithinBounds('.reset-colors-btn', 'Reset button');
+    await checkWithinBounds('.recenter-map-btn', 'Reset button');
   });
 });

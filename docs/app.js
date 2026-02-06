@@ -1110,7 +1110,7 @@ const bindColorPickers = (parties) => {
   });
 };
 
-const resetColorConfig = (parties) => {
+const recenterMap = (parties) => {
   // Clear localStorage for color config
   localStorage.removeItem(COLOR_CONFIG_STORAGE_KEY);
 
@@ -1420,11 +1420,11 @@ const init = async () => {
     });
   }
 
-  // Bind reset colors button
-  const resetColorsBtn = document.getElementById("reset-colors-btn");
-  if (resetColorsBtn) {
-    resetColorsBtn.addEventListener("click", () => {
-      resetColorConfig(parties);
+  // Bind recenter map button
+  const recenterMapBtn = document.getElementById("recenter-map-btn");
+  if (recenterMapBtn) {
+    recenterMapBtn.addEventListener("click", () => {
+      recenterMap(parties);
     });
   }
 

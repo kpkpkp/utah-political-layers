@@ -319,7 +319,7 @@ test.describe('Panel Layout Tests', () => {
     await expect(header).toBeVisible();
 
     const tourBtn = header.locator('#tour-btn');
-    const resetBtn = header.locator('#reset-colors-btn');
+    const resetBtn = header.locator('#recenter-map-btn');
 
     await expect(tourBtn).toBeVisible();
     await expect(resetBtn).toBeVisible();

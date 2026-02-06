@@ -561,7 +561,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   flex-shrink: 0;
 }}
 
-.reset-colors-btn {{
+.recenter-map-btn {{
   padding: 8px 10px;
   border: 1px solid #bdbdbd;
   border-radius: 6px;
@@ -574,16 +574,16 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   white-space: nowrap;
 }}
 
-.reset-colors-btn:hover {{
+.recenter-map-btn:hover {{
   background: #f5f5f5;
   border-color: #3b6ea5;
 }}
 
-.reset-colors-btn:active {{
+.recenter-map-btn:active {{
   background: #ebebeb;
 }}
 
-.reset-colors-btn:focus-visible {{
+.recenter-map-btn:focus-visible {{
   outline: 2px solid #3b6ea5;
   outline-offset: 2px;
 }}
@@ -854,7 +854,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
 
   /* Reset button adjustments */
-  .reset-colors-btn {{
+  .recenter-map-btn {{
     padding: 8px 10px; /* Slightly reduce horizontal padding */
     font-size: 12px;
     min-height: 44px; /* Ensure touch target */
@@ -1001,7 +1001,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
 
   /* Reset button */
-  .reset-colors-btn {{
+  .recenter-map-btn {{
     min-height: 44px;
     font-size: 14px;
   }}
@@ -1150,7 +1150,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
 
   /* Compact reset button */
-  .reset-colors-btn {{
+  .recenter-map-btn {{
     min-height: 36px;
     font-size: 13px;
     padding: 6px 10px;
@@ -1732,7 +1732,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
       <div class="panel-header">
         <div class="panel-title">Utah Political Layers</div>
         <button class="tour-btn" id="tour-btn">Take Tour</button>
-        <button class="reset-colors-btn" id="reset-colors-btn">Recenter Map</button>
+        <button class="recenter-map-btn" id="recenter-map-btn">Recenter Map</button>
       </div>
 
       <!-- Upper: Layers with paired outline colors -->
@@ -2984,7 +2984,7 @@ const bindColorPickers = (parties) => {{
   }});
 }};
 
-const resetColorConfig = (parties) => {{
+const recenterMap = (parties) => {{
   // Clear localStorage for color config
   localStorage.removeItem(COLOR_CONFIG_STORAGE_KEY);
 
@@ -3294,11 +3294,11 @@ const init = async () => {{
     }});
   }}
 
-  // Bind reset colors button
-  const resetColorsBtn = document.getElementById("reset-colors-btn");
-  if (resetColorsBtn) {{
-    resetColorsBtn.addEventListener("click", () => {{
-      resetColorConfig(parties);
+  // Bind recenter map button
+  const recenterMapBtn = document.getElementById("recenter-map-btn");
+  if (recenterMapBtn) {{
+    recenterMapBtn.addEventListener("click", () => {{
+      recenterMap(parties);
     }});
   }}
 

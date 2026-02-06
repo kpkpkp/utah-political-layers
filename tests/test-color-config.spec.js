@@ -182,7 +182,7 @@ test.describe('Color Configuration Feature - E2E Tests', () => {
     expect(storedConfig.outline.senate).toBe('#ff00ff');
 
     // Click reset button
-    const resetBtn = page.locator('#reset-colors-btn');
+    const resetBtn = page.locator('#recenter-map-btn');
     await expect(resetBtn).toBeVisible();
     await resetBtn.click();
     await page.waitForTimeout(500);
@@ -425,7 +425,7 @@ test.describe('Color Configuration Feature - E2E Tests', () => {
     console.log('✓ Screenshot saved: color-pickers-custom.png');
 
     // Reset and screenshot
-    await page.locator('#reset-colors-btn').click();
+    await page.locator('#recenter-map-btn').click();
     await page.waitForTimeout(500);
     await controlsPanel.screenshot({ path: 'screenshots/color-pickers-reset.png' });
     console.log('✓ Screenshot saved: color-pickers-reset.png');
