@@ -153,7 +153,7 @@ test('Map tiles toggling works', async ({ page }) => {
   expect(initialChecked).toBe(true);
 
   // Open Appearance group (collapsed by default)
-  await page.locator('.appearance-group summary').click();
+  await page.locator('.appearance-group:not(#sources-group) summary').click();
   await page.waitForTimeout(300);
 
   // Try different tile styles
@@ -261,7 +261,7 @@ test('Styling controls work (party fill, line width, opacity)', async ({ page })
   console.log('✓ Party fill re-enabled');
 
   // Open Appearance group (collapsed by default)
-  await page.locator('.appearance-group summary').click();
+  await page.locator('.appearance-group:not(#sources-group) summary').click();
   await page.waitForTimeout(300);
 
   // Test line width slider

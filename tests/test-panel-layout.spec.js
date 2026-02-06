@@ -140,7 +140,7 @@ test.describe('Panel Layout Tests', () => {
 
   test('Line width, line opacity, and fill opacity sliders are in "legend" section', async ({ page }) => {
     // Open the Appearance details group first (starts collapsed)
-    await page.locator('.appearance-group summary').click();
+    await page.locator('.appearance-group:not(#sources-group) summary').click();
 
     // Look for sliders within the panel-legend section
     const lineWidthSlider = page.locator('.panel-legend #line-width');

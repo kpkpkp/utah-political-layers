@@ -10,8 +10,8 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""
   />
-  <link rel="stylesheet" href="styles.css?v=20260202-reset-fit" />
-  <link rel="stylesheet" href="css/tour.css?v=20260202-reset-fit" />
+  <link rel="stylesheet" href="styles.css?v=20260204-corner" />
+  <link rel="stylesheet" href="css/tour.css?v=20260204-corner" />
   <!-- Google Analytics 4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
@@ -33,9 +33,11 @@
     <aside class="panel control-panel" id="controls">
       <div class="panel-drag-handle" aria-hidden="true"></div>
       <button class="panel-toggle" id="panel-toggle">◀</button>
+      <button class="panel-corner-btn" id="panel-corner-btn" title="Move to next corner">⟳</button>
 
       <div class="panel-header">
         <div class="panel-title">Utah Political Layers</div>
+        <button class="tour-btn" id="tour-btn">Take Tour</button>
         <button class="reset-colors-btn" id="reset-colors-btn">Reset to Defaults</button>
       </div>
 
@@ -134,12 +136,25 @@
             </select>
           </div>
         </details>
+        <details class="appearance-group" id="sources-group">
+          <summary>Sources</summary>
+          <div class="appearance-content sources-list">
+            <a href="https://le.utah.gov/asp/roster/roster.asp?house=H" target="_blank" rel="noopener">Utah Legislature Roster</a>
+            <a href="https://ballotpedia.org/United_States_congressional_delegations_from_Utah" target="_blank" rel="noopener">Ballotpedia – Utah Congressional Delegation</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_StateHouse2022/FeatureServer/0" target="_blank" rel="noopener">SGID – State House Districts 2022</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_StateSenate2022/FeatureServer/0" target="_blank" rel="noopener">SGID – State Senate Districts 2022</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_USHouse2022/FeatureServer/0" target="_blank" rel="noopener">SGID – US Congress Districts 2022</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_USHouse2026/FeatureServer/0" target="_blank" rel="noopener">SGID – US Congress Districts 2026</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Boundaries_State/FeatureServer/0" target="_blank" rel="noopener">SGID – Utah State Boundary</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Blocks_PopDensity_5orMore_Albers_Equal_Area/FeatureServer/0" target="_blank" rel="noopener">SGID – Census Block Population Density</a>
+            <a href="https://opendata.gis.utah.gov/" target="_blank" rel="noopener">Utah SGID Open Data</a>
+            <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a>
+            <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO Basemaps</a>
+            <a href="https://opentopomap.org/" target="_blank" rel="noopener">OpenTopoMap</a>
+          </div>
+        </details>
       </div>
 
-      <!-- Footer: Tour left, Reset right, Save Defaults (localhost only) -->
-      <div class="panel-footer">
-        <button class="tour-btn" id="tour-btn">Take Tour</button>
-      </div>
       <div class="panel-save-defaults localhost-only" id="save-defaults-container">
         <button class="save-defaults-btn" id="save-defaults-btn">Save as Defaults</button>
         <div class="save-defaults-dropdown" id="save-defaults-dropdown">
@@ -156,7 +171,7 @@
     crossorigin=""
   ></script>
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
-  <script src="app.js?v=20260202-reset-fit"></script>
-  <script src="js/tour.js?v=20260202-reset-fit"></script>
+  <script src="app.js?v=20260204-corner"></script>
+  <script src="js/tour.js?v=20260204-corner"></script>
 </body>
 </html>

@@ -432,6 +432,23 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   margin-top: 6px;
 }}
 
+.sources-list {{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}}
+
+.sources-list a {{
+  font-size: 10px;
+  color: #4575b4;
+  text-decoration: none;
+  line-height: 1.3;
+}}
+
+.sources-list a:hover {{
+  text-decoration: underline;
+}}
+
 .slider-row {{
   display: flex;
   flex-direction: column;
@@ -1801,6 +1818,23 @@ body.is-localhost .panel-save-defaults.localhost-only {{
               <option value="carto-dark">Carto Dark</option>
               <option value="osm-hot">OSM Humanitarian</option>
             </select>
+          </div>
+        </details>
+        <details class="appearance-group" id="sources-group">
+          <summary>Sources</summary>
+          <div class="appearance-content sources-list">
+            <a href="https://le.utah.gov/asp/roster/roster.asp?house=H" target="_blank" rel="noopener">Utah Legislature Roster</a>
+            <a href="https://ballotpedia.org/United_States_congressional_delegations_from_Utah" target="_blank" rel="noopener">Ballotpedia – Utah Congressional Delegation</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_StateHouse2022/FeatureServer/0" target="_blank" rel="noopener">SGID – State House Districts 2022</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_StateSenate2022/FeatureServer/0" target="_blank" rel="noopener">SGID – State Senate Districts 2022</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_USHouse2022/FeatureServer/0" target="_blank" rel="noopener">SGID – US Congress Districts 2022</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Political_USHouse2026/FeatureServer/0" target="_blank" rel="noopener">SGID – US Congress Districts 2026</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Boundaries_State/FeatureServer/0" target="_blank" rel="noopener">SGID – Utah State Boundary</a>
+            <a href="https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Blocks_PopDensity_5orMore_Albers_Equal_Area/FeatureServer/0" target="_blank" rel="noopener">SGID – Census Block Population Density</a>
+            <a href="https://opendata.gis.utah.gov/" target="_blank" rel="noopener">Utah SGID Open Data</a>
+            <a href="https://www.openstreetmap.org/" target="_blank" rel="noopener">OpenStreetMap</a>
+            <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO Basemaps</a>
+            <a href="https://opentopomap.org/" target="_blank" rel="noopener">OpenTopoMap</a>
           </div>
         </details>
       </div>
