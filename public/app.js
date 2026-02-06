@@ -45,11 +45,15 @@ const updateControlsPosition = () => {
   const zoomControl = document.querySelector(".leaflet-control-zoom");
   const scaleControl = document.querySelector(".leaflet-control-scale");
 
+  const attrControl = document.querySelector(".leaflet-control-attribution");
   if (zoomControl && newContainer) {
     newContainer.appendChild(zoomControl);
   }
   if (scaleControl && newContainer) {
     newContainer.appendChild(scaleControl);
+  }
+  if (attrControl && newContainer) {
+    newContainer.appendChild(attrControl);
   }
 };
 
