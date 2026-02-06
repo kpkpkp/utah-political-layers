@@ -1005,7 +1005,10 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
     }
     received += features.length;
     if (status) {
-      status.textContent = `${received.toLocaleString()} blocks`;
+      const total = populationState.totalCount;
+      status.textContent = total
+        ? `${received.toLocaleString()} / ${total.toLocaleString()}`
+        : `${received.toLocaleString()} blocks`;
     }
     offset += pageSize;
     if (features.length < pageSize) {
@@ -1034,6 +1037,10 @@ const loadPopulationPoints = async () => {
   } catch (error) {
     console.warn("Population count failed", error);
   }
+  if (loadingTimer) {
+    clearInterval(loadingTimer);
+    loadingTimer = null;
+  }
   console.log("Loading population points...");
   try {
     const baseColor = mixColor(hexToRgb(populationTintColor), 0.5);
@@ -1043,9 +1050,6 @@ const loadPopulationPoints = async () => {
     populationState.loading = false;
     updatePopulationStyles();
     persistPopulationPointCache();
-    if (loadingTimer) {
-      clearInterval(loadingTimer);
-    }
     if (status) {
       status.textContent = restCount ? `${restCount.toLocaleString()} blocks` : "ready";
     }
