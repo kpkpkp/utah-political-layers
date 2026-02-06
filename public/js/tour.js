@@ -108,7 +108,7 @@ const tourSteps = [
     id: 'state-senate',
     title: 'State Senate Districts',
     content: `
-      <p>Utah's Senate has <strong>29 districts</strong>, shown in blue outlines.</p>
+      <p>Utah's Senate has <strong>29 districts</strong>, shown in gray outlines.</p>
       <p>Senate districts are larger than House districts, as each senator represents more constituents.</p>
       <p>Notice how the districts are layered - you can see both House and Senate boundaries at the same time!</p>
       <p>The color fills show which party currently holds each seat.</p>
@@ -132,7 +132,7 @@ const tourSteps = [
     id: 'congress-current',
     title: 'Federal Congressional Districts',
     content: `
-      <p>Utah currently has <strong>4 Congressional districts</strong> (shown in purple outlines).</p>
+      <p>Utah currently has <strong>4 Congressional districts</strong> (shown in gold outlines).</p>
       <p>These are for U.S. House of Representatives seats in Washington, D.C.</p>
       <p>Congressional districts are much larger than state legislative districts, as they represent significantly more people.</p>
       <p>Let's zoom out to see all four districts across the entire state.</p>
@@ -155,7 +155,7 @@ const tourSteps = [
     id: 'congress-future',
     title: 'Future Congressional Districts',
     content: `
-      <p>After the 2020 Census, Utah's <strong>4 Congressional districts</strong> were redrawn to reflect population shifts (shown with green dashed lines).</p>
+      <p>After the 2020 Census, Utah's <strong>4 Congressional districts</strong> were redrawn to reflect population shifts (shown with orange dashed lines).</p>
       <p>Compare these boundaries with the current districts to see how representation areas have changed.</p>
       <p>Notice the dashed style - this helps distinguish the redrawn districts from current ones.</p>
     `,
@@ -177,7 +177,7 @@ const tourSteps = [
     id: 'population',
     title: 'Population Density',
     content: `
-      <p>The red dots show <strong>population density</strong> across Utah.</p>
+      <p>The peach dots show <strong>population density</strong> across Utah.</p>
       <p>Each dot represents a census block with 5 or more residents.</p>
       <p>Larger, darker dots indicate higher population density.</p>
       <p>Notice how most of Utah's population clusters along the Wasatch Front (the I-15 corridor from Provo to Ogden).</p>
