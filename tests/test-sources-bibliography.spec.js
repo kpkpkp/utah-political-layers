@@ -55,7 +55,7 @@ test.describe("Sources Bibliography", () => {
     const container = page.locator("#sources-group .sources-list");
     await expect(container.locator('a[href*="le.utah.gov"]')).toBeVisible();
     await expect(container.locator('a[href*="ballotpedia.org"]')).toBeVisible();
-    await expect(container.locator('a[href*="opendata.gis.utah.gov"]')).toBeVisible();
+    await expect(container.locator('a[href*="opendata.gis.utah.gov"]').first()).toBeVisible();
     await expect(container.locator('a[href*="openstreetmap.org"]')).toBeVisible();
   });
 

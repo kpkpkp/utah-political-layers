@@ -360,13 +360,13 @@ body.is-localhost .panel-save-defaults.localhost-only {
 }
 
 .appearance-group summary::after {
-  content: "\25BC";
-  font-size: 8px;
+  content: "\25B6";
+  font-size: 9px;
   transition: transform 0.2s;
 }
 
 .appearance-group[open] summary::after {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 .appearance-group .appearance-content {
