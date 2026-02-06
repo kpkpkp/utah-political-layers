@@ -1379,8 +1379,8 @@ const init = async () => {
     attachToggle(id, key);
     if (!checkbox.checked) {
       map.removeLayer(layerState[key]);
-    } else if (key === "population") {
-      layerState.population.addTo(map);
+    } else if (!map.hasLayer(layerState[key])) {
+      layerState[key].addTo(map);
     }
     // Background load is started separately in init, don't call here
   });
