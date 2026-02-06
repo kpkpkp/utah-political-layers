@@ -414,10 +414,20 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   display: none;
 }}
 
+.appearance-group summary::marker {{
+  content: "";
+}}
+
 .appearance-group summary::after {{
-  content: "\25B6";
-  font-size: 9px;
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 5px solid #666;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
   transition: transform 0.2s;
+  flex-shrink: 0;
 }}
 
 .appearance-group[open] summary::after {{
