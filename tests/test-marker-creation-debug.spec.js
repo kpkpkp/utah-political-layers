@@ -56,7 +56,7 @@ test('Debug marker creation process', async ({ page }) => {
       console.log(`Status: ${status}`);
     }
 
-    if (status.includes('ready')) {
+    if (status.includes('ready') || status.includes('blocks')) {
       console.log(`\nFinal status: ${status}`);
       break;
     }

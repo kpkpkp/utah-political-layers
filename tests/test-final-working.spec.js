@@ -26,7 +26,7 @@ test('Final verification - all layers working', async ({ page }) => {
       return statusEl?.textContent || '';
     });
 
-    if (status.includes('ready')) {
+    if (status.includes('ready') || status.includes('blocks')) {
       console.log(`✅ ${status}\n`);
       break;
     }

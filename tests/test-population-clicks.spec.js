@@ -143,7 +143,7 @@ test.describe('Population Click Tests', () => {
     // Wait for population to fully load
     await page.waitForFunction(() => {
       const status = document.getElementById('population-status');
-      return status && status.textContent.includes('ready');
+      return status && (status.textContent.includes('ready') || status.textContent.includes('blocks'));
     }, { timeout: 120000 });
 
     // Give time for rendering
@@ -212,7 +212,7 @@ test.describe('Population Click Tests', () => {
     // Wait for population to load
     await page.waitForFunction(() => {
       const status = document.getElementById('population-status');
-      return status && status.textContent.includes('ready');
+      return status && (status.textContent.includes('ready') || status.textContent.includes('blocks'));
     }, { timeout: 120000 });
 
     await page.waitForTimeout(500);

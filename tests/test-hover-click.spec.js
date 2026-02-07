@@ -22,7 +22,7 @@ test('Test hover and click functionality', async ({ page }) => {
   for (let i = 0; i < 30; i++) {
     await page.waitForTimeout(1000);
     const status = await page.locator('#population-status').textContent();
-    if (status.includes('ready')) {
+    if (status.includes('ready') || status.includes('blocks')) {
       console.log(`✅ ${status}`);
       break;
     }

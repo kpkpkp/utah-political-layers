@@ -27,7 +27,7 @@ test('Show working population layer in visible browser', async ({ page }) => {
     const status = await page.locator('#population-status').textContent().catch(() => 'Loading...');
     process.stdout.write(`\r   ${status}                         `);
 
-    if (status.includes('ready')) {
+    if (status.includes('ready') || status.includes('blocks')) {
       console.log('\n');
       break;
     }

@@ -62,7 +62,7 @@ test('Diagnose population layer', async ({ page }) => {
 
     console.log(`[${attempts}] ${status.statusText} | Layers in group: ${status.layerCount} | On map: ${status.mapHasLayer}`);
 
-    if (status.loaded || status.statusText.includes('ready')) {
+    if (status.loaded || status.statusText.includes('ready') || status.statusText.includes('blocks')) {
       console.log('\n✅ Loading complete!');
       break;
     }

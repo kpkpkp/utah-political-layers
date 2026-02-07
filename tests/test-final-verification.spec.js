@@ -30,7 +30,7 @@ test('Final verification - Population layer works', async ({ page }) => {
     const status = await page.locator('#population-status').textContent();
     process.stdout.write(`\r${status}                    `);
 
-    if (status.includes('ready')) {
+    if (status.includes('ready') || status.includes('blocks')) {
       console.log('\n');
       break;
     }

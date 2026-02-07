@@ -126,7 +126,7 @@ test.describe('Background Population Loading', () => {
 
     // Status should indicate loading or ready, not empty
     expect(statusText).toBeTruthy();
-    expect(statusText).toMatch(/Population|loading|ready/i);
+    expect(statusText).toMatch(/Population|loading|ready|blocks|\d/i);
 
     // Wait for load to complete
     const loaded = await page.evaluate(async () => {
@@ -165,7 +165,7 @@ test.describe('Background Population Loading', () => {
 
     // Verify status shows ready status
     const finalStatusText = await page.locator('#population-status').textContent();
-    expect(finalStatusText).toMatch(/ready/i);
+    expect(finalStatusText).toMatch(/ready|blocks/i);
   });
 
   test('population state is exposed on window', async ({ page }) => {

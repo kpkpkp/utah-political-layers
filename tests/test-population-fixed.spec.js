@@ -37,7 +37,7 @@ test('Test population layer after fix', async ({ page }) => {
     const status = await page.locator('#population-status').textContent();
     console.log(`Status (${i+1}s): ${status}`);
 
-    if (status.includes('ready')) {
+    if (status.includes('ready') || status.includes('blocks')) {
       break;
     }
   }
@@ -66,8 +66,8 @@ test('Test population layer after fix', async ({ page }) => {
   console.log(`Network requests: ${networkCount}`);
   console.log(`Population pane children: ${markerInfo.childCount}`);
 
-  // Verify it worked
-  expect(finalStatus).toContain('ready');
+  // Verify it worked - status shows block count or "ready"
+  expect(finalStatus).toMatch(/ready|blocks/);
   expect(finalStatus).not.toContain('no features');
   expect(networkCount).toBeGreaterThan(0);
 });

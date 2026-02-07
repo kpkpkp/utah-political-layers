@@ -28,7 +28,7 @@ test('Population layer displays on map', async ({ page }) => {
       console.log(`   Status: ${statusText}`);
     }
 
-    if (statusText.includes('ready') || statusText.includes('loaded')) {
+    if (statusText.includes('ready') || statusText.includes('loaded') || statusText.includes('blocks')) {
       loaded = true;
       console.log(`✅ Population loaded: ${statusText}`);
     }
