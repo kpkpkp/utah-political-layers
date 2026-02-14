@@ -8,6 +8,12 @@ test.describe('Mobile Responsive Panel - Bottom Sheet Behavior', () => {
       await page.goto('http://localhost:8080');
       await page.waitForSelector('#map', { timeout: 10000 });
       await page.waitForTimeout(1000); // Allow initial render
+      // Dismiss tour if it appears
+      const skipBtn = page.locator('#tour-skip');
+      if (await skipBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await skipBtn.click();
+        await page.waitForTimeout(300);
+      }
     });
 
     test('1. Panel transforms to bottom sheet at mobile viewport', async ({ page }) => {
@@ -108,36 +114,37 @@ test.describe('Mobile Responsive Panel - Bottom Sheet Behavior', () => {
       const panel = page.locator('.control-panel');
       const dragHandle = page.locator('.panel-drag-handle');
 
-      // Get initial state
-      const initialCollapsed = await panel.evaluate((el) =>
-        el.classList.contains('collapsed')
-      );
+      // Panel starts collapsed on mobile; expand it first via FAB
+      const fab = page.locator('#mobile-fab');
+      await fab.click();
+      await page.waitForTimeout(400);
 
-      console.log(`Initial panel state: ${initialCollapsed ? 'collapsed' : 'expanded'}`);
+      // Now panel should be expanded
+      expect(await panel.evaluate(el => el.classList.contains('collapsed'))).toBe(false);
+      console.log('Panel expanded via FAB');
 
-      // Click drag handle
+      // Click drag handle to collapse
       await dragHandle.click();
-      await page.waitForTimeout(400); // Wait for transition
+      await page.waitForTimeout(400);
 
-      // Verify state changed
       const afterFirstClick = await panel.evaluate((el) =>
         el.classList.contains('collapsed')
       );
 
-      expect(afterFirstClick).toBe(!initialCollapsed);
-      console.log(`After first click: ${afterFirstClick ? 'collapsed' : 'expanded'}`);
+      expect(afterFirstClick).toBe(true);
+      console.log(`After drag handle click: collapsed`);
 
-      // Click again to toggle back
-      await dragHandle.click();
+      // Re-expand via FAB (drag handle is off-viewport when collapsed)
+      await fab.click();
       await page.waitForTimeout(400);
 
       const afterSecondClick = await panel.evaluate((el) =>
         el.classList.contains('collapsed')
       );
 
-      expect(afterSecondClick).toBe(initialCollapsed);
-      console.log(`After second click: ${afterSecondClick ? 'collapsed' : 'expanded'}`);
-      console.log('✓ Drag handle successfully toggles panel state');
+      expect(afterSecondClick).toBe(false);
+      console.log(`After FAB click: expanded`);
+      console.log('✓ Drag handle collapse + FAB expand work correctly');
     });
 
     test('5. Panel toggle button is hidden on mobile', async ({ page }) => {
@@ -157,15 +164,10 @@ test.describe('Mobile Responsive Panel - Bottom Sheet Behavior', () => {
       const panel = page.locator('.control-panel');
       const dragHandle = page.locator('.panel-drag-handle');
 
-      // Ensure panel starts expanded for this test
-      const initialCollapsed = await panel.evaluate((el) =>
-        el.classList.contains('collapsed')
-      );
-
-      if (initialCollapsed) {
-        await dragHandle.click();
-        await page.waitForTimeout(400);
-      }
+      // Panel starts collapsed on mobile; expand via FAB
+      const fab = page.locator('#mobile-fab');
+      await fab.click();
+      await page.waitForTimeout(400);
 
       // Verify that the drag handle has event listeners for touch gestures
       // (We can't easily test touch events without hasTouch enabled, but we can verify the setup)
@@ -400,6 +402,12 @@ test.describe('Mobile Responsive Panel - Bottom Sheet Behavior', () => {
       await page.goto('http://localhost:8080');
       await page.waitForSelector('#map', { timeout: 10000 });
       await page.waitForTimeout(1000);
+      // Dismiss tour if it appears
+      const skipBtn = page.locator('#tour-skip');
+      if (await skipBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await skipBtn.click();
+        await page.waitForTimeout(300);
+      }
     });
 
     test('14. Drag handle has proper ARIA attributes', async ({ page }) => {
@@ -437,20 +445,21 @@ test.describe('Mobile Responsive Panel - Bottom Sheet Behavior', () => {
       await page.goto('http://localhost:8080');
       await page.waitForSelector('#map', { timeout: 10000 });
       await page.waitForTimeout(1000);
+      // Dismiss tour if it appears
+      const skipBtn = page.locator('#tour-skip');
+      if (await skipBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await skipBtn.click();
+        await page.waitForTimeout(300);
+      }
     });
 
     test('16. Mobile panel expanded state screenshot', async ({ page }) => {
       const panel = page.locator('.control-panel');
 
-      // Ensure panel is expanded
-      const collapsed = await panel.evaluate((el) =>
-        el.classList.contains('collapsed')
-      );
-
-      if (collapsed) {
-        await page.locator('.panel-drag-handle').click();
-        await page.waitForTimeout(400);
-      }
+      // Expand panel via FAB (panel starts collapsed on mobile)
+      const fab = page.locator('#mobile-fab');
+      await fab.click();
+      await page.waitForTimeout(400);
 
       await page.screenshot({
         path: 'screenshots/mobile-panel-expanded.png',
@@ -463,15 +472,11 @@ test.describe('Mobile Responsive Panel - Bottom Sheet Behavior', () => {
     test('17. Mobile panel collapsed state screenshot', async ({ page }) => {
       const panel = page.locator('.control-panel');
 
-      // Ensure panel is collapsed
+      // Panel starts collapsed on mobile - verify
       const collapsed = await panel.evaluate((el) =>
         el.classList.contains('collapsed')
       );
-
-      if (!collapsed) {
-        await page.locator('.panel-drag-handle').click();
-        await page.waitForTimeout(400);
-      }
+      expect(collapsed).toBe(true);
 
       await page.screenshot({
         path: 'screenshots/mobile-panel-collapsed.png',

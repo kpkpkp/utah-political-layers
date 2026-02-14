@@ -588,6 +588,34 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   outline-offset: 2px;
 }}
 
+/* ===== Feedback Button ===== */
+.feedback-btn {{
+  padding: 8px 10px;
+  border: 1px solid #bdbdbd;
+  border-radius: 6px;
+  background: #f5f5f5;
+  color: #555;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}}
+
+.feedback-btn:hover {{
+  background: #ebebeb;
+  border-color: #999;
+  color: #333;
+}}
+
+.feedback-btn:focus-visible {{
+  outline: 2px solid #3b6ea5;
+  outline-offset: 2px;
+}}
+
 /* Ensure Leaflet controls are visible */
 .leaflet-bottom-left {{
   bottom: 0;
@@ -683,6 +711,22 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   border: 2px solid #777 !important;
   border-radius: 4px !important;
   font-size: 12px !important;
+}}
+
+/* ===== Mobile FAB & Header (hidden on desktop) ===== */
+.mobile-fab {{
+  display: none;
+}}
+
+.panel-mobile-header {{
+  display: none;
+}}
+
+.drag-indicator {{
+  width: 48px;
+  height: 5px;
+  background: #c0c0c0;
+  border-radius: 3px;
 }}
 
 /* ====================================
@@ -925,23 +969,112 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     display: none;
   }}
 
-  /* Drag handle styling - provides visual affordance for bottom sheet */
-  .panel-drag-handle {{
-    width: 40px;
-    height: 4px;
-    background: #d0d0d0;
-    border-radius: 2px;
-    margin: 8px auto 12px;
-    cursor: grab;
-    transition: background 0.2s ease;
+  /* Mobile FAB - floating action button to open controls */
+  .mobile-fab {{
+    display: flex;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #d0d0d0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease;
   }}
 
-  .panel-drag-handle:hover {{
-    background: #a0a0a0;
+  .mobile-fab:focus-visible {{
+    outline: 2px solid #3b6ea5;
+    outline-offset: 2px;
+  }}
+
+  /* FAB above collapsed panel so it's clickable */
+  body:has(.control-panel.collapsed) .mobile-fab {{
+    z-index: 1001;
+  }}
+
+  /* Hide FAB when panel is expanded */
+  body:has(.control-panel:not(.collapsed)) .mobile-fab {{
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+  }}
+
+  /* Mobile bottom sheet header */
+  .panel-mobile-header {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 4px;
+  }}
+
+  .panel-mobile-title {{
+    font-weight: 600;
+    font-size: 14px;
+    color: #1b1b1b;
+  }}
+
+  .panel-close-btn {{
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    padding: 8px;
+    cursor: pointer;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s ease;
+  }}
+
+  .panel-close-btn:hover {{
+    background: #f0f0f0;
+  }}
+
+  .panel-close-btn:focus-visible {{
+    outline: 2px solid #3b6ea5;
+    outline-offset: 2px;
+  }}
+
+  /* Drag handle styling - provides visual affordance for bottom sheet */
+  .panel-drag-handle {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: auto;
+    background: transparent;
+    margin: 4px auto 8px;
+    padding: 4px 0;
+    cursor: grab;
   }}
 
   .panel-drag-handle:active {{
     cursor: grabbing;
+  }}
+
+  .drag-indicator {{
+    width: 48px;
+    height: 5px;
+    background: #c0c0c0;
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }}
+
+  .panel-drag-handle:hover .drag-indicator {{
+    background: #a0a0a0;
+  }}
+
+  .panel-drag-handle:active .drag-indicator {{
     background: #808080;
   }}
 
@@ -1012,9 +1145,9 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }}
 
-  /* When collapsed, Leaflet controls can be lower */
+  /* When collapsed, Leaflet controls sit above the FAB */
   body:has(.control-panel.collapsed) .leaflet-bottom-left {{
-    bottom: 70px !important;
+    bottom: 90px !important;
   }}
 }}
 
@@ -1063,11 +1196,76 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     transform: translateY(calc(100% - 36px)) !important;
   }}
 
+  /* Show FAB in landscape too */
+  .mobile-fab {{
+    display: flex;
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #d0d0d0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }}
+
+  body:has(.control-panel:not(.collapsed)) .mobile-fab {{
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+  }}
+
+  /* Show mobile header in landscape */
+  .panel-mobile-header {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 2px;
+  }}
+
+  .panel-mobile-title {{
+    font-weight: 600;
+    font-size: 12px;
+    color: #1b1b1b;
+  }}
+
+  .panel-close-btn {{
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #666;
+    padding: 6px;
+    cursor: pointer;
+    min-width: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }}
+
   /* Smaller drag handle */
   .panel-drag-handle {{
-    width: 32px;
-    height: 3px;
-    margin: 6px auto 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: auto;
+    background: transparent;
+    margin: 4px auto 6px;
+    padding: 2px 0;
+  }}
+
+  .drag-indicator {{
+    width: 36px;
+    height: 4px;
   }}
 
   /* Compact panel sections */
@@ -1178,7 +1376,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
 
   body:has(.control-panel.collapsed) .leaflet-bottom-left {{
-    bottom: 50px !important;
+    bottom: 80px !important;
   }}
 }}
 
@@ -1724,8 +1922,18 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 
     <div id="map"></div>
 
+    <button class="mobile-fab" id="mobile-fab" aria-label="Open controls">
+      <span class="mobile-fab-icon">&#9776;</span>
+    </button>
+
     <aside class="panel control-panel" id="controls">
-      <div class="panel-drag-handle" aria-hidden="true"></div>
+      <div class="panel-drag-handle" aria-hidden="true">
+        <div class="drag-indicator"></div>
+      </div>
+      <div class="panel-mobile-header">
+        <span class="panel-mobile-title">Utah Political Layers</span>
+        <button class="panel-close-btn" id="panel-close-btn" aria-label="Close controls">&#10005;</button>
+      </div>
       <button class="panel-toggle" id="panel-toggle">◀</button>
       <button class="panel-corner-btn" id="panel-corner-btn" title="Move to next corner">⟳</button>
 
@@ -1733,6 +1941,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
         <div class="panel-title">Utah Political Layers</div>
         <button class="tour-btn" id="tour-btn">Take Tour</button>
         <button class="recenter-map-btn" id="recenter-map-btn">Recenter Map</button>
+        <a class="feedback-btn" href="https://github.com/kpkpkp/utah-political-layers/issues/new?template=bug_report.md&labels=bug" target="_blank" rel="noopener">Feedback</a>
       </div>
 
       <!-- Upper: Layers with paired outline colors -->
@@ -3321,6 +3530,29 @@ const init = async () => {{
       updateToggleDirection();
       // Track panel toggle
       trackEvent('panel_toggle', {{ expanded: !collapsed }});
+    }});
+  }}
+
+  // Start collapsed on mobile so users see the full map + FAB
+  if (panel && window.innerWidth <= 480) {{
+    panel.classList.add("collapsed");
+  }}
+
+  // Mobile FAB click handler - opens the control panel
+  const fab = document.getElementById("mobile-fab");
+  if (fab && panel) {{
+    fab.addEventListener("click", () => {{
+      panel.classList.remove("collapsed");
+      trackEvent("fab_open_panel");
+    }});
+  }}
+
+  // Mobile close button handler - collapses the control panel
+  const panelCloseBtn = document.getElementById("panel-close-btn");
+  if (panelCloseBtn && panel) {{
+    panelCloseBtn.addEventListener("click", () => {{
+      panel.classList.add("collapsed");
+      trackEvent("panel_close_btn");
     }});
   }}
 
