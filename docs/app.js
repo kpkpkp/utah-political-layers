@@ -1450,6 +1450,29 @@ const init = async () => {
     });
   }
 
+  // Start collapsed on mobile so users see the full map + FAB
+  if (panel && window.innerWidth <= 480) {
+    panel.classList.add("collapsed");
+  }
+
+  // Mobile FAB click handler - opens the control panel
+  const fab = document.getElementById("mobile-fab");
+  if (fab && panel) {
+    fab.addEventListener("click", () => {
+      panel.classList.remove("collapsed");
+      trackEvent("fab_open_panel");
+    });
+  }
+
+  // Mobile close button handler - collapses the control panel
+  const panelCloseBtn = document.getElementById("panel-close-btn");
+  if (panelCloseBtn && panel) {
+    panelCloseBtn.addEventListener("click", () => {
+      panel.classList.add("collapsed");
+      trackEvent("panel_close_btn");
+    });
+  }
+
   // Corner rotation button
   const cornerBtn = document.getElementById("panel-corner-btn");
   if (cornerBtn) {

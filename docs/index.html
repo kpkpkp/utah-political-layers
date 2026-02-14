@@ -30,8 +30,18 @@
 
     <div id="map"></div>
 
+    <button class="mobile-fab" id="mobile-fab" aria-label="Open controls">
+      <span class="mobile-fab-icon">&#9776;</span>
+    </button>
+
     <aside class="panel control-panel" id="controls">
-      <div class="panel-drag-handle" aria-hidden="true"></div>
+      <div class="panel-drag-handle" aria-hidden="true">
+        <div class="drag-indicator"></div>
+      </div>
+      <div class="panel-mobile-header">
+        <span class="panel-mobile-title">Utah Political Layers</span>
+        <button class="panel-close-btn" id="panel-close-btn" aria-label="Close controls">&#10005;</button>
+      </div>
       <button class="panel-toggle" id="panel-toggle">◀</button>
       <button class="panel-corner-btn" id="panel-corner-btn" title="Move to next corner">⟳</button>
 
@@ -39,6 +49,7 @@
         <div class="panel-title">Utah Political Layers</div>
         <button class="tour-btn" id="tour-btn">Take Tour</button>
         <button class="recenter-map-btn" id="recenter-map-btn">Recenter Map</button>
+        <a class="feedback-btn" href="https://github.com/kpkpkp/utah-political-layers/issues/new?template=bug_report.md&labels=bug" target="_blank" rel="noopener">Feedback</a>
       </div>
 
       <!-- Upper: Layers with paired outline colors -->
