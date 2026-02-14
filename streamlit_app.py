@@ -674,6 +674,10 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 #map {{
   overflow: visible !important;
   position: relative;
+  /* Create stacking context so Leaflet's internal z-indexes stay contained
+     and don't compete with the panel/FAB overlays */
+  isolation: isolate;
+  z-index: 0;
 }}
 
 /* Leaflet bottom-left container - positioned absolutely at bottom-left of map */
@@ -929,6 +933,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
     overflow-x: hidden;
+    z-index: 10001 !important;
     display: grid;
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -981,7 +986,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     background: #ffffff;
     border: 2px solid #d0d0d0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-    z-index: 999;
+    z-index: 10000;
     align-items: center;
     justify-content: center;
     font-size: 24px;
@@ -996,7 +1001,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 
   /* FAB above collapsed panel so it's clickable */
   body:has(.control-panel.collapsed) .mobile-fab {{
-    z-index: 1001;
+    z-index: 10002;
   }}
 
   /* Hide FAB when panel is expanded */
