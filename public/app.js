@@ -558,26 +558,35 @@ const attachToggle = (checkboxId, layerKey) => {
     const layer = layerState[layerKey];
     if (!layer) return;
     if (checkbox.checked) {
-      layer.addTo(map);
       if (layerKey === "population") {
-        // Data is loaded in background - just ensure layer is on map
-        // If still loading, the status indicator will show progress
-        if (!populationState.loaded && !populationState.loading) {
-          // Fallback: start load if somehow not started
-          loadPopulationPoints().catch((error) => console.error(error));
+        const popStatus = document.getElementById("population-status");
+        // Disable checkbox to prevent double-toggle while rendering
+        checkbox.disabled = true;
+        if (popStatus && populationState.loaded) {
+          popStatus.textContent = "rendering...";
         }
-        // Force redraw if data already loaded
-        if (populationState.loaded && populationRenderer && populationRenderer._reset) {
-          populationRenderer._reset();
-        }
-        trackEvent('population_toggle', { enabled: true });
+        // Defer addTo so "rendering..." text paints first
+        setTimeout(() => {
+          layer.addTo(map);
+          if (!populationState.loaded && !populationState.loading) {
+            loadPopulationPoints().catch((error) => console.error(error));
+          }
+          if (populationState.loaded && populationRenderer && populationRenderer._reset) {
+            populationRenderer._reset();
+          }
+          if (popStatus && populationState.loaded) {
+            const count = populationLayer.getLayers().length;
+            popStatus.textContent = count ? `${count.toLocaleString()} blocks` : "ready";
+          }
+          checkbox.disabled = false;
+          trackEvent('population_toggle', { enabled: true });
+        }, 20);
       } else {
-        // Track layer toggle
+        layer.addTo(map);
         trackEvent('layer_toggle', { layer: layerKey, enabled: true });
       }
     } else {
       map.removeLayer(layer);
-      // Track layer/population toggle off
       if (layerKey === "population") {
         trackEvent('population_toggle', { enabled: false });
       } else {
