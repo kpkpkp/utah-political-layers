@@ -3706,7 +3706,7 @@ const init = async () => {{
   if (bgStatus) bgStatus.textContent = "preloading...";
   loadPopulationPoints().catch((error) => {{
     console.error('Background population load failed:', error);
-    if (bgStatus) bgStatus.textContent = "preload failed";
+    if (bgStatus) bgStatus.textContent = `failed: ${{error.message || error}}`;
   }});
 
   const panel = document.getElementById("controls");
