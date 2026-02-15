@@ -67,7 +67,6 @@ body {{
   position: relative;
   height: 100vh;
   height: 100dvh;
-  overflow: hidden;
 }}
 
 .header {{
@@ -919,9 +918,8 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 */
 @media (max-width: 480px) {{
   .control-panel {{
-    /* Bottom sheet using absolute positioning (position:fixed is broken
-       on many mobile browsers due to stacking context issues) */
-    position: absolute !important;
+    /* Bottom sheet fixed to viewport (same as tour overlay which works) */
+    position: fixed !important;
     top: auto !important;
     bottom: 0 !important;
     left: 0 !important;
@@ -981,7 +979,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   /* Mobile FAB - floating action button to open controls */
   .mobile-fab {{
     display: flex;
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     right: 20px;
     width: 56px;
@@ -1208,7 +1206,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   /* Show FAB in landscape too */
   .mobile-fab {{
     display: flex;
-    position: absolute;
+    position: fixed;
     bottom: 16px;
     right: 16px;
     width: 48px;
