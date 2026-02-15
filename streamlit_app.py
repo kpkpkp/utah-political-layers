@@ -2103,7 +2103,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           <input type="color" id="outline-color-boundary" value="#2c3e50" aria-label="Boundary color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-boundary" checked />
-            <span>Utah boundary</span>
+            <span>State Boundary</span>
           </label>
         </div>
         <div class="layer-row">
@@ -2126,28 +2126,28 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           <input type="color" id="outline-color-house" value="#ff6f00" aria-label="House outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-house" />
-            <span>House</span>
+            <span>Utah House</span>
           </label>
         </div>
         <div class="layer-row">
           <input type="color" id="outline-color-senate" value="#66777f" aria-label="Senate outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-senate" />
-            <span>Senate</span>
+            <span>Utah Senate</span>
           </label>
         </div>
         <div class="layer-row">
           <input type="color" id="outline-color-congress-current" value="#fbd037" aria-label="Congress current outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-current" checked />
-            <span>Congress (current)</span>
+            <span>U.S. Congress (current)</span>
           </label>
         </div>
         <div class="layer-row has-note">
           <input type="color" id="outline-color-congress-future" value="#f68a0e" aria-label="Congress coming outline color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-congress-future" />
-            <span>Congress (coming)</span>
+            <span>U.S. Congress (coming)</span>
           </label>
           <div class="note">Parties to be determined.</div>
         </div>
