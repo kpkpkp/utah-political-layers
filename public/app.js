@@ -1038,11 +1038,11 @@ const loadPopulationPoints = async () => {
   let loadingDots = 0;
   let loadingTimer = null;
   if (status) {
-    status.textContent = "loading";
+    status.textContent = "loading...";
     loadingTimer = setInterval(() => {
-      loadingDots = (loadingDots + 1) % 6;
-      status.textContent = `loading${".".repeat(loadingDots)}`;
-    }, 5000);
+      loadingDots = (loadingDots + 1) % 4;
+      status.textContent = `loading${".".repeat(loadingDots + 1)}`;
+    }, 500);
   }
   try {
     populationState.totalCount = await fetchPopulationCount();
