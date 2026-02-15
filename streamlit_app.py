@@ -1918,6 +1918,65 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
 }}
 
+
+/* ===== Streamlit iframe fix: disable mobile bottom sheet ===== */
+/* position:fixed inside a 2000px iframe puts the panel off-screen.
+   Force desktop-style panel at all widths instead. */
+@media (max-width: 480px) {{
+  .control-panel {{
+    position: absolute !important;
+    top: 8px !important;
+    bottom: auto !important;
+    right: 8px !important;
+    left: auto !important;
+    width: 95vw !important;
+    max-width: 440px !important;
+    max-height: 80vh !important;
+    min-width: unset !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+    padding: 10px 12px !important;
+    transform: none !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important;
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "header"
+      "layers"
+      "legend" !important;
+  }}
+  .control-panel.collapsed {{
+    transform: translateX(calc(100% - 28px)) !important;
+  }}
+  /* Show desktop toggle/corner buttons instead of mobile FAB */
+  .panel-toggle,
+  .panel-corner-btn {{
+    display: block !important;
+  }}
+  .mobile-fab {{
+    display: none !important;
+  }}
+  .panel-mobile-header {{
+    display: none !important;
+  }}
+  .panel-drag-handle {{
+    display: none !important;
+  }}
+  .panel-layers {{
+    border-right: none !important;
+    padding-right: 0 !important;
+  }}
+}}
+@media (max-height: 500px) and (orientation: landscape) {{
+  .mobile-fab {{
+    display: none !important;
+  }}
+  .panel-toggle,
+  .panel-corner-btn {{
+    display: block !important;
+  }}
+}}
+
   </style>
 </head>
 <body>
@@ -3541,9 +3600,7 @@ const init = async () => {{
   }}
 
   // Start collapsed on mobile so users see the full map + FAB
-  if (panel && window.innerWidth <= 480) {{
-    panel.classList.add("collapsed");
-  }}
+  // Mobile auto-collapse disabled for Streamlit iframe
 
   // Mobile FAB click handler - opens the control panel
   const fab = document.getElementById("mobile-fab");
