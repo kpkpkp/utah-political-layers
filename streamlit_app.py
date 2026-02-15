@@ -65,7 +65,9 @@ body {{
 
 .app {{
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }}
 
 .header {{
@@ -917,19 +919,21 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 */
 @media (max-width: 480px) {{
   .control-panel {{
-    /* Transform to bottom sheet with single column grid */
-    position: fixed !important;
+    /* Bottom sheet using absolute positioning (position:fixed is broken
+       on many mobile browsers due to stacking context issues) */
+    position: absolute !important;
     top: auto !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
     width: 100%;
     max-height: 60vh;
+    max-height: 60dvh;
     min-width: unset;
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
     padding: 8px 16px 16px;
-    transform: translateY(0);
+    transform: none;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
     overflow-x: hidden;
@@ -977,7 +981,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   /* Mobile FAB - floating action button to open controls */
   .mobile-fab {{
     display: flex;
-    position: fixed;
+    position: absolute;
     bottom: 20px;
     right: 20px;
     width: 56px;
@@ -1204,7 +1208,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   /* Show FAB in landscape too */
   .mobile-fab {{
     display: flex;
-    position: fixed;
+    position: absolute;
     bottom: 16px;
     right: 16px;
     width: 48px;
