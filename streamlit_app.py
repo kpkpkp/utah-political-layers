@@ -1614,7 +1614,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     max-width: none;
     min-width: unset;
     border-radius: 10px;
-    max-height: 40vh;
+    max-height: 250px;
     overflow-y: auto;
     padding: 14px 16px;
     font-size: 12px;
@@ -4468,13 +4468,17 @@ class TourController {{
     const callout = this.elements.callout;
     if (!callout) return;
     // In iframes, position:fixed uses the iframe viewport (2000px), not the
-    // visible area (~600px). Place callout at 55% of map height to land in the
-    // lower half of the visible screen on phones.
+    // visible area (~600px). Use map height as proxy and position so the
+    // callout bottom sits at ~70% of map height (within visible area).
     const mapEl = document.getElementById('map');
     const mapH = mapEl ? mapEl.offsetHeight : (screen.availHeight || 700);
-    const top = Math.round(mapH * 0.55);
     callout.style.position = 'fixed';
-    callout.style.top = top + 'px';
+    requestAnimationFrame(() => {{
+      const h = callout.offsetHeight;
+      const safeBottom = Math.round(mapH * 0.7);
+      const top = safeBottom - h;
+      callout.style.top = Math.max(8, top) + 'px';
+    }});
   }}
 
   /**
