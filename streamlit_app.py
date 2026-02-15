@@ -1505,7 +1505,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   right: 0;
   bottom: 0;
   background: transparent;
-  z-index: 9998;
+  z-index: 10010;
   pointer-events: none;
 }}
 
@@ -1525,7 +1525,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   padding: 24px;
-  z-index: 9999;
+  z-index: 10011;
   max-width: 500px;
   min-width: 320px;
   animation: tour-callout-slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
