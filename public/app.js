@@ -1451,7 +1451,8 @@ const init = async () => {
   }
 
   // Start collapsed on mobile so users see the full map + FAB
-  if (panel && window.innerWidth <= 480) {
+  // Use matchMedia (CSS pixels) instead of innerWidth (device pixels on some phones)
+  if (panel && window.matchMedia("(max-width: 480px)").matches) {
     panel.classList.add("collapsed");
   }
 
@@ -1489,8 +1490,8 @@ const init = async () => {
     let touchStartTime = 0;
     let isDragging = false;
 
-    // Check if we're on mobile viewport
-    const isMobile = () => window.innerWidth <= 480;
+    // Check if we're on mobile viewport (use matchMedia for CSS pixels, not device pixels)
+    const isMobile = () => window.matchMedia("(max-width: 480px)").matches;
 
     // Handle touch start
     dragHandle.addEventListener("touchstart", (e) => {
