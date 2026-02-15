@@ -2921,6 +2921,7 @@ const updatePopulationStyles = () => {{
 const outerRingsFromGeometry = (geometry) => {{
   if (!geometry) return [];
   const {{ type, coordinates }} = geometry;
+  if (!coordinates) return [];
   if (type === "Polygon" && coordinates.length) {{
     return [coordinates[0]];
   }}
@@ -3078,6 +3079,7 @@ const ringAreaMeters = (coords) => {{
 const geometryAreaMeters = (geometry) => {{
   if (!geometry) return 0;
   const {{ type, coordinates }} = geometry;
+  if (!coordinates) return 0;
   if (type === "Polygon") {{
     let area = Math.abs(ringAreaMeters(coordinates[0]));
     for (let i = 1; i < coordinates.length; i += 1) {{
@@ -3233,9 +3235,13 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {{
     }}
     const markers = [];
     features.forEach((feature) => {{
-      const marker = buildPopulationMarker(feature, baseColor, cache);
-      if (marker) {{
-        markers.push(marker);
+      try {{
+        const marker = buildPopulationMarker(feature, baseColor, cache);
+        if (marker) {{
+          markers.push(marker);
+        }}
+      }} catch (e) {{
+        // Skip features with bad geometry
       }}
     }});
     if (markers.length) {{
@@ -3302,14 +3308,10 @@ const loadPopulationPoints = async () => {{
     clearInterval(loadingTimer);
     loadingTimer = null;
   }}
-  if (status) status.textContent = "step:color";
   try {{
     const baseColor = mixColor(hexToRgb(populationTintColor), 0.5);
-    if (status) status.textContent = "step:cache";
     const cache = loadPopulationPointCache();
-    if (status) status.textContent = "step:fetch";
     const restCount = await loadPopulationPointsViaRest(baseColor, cache, status);
-    if (status) status.textContent = "step:styles";
     populationState.loaded = true;
     populationState.loading = false;
     updatePopulationStyles();
@@ -3712,31 +3714,15 @@ const init = async () => {{
     }});
   }}
 
-  // Start loading population data in background for instant toggle.
-  // Delay 3s to let map fully initialize, then retry once on failure.
+  // Start loading population data in background for instant toggle
   const bgStatus = document.getElementById("population-status");
-  setTimeout(() => {{
-    if (bgStatus) bgStatus.textContent = "preloading...";
-    loadPopulationPoints().then(() => {{
-      console.log('Background population preload complete');
-    }}).catch((firstError) => {{
-      const step = bgStatus ? bgStatus.textContent : 'unknown';
-      const msg = String(firstError.message || firstError).substring(0, 100);
-      console.warn('Population preload failed at ' + step + ': ' + msg);
-      if (bgStatus) bgStatus.textContent = step + '|' + msg.substring(0, 50);
-      populationState.loading = false;
-      setTimeout(() => {{
-        loadPopulationPoints().then(() => {{
-          console.log('Background population preload complete (retry)');
-        }}).catch((retryError) => {{
-          const msg2 = String(retryError.message || retryError).substring(0, 100);
-          const step2 = bgStatus ? bgStatus.textContent : 'unknown';
-          console.error('Population retry failed at ' + step2 + ': ' + msg2);
-          if (bgStatus) bgStatus.textContent = step2 + '|' + msg2.substring(0, 50);
-        }});
-      }}, 5000);
-    }});
-  }}, 3000);
+  if (bgStatus) bgStatus.textContent = "preloading...";
+  loadPopulationPoints().then(() => {{
+    console.log('Background population preload complete');
+  }}).catch((error) => {{
+    console.error('Background population load failed:', error);
+    if (bgStatus) bgStatus.textContent = 'preload failed';
+  }});
 
   const panel = document.getElementById("controls");
   const panelToggle = document.getElementById("panel-toggle");
