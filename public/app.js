@@ -557,41 +557,31 @@ const attachToggle = (checkboxId, layerKey) => {
   checkbox.addEventListener("change", () => {
     const layer = layerState[layerKey];
     if (!layer) return;
-    if (checkbox.checked) {
-      if (layerKey === "population") {
-        const popStatus = document.getElementById("population-status");
-        // Disable checkbox to prevent double-toggle while rendering
-        checkbox.disabled = true;
-        if (popStatus && populationState.loaded) {
-          popStatus.textContent = "rendering...";
+    if (layerKey === "population") {
+      if (checkbox.checked) {
+        // If data not yet loaded, add to map and start loading
+        if (!map.hasLayer(populationLayer)) {
+          populationLayer.addTo(map);
         }
-        // Defer addTo so "rendering..." text paints first
-        setTimeout(() => {
-          layer.addTo(map);
-          if (!populationState.loaded && !populationState.loading) {
-            loadPopulationPoints().catch((error) => console.error(error));
-          }
-          if (populationState.loaded && populationRenderer && populationRenderer._reset) {
-            populationRenderer._reset();
-          }
-          if (popStatus && populationState.loaded) {
-            const count = populationLayer.getLayers().length;
-            popStatus.textContent = count ? `${count.toLocaleString()} blocks` : "ready";
-          }
-          checkbox.disabled = false;
-          trackEvent('population_toggle', { enabled: true });
-        }, 20);
+        if (!populationState.loaded && !populationState.loading) {
+          loadPopulationPoints().catch((error) => console.error(error));
+        }
+        // Show pane instantly (no re-render needed)
+        populationPane.style.display = "";
+        populationOutlinePane.style.display = "";
+        trackEvent('population_toggle', { enabled: true });
       } else {
-        layer.addTo(map);
-        trackEvent('layer_toggle', { layer: layerKey, enabled: true });
+        // Hide pane instantly — layer stays on map, canvas stays rendered
+        populationPane.style.display = "none";
+        populationOutlinePane.style.display = "none";
+        trackEvent('population_toggle', { enabled: false });
       }
+    } else if (checkbox.checked) {
+      layer.addTo(map);
+      trackEvent('layer_toggle', { layer: layerKey, enabled: true });
     } else {
       map.removeLayer(layer);
-      if (layerKey === "population") {
-        trackEvent('population_toggle', { enabled: false });
-      } else {
-        trackEvent('layer_toggle', { layer: layerKey, enabled: false });
-      }
+      trackEvent('layer_toggle', { layer: layerKey, enabled: false });
     }
   });
 };
@@ -1106,16 +1096,18 @@ const loadPopulationPoints = async () => {
     if (status) {
       status.textContent = restCount ? `${restCount.toLocaleString()} blocks` : "ready";
     }
-    const populationToggle = document.getElementById("toggle-population");
-    if (populationToggle && populationToggle.checked && !map.hasLayer(populationLayer)) {
+    // Add layer to map (hidden) so canvas is pre-rendered for instant toggle
+    if (!map.hasLayer(populationLayer)) {
+      populationPane.style.display = "none";
+      populationOutlinePane.style.display = "none";
       populationLayer.addTo(map);
-      setTimeout(() => {
-        if (populationRenderer && populationRenderer._redraw) {
-          populationRenderer._redraw();
-        }
-        map.invalidateSize();
-      }, 100);
     }
+    const populationToggle = document.getElementById("toggle-population");
+    if (populationToggle && populationToggle.checked) {
+      populationPane.style.display = "";
+      populationOutlinePane.style.display = "";
+    }
+    enablePopulationCanvasClicks();
   } catch (error) {
     populationState.loading = false;
     if (loadingTimer) {
