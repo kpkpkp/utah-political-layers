@@ -405,7 +405,7 @@ class TourController {
     // browser chrome). Align callout bottom to that edge.
     const mapEl = document.getElementById('map');
     const mapH = mapEl ? mapEl.offsetHeight : (screen.availHeight || 700);
-    const visibleBottom = Math.round(mapH * 0.78);
+    const visibleBottom = Math.round(mapH * 0.72);
     callout.style.position = 'fixed';
     requestAnimationFrame(() => {
       const h = callout.offsetHeight;
