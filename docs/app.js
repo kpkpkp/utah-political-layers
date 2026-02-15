@@ -1489,7 +1489,7 @@ const init = async () => {
   }).catch((error) => {
     console.error('Background population load failed:', error);
     // Show truncated error with line hint
-    const msg = (error.stack || error.message || String(error)).split('\n').slice(0, 2).join(' | ');
+    const msg = String(error.stack || error.message || error).substring(0, 120);
     if (bgStatus) bgStatus.textContent = `err: ${msg.slice(0, 80)}`;
   });
 
@@ -1696,7 +1696,7 @@ const saveDefaults = (target) => {
   console.log(`// Defaults for ${target}:`);
   console.log(json);
   navigator.clipboard.writeText(json).then(() => {
-    alert(`Defaults copied to clipboard for ${target}.\n\nCheck console for JSON output.`);
+    alert("Defaults copied to clipboard for " + target + ". Check console for JSON output.");
   }).catch((err) => {
     console.error('Failed to copy to clipboard:', err);
     alert(`Failed to copy to clipboard. Check console for JSON output.`);
