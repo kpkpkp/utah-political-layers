@@ -2417,10 +2417,14 @@ const utahBounds = [[37.0, -114.05], [42.0, -109.04]];
 // In Streamlit iframe, resize map to real viewport so fitBounds works correctly
 const inIframe = window.self !== window.top;
 if (inIframe) {{
-  const realViewport = Math.min(screen.availHeight || 700, window.innerHeight);
   const mapEl = map.getContainer();
-  mapEl.style.height = realViewport + 'px';
-  map.invalidateSize({{ animate: false }});
+  const containerH = mapEl.offsetHeight;
+  const screenH = screen.availHeight || screen.height || 900;
+  // Only resize if container is much taller than the screen (the 2000px iframe case)
+  if (containerH > screenH * 1.5) {{
+    mapEl.style.height = screenH + 'px';
+    map.invalidateSize({{ animate: false }});
+  }}
 }}
 
 const storedView = loadStoredView();
@@ -3097,7 +3101,7 @@ const geometryAreaMeters = (geometry) => {{
 }};
 
 const buildPopulationMarker = (feature, baseColor, cache) => {{
-  if (!feature) return null;
+  if (!feature || !feature.geometry) return null;
   const density = Number(feature.properties?.PopDensity || 0);
   const population = Number(feature.properties?.POP10 || 0);
   const objectId = String(feature.properties?.FID || "");
@@ -3202,6 +3206,13 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {{
   let received = 0;
 
   while (true) {{
+    if (status) {{
+      const total = populationState.totalCount;
+      const fetchMsg = total
+        ? `fetching ${{received.toLocaleString()}} / ${{total.toLocaleString()}}...`
+        : `fetching ${{received.toLocaleString()}}...`;
+      status.textContent = fetchMsg;
+    }}
     const params = new URLSearchParams({{
       where: "STATEFP10='49'",
       outFields: "*",
@@ -3210,11 +3221,21 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {{
       resultOffset: String(offset),
       resultRecordCount: String(pageSize)
     }});
-    const response = await fetch(`${{baseUrl}}?${{params.toString()}}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    let response;
+    try {{
+      response = await fetch(`${{baseUrl}}?${{params.toString()}}`, {{ signal: controller.signal }});
+    }} finally {{
+      clearTimeout(timeout);
+    }}
     if (!response.ok) {{
       throw new Error(`Population query failed: ${{response.status}}`);
     }}
     const data = await response.json();
+    if (data.error) {{
+      throw new Error(`ArcGIS error: ${{data.error.message || JSON.stringify(data.error)}}`);
+    }}
     const features = data.features || [];
     if (!features.length) {{
       break;
@@ -3400,13 +3421,14 @@ const recenterMap = (parties) => {{
   const inIframe = window.self !== window.top;
   if (inIframe) {{
     // Iframe is 2000px tall but only the phone screen is visible.
-    // window.innerHeight returns 2000 (iframe height), not the real viewport.
-    // Use screen.availHeight as the real visible area estimate.
-    const realViewport = Math.min(screen.availHeight || 700, window.innerHeight);
-    // Temporarily resize map to real viewport, fitBounds, leave it.
+    // Resize map to screen height if container is oversized, then fitBounds.
     const mapEl = map.getContainer();
-    mapEl.style.height = realViewport + 'px';
-    map.invalidateSize({{ animate: false }});
+    const containerH = mapEl.offsetHeight;
+    const screenH = screen.availHeight || screen.height || 900;
+    if (containerH > screenH * 1.5) {{
+      mapEl.style.height = screenH + 'px';
+      map.invalidateSize({{ animate: false }});
+    }}
     map.fitBounds(utahBounds, {{ padding: [10, 10], animate: true, duration: 1.0 }});
   }} else {{
     map.fitBounds(utahBounds, {{
