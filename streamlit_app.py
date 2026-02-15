@@ -1607,14 +1607,15 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 @media (max-width: 768px) {{
   .tour-callout {{
     position: fixed;
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    top: 8px !important;
+    bottom: auto !important;
+    left: 8px !important;
+    right: 8px !important;
     transform: none !important;
     max-width: none;
-    border-radius: 12px 12px 0 0;
-    max-height: 70vh;
+    min-width: unset;
+    border-radius: 12px;
+    max-height: 60vh;
     overflow-y: auto;
   }}
 }}
