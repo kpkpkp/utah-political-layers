@@ -394,18 +394,14 @@ class TourController {
     if (!this._isMobile) return;
     const callout = this.elements.callout;
     if (!callout) return;
-    // In iframes, window.innerHeight is the iframe height (2000px), not visible area.
-    // The map element was resized to screen.availHeight in the iframe init code,
-    // so its offsetHeight is the best proxy for visible area.
+    // In iframes, position:fixed uses the iframe viewport (2000px), not the
+    // visible area (~600px). Place callout at 55% of map height to land in the
+    // lower half of the visible screen on phones.
     const mapEl = document.getElementById('map');
-    const visibleH = mapEl ? mapEl.offsetHeight : Math.min(screen.availHeight || 700, window.innerHeight);
-    requestAnimationFrame(() => {
-      const h = callout.offsetHeight;
-      const top = visibleH - h - 8;
-      // Must use position:fixed (not absolute) because body has overflow:hidden
-      callout.style.position = 'fixed';
-      callout.style.top = Math.max(8, top) + 'px';
-    });
+    const mapH = mapEl ? mapEl.offsetHeight : (screen.availHeight || 700);
+    const top = Math.round(mapH * 0.55);
+    callout.style.position = 'fixed';
+    callout.style.top = top + 'px';
   }
 
   /**
