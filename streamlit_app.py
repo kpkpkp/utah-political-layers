@@ -3704,9 +3704,13 @@ const init = async () => {{
   // Start loading population data in background for instant toggle
   const bgStatus = document.getElementById("population-status");
   if (bgStatus) bgStatus.textContent = "preloading...";
-  loadPopulationPoints().catch((error) => {{
+  loadPopulationPoints().then(() => {{
+    console.log('Background population preload complete');
+  }}).catch((error) => {{
     console.error('Background population load failed:', error);
-    if (bgStatus) bgStatus.textContent = `failed: ${{error.message || error}}`;
+    // Show truncated error with line hint
+    const msg = (error.stack || error.message || String(error)).split('\n').slice(0, 2).join(' | ');
+    if (bgStatus) bgStatus.textContent = `err: ${{msg.slice(0, 80)}}`;
   }});
 
   const panel = document.getElementById("controls");
