@@ -1607,16 +1607,17 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 @media (max-width: 768px) {{
   .tour-callout {{
     position: fixed;
-    top: 8px !important;
     bottom: auto !important;
     left: 8px !important;
     right: 8px !important;
-    transform: none !important;
     max-width: none;
     min-width: unset;
     border-radius: 12px;
-    max-height: 60vh;
+    max-height: 50vh;
     overflow-y: auto;
+    transform: scale(0.75) !important;
+    transform-origin: bottom center;
+    padding: 18px;
   }}
 }}
 
@@ -4427,6 +4428,30 @@ class TourController {{
       prevBtn,
       nextBtn
     }};
+
+    this._isMobile = window.matchMedia('(max-width: 768px)').matches;
+  }}
+
+  /**
+   * Position the callout at the bottom of the visible viewport.
+   * Uses screen.availHeight inside iframes where innerHeight is oversized.
+   */
+  positionCallout() {{
+    if (!this._isMobile) return;
+    const callout = this.elements.callout;
+    if (!callout) return;
+    const inIframe = window.self !== window.top;
+    const visibleH = inIframe
+      ? (screen.availHeight || screen.height || 700)
+      : window.innerHeight;
+    // After scale(0.75) with transform-origin: bottom center,
+    // the visual bottom aligns with the element's CSS bottom.
+    // Place element so its bottom sits 8px above viewport bottom.
+    requestAnimationFrame(() => {{
+      const scaledH = callout.offsetHeight * 0.75;
+      const top = visibleH - scaledH - 8;
+      callout.style.top = Math.max(8, top) + 'px';
+    }});
   }}
 
   /**
@@ -4617,6 +4642,7 @@ class TourController {{
 
     // Update UI
     this.updateStepUI(step);
+    this.positionCallout();
 
     // Call onEnter for new step
     if (step.onEnter) {{

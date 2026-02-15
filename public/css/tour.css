@@ -113,16 +113,17 @@
 @media (max-width: 768px) {
   .tour-callout {
     position: fixed;
-    top: 8px !important;
     bottom: auto !important;
     left: 8px !important;
     right: 8px !important;
-    transform: none !important;
     max-width: none;
     min-width: unset;
     border-radius: 12px;
-    max-height: 60vh;
+    max-height: 50vh;
     overflow-y: auto;
+    transform: scale(0.75) !important;
+    transform-origin: bottom center;
+    padding: 18px;
   }
 }
 
