@@ -4467,19 +4467,16 @@ class TourController {{
     if (!this._isMobile) return;
     const callout = this.elements.callout;
     if (!callout) return;
-    const vv = window.visualViewport;
-    const visibleH = vv ? vv.height : window.innerHeight;
+    // In iframes, window.innerHeight is the iframe height (2000px), not visible area.
+    // screen.availHeight gives the real device screen height in CSS pixels.
+    // Use the smallest value as best estimate of visible area.
     const screenH = screen.availHeight || screen.height || 700;
-    const innerH = window.innerHeight;
-    // Debug: show values in callout title
-    const dbg = document.getElementById('tour-title');
-    if (dbg) dbg.textContent += ` [vv:${{vv?Math.round(vv.height):'no'}} scr:${{screenH}} inn:${{innerH}} mob:${{this._isMobile}}]`;
+    const visibleH = Math.min(screenH, window.innerHeight);
     requestAnimationFrame(() => {{
       const h = callout.offsetHeight;
-      // Use smallest reasonable height as visible area estimate
-      const best = Math.min(visibleH, screenH, innerH);
-      const top = best - h - 8;
-      callout.style.position = 'absolute';
+      const top = visibleH - h - 8;
+      // Must use position:fixed (not absolute) because body has overflow:hidden
+      callout.style.position = 'fixed';
       callout.style.top = Math.max(8, top) + 'px';
     }});
   }}
