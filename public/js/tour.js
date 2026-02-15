@@ -697,8 +697,9 @@ class TourController {
     // Update title
     title.textContent = step.title;
 
-    // Update content
+    // Update content, then re-append nav buttons inline
     content.innerHTML = step.content;
+    content.appendChild(this.elements.buttons);
 
     // Update button visibility
     prevBtn.style.display = this.currentStepIndex > 0 ? 'inline-block' : 'none';
