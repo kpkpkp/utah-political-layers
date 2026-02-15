@@ -394,13 +394,18 @@ class TourController {
     if (!this._isMobile) return;
     const callout = this.elements.callout;
     if (!callout) return;
-    // visualViewport gives real visible height even inside iframes
     const vv = window.visualViewport;
     const visibleH = vv ? vv.height : window.innerHeight;
-    const scrollY = vv ? vv.offsetTop : window.scrollY;
+    const screenH = screen.availHeight || screen.height || 700;
+    const innerH = window.innerHeight;
+    // Debug: show values in callout title
+    const dbg = document.getElementById('tour-title');
+    if (dbg) dbg.textContent += ` [vv:${vv?Math.round(vv.height):'no'} scr:${screenH} inn:${innerH} mob:${this._isMobile}]`;
     requestAnimationFrame(() => {
       const h = callout.offsetHeight;
-      const top = scrollY + visibleH - h - 8;
+      // Use smallest reasonable height as visible area estimate
+      const best = Math.min(visibleH, screenH, innerH);
+      const top = best - h - 8;
       callout.style.position = 'absolute';
       callout.style.top = Math.max(8, top) + 'px';
     });
