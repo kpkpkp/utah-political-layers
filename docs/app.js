@@ -1065,11 +1065,14 @@ const loadPopulationPoints = async () => {
     clearInterval(loadingTimer);
     loadingTimer = null;
   }
-  console.log("Loading population points...");
+  if (status) status.textContent = "step:color";
   try {
     const baseColor = mixColor(hexToRgb(populationTintColor), 0.5);
+    if (status) status.textContent = "step:cache";
     const cache = loadPopulationPointCache();
+    if (status) status.textContent = "step:fetch";
     const restCount = await loadPopulationPointsViaRest(baseColor, cache, status);
+    if (status) status.textContent = "step:styles";
     populationState.loaded = true;
     populationState.loading = false;
     updatePopulationStyles();
@@ -1080,12 +1083,10 @@ const loadPopulationPoints = async () => {
     const populationToggle = document.getElementById("toggle-population");
     if (populationToggle && populationToggle.checked && !map.hasLayer(populationLayer)) {
       populationLayer.addTo(map);
-      // Trigger a map redraw to render the canvas markers
       setTimeout(() => {
         if (populationRenderer && populationRenderer._redraw) {
           populationRenderer._redraw();
         }
-        // Force map to redraw
         map.invalidateSize();
       }, 100);
     }
@@ -1482,15 +1483,19 @@ const init = async () => {
     loadPopulationPoints().then(() => {
       console.log('Background population preload complete');
     }).catch((firstError) => {
-      console.warn('Population preload attempt 1 failed, retrying...', firstError);
-      if (bgStatus) bgStatus.textContent = "retrying...";
+      const step = bgStatus ? bgStatus.textContent : 'unknown';
+      const msg = String(firstError.message || firstError).substring(0, 100);
+      console.warn('Population preload failed at ' + step + ': ' + msg);
+      if (bgStatus) bgStatus.textContent = step + '|' + msg.substring(0, 50);
       populationState.loading = false;
       setTimeout(() => {
         loadPopulationPoints().then(() => {
           console.log('Background population preload complete (retry)');
         }).catch((retryError) => {
-          console.error('Background population load failed:', retryError);
-          if (bgStatus) bgStatus.textContent = 'preload failed';
+          const msg2 = String(retryError.message || retryError).substring(0, 100);
+          const step2 = bgStatus ? bgStatus.textContent : 'unknown';
+          console.error('Population retry failed at ' + step2 + ': ' + msg2);
+          if (bgStatus) bgStatus.textContent = step2 + '|' + msg2.substring(0, 50);
         });
       }, 5000);
     });
