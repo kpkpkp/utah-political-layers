@@ -1474,17 +1474,27 @@ const init = async () => {
     });
   }
 
-  // Start loading population data in background for instant toggle
+  // Start loading population data in background for instant toggle.
+  // Delay 3s to let map fully initialize, then retry once on failure.
   const bgStatus = document.getElementById("population-status");
-  if (bgStatus) bgStatus.textContent = "preloading...";
-  loadPopulationPoints().then(() => {
-    console.log('Background population preload complete');
-  }).catch((error) => {
-    console.error('Background population load failed:', error);
-    // Show truncated error with line hint
-    const msg = String(error.stack || error.message || error).substring(0, 120);
-    if (bgStatus) bgStatus.textContent = `err: ${msg.slice(0, 80)}`;
-  });
+  setTimeout(() => {
+    if (bgStatus) bgStatus.textContent = "preloading...";
+    loadPopulationPoints().then(() => {
+      console.log('Background population preload complete');
+    }).catch((firstError) => {
+      console.warn('Population preload attempt 1 failed, retrying...', firstError);
+      if (bgStatus) bgStatus.textContent = "retrying...";
+      populationState.loading = false;
+      setTimeout(() => {
+        loadPopulationPoints().then(() => {
+          console.log('Background population preload complete (retry)');
+        }).catch((retryError) => {
+          console.error('Background population load failed:', retryError);
+          if (bgStatus) bgStatus.textContent = 'preload failed';
+        });
+      }, 5000);
+    });
+  }, 3000);
 
   const panel = document.getElementById("controls");
   const panelToggle = document.getElementById("panel-toggle");
