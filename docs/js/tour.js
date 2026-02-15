@@ -394,13 +394,14 @@ class TourController {
     if (!this._isMobile) return;
     const callout = this.elements.callout;
     if (!callout) return;
-    const inIframe = window.self !== window.top;
-    const visibleH = inIframe
-      ? (screen.availHeight || screen.height || 700)
-      : window.innerHeight;
+    // visualViewport gives real visible height even inside iframes
+    const vv = window.visualViewport;
+    const visibleH = vv ? vv.height : window.innerHeight;
+    const scrollY = vv ? vv.offsetTop : window.scrollY;
     requestAnimationFrame(() => {
       const h = callout.offsetHeight;
-      const top = visibleH - h - 8;
+      const top = scrollY + visibleH - h - 8;
+      callout.style.position = 'absolute';
       callout.style.top = Math.max(8, top) + 'px';
     });
   }
