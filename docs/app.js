@@ -1465,8 +1465,11 @@ const init = async () => {
   }
 
   // Start loading population data in background for instant toggle
+  const bgStatus = document.getElementById("population-status");
+  if (bgStatus) bgStatus.textContent = "preloading...";
   loadPopulationPoints().catch((error) => {
     console.error('Background population load failed:', error);
+    if (bgStatus) bgStatus.textContent = "preload failed";
   });
 
   const panel = document.getElementById("controls");
