@@ -395,10 +395,10 @@ class TourController {
     const callout = this.elements.callout;
     if (!callout) return;
     // In iframes, window.innerHeight is the iframe height (2000px), not visible area.
-    // screen.availHeight gives the real device screen height in CSS pixels.
-    // Use the smallest value as best estimate of visible area.
-    const screenH = screen.availHeight || screen.height || 700;
-    const visibleH = Math.min(screenH, window.innerHeight);
+    // The map element was resized to screen.availHeight in the iframe init code,
+    // so its offsetHeight is the best proxy for visible area.
+    const mapEl = document.getElementById('map');
+    const visibleH = mapEl ? mapEl.offsetHeight : Math.min(screen.availHeight || 700, window.innerHeight);
     requestAnimationFrame(() => {
       const h = callout.offsetHeight;
       const top = visibleH - h - 8;
