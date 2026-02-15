@@ -180,17 +180,15 @@ window.map = map;
 // Utah's approximate bounds: [south, west] to [north, east]
 const utahBounds = [[37.0, -114.05], [42.0, -109.04]];
 
-// In Streamlit iframe, resize map to real viewport so fitBounds works correctly
+// In Streamlit iframe, resize map to real viewport so fitBounds works correctly.
+// The iframe is height=2000 but only ~900px of real screen is visible.
+// screen.availHeight gives the real device screen height.
 const inIframe = window.self !== window.top;
 if (inIframe) {
   const mapEl = map.getContainer();
-  const containerH = mapEl.offsetHeight;
   const screenH = screen.availHeight || screen.height || 900;
-  // Only resize if container is much taller than the screen (the 2000px iframe case)
-  if (containerH > screenH * 1.5) {
-    mapEl.style.height = screenH + 'px';
-    map.invalidateSize({ animate: false });
-  }
+  mapEl.style.height = screenH + 'px';
+  map.invalidateSize({ animate: false });
 }
 
 const storedView = loadStoredView();
@@ -1184,14 +1182,11 @@ const recenterMap = (parties) => {
   const inIframe = window.self !== window.top;
   if (inIframe) {
     // Iframe is 2000px tall but only the phone screen is visible.
-    // Resize map to screen height if container is oversized, then fitBounds.
+    // Resize map to real screen height, then fitBounds.
     const mapEl = map.getContainer();
-    const containerH = mapEl.offsetHeight;
     const screenH = screen.availHeight || screen.height || 900;
-    if (containerH > screenH * 1.5) {
-      mapEl.style.height = screenH + 'px';
-      map.invalidateSize({ animate: false });
-    }
+    mapEl.style.height = screenH + 'px';
+    map.invalidateSize({ animate: false });
     map.fitBounds(utahBounds, { padding: [10, 10], animate: true, duration: 1.0 });
   } else {
     map.fitBounds(utahBounds, {
