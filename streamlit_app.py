@@ -1616,7 +1616,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     border-radius: 10px;
     max-height: none;
     overflow-y: auto;
-    padding: 14px 16px;
+    padding: 12px 16px 8px;
     font-size: 12px;
   }}
   .tour-callout .tour-title {{
@@ -1629,6 +1629,12 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
   .tour-callout .tour-content p {{
     margin: 4px 0;
+  }}
+  .tour-callout .tour-content p:last-of-type {{
+    margin-bottom: 0;
+  }}
+  .tour-callout .tour-content {{
+    margin-bottom: 0;
   }}
   .tour-callout .tour-content ul {{
     margin: 4px 0;
