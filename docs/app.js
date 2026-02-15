@@ -999,10 +999,13 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
     } catch (jsonErr) {
       throw new Error("json parse: " + (jsonErr.message || jsonErr));
     }
+    if (!data) {
+      throw new Error("null response data");
+    }
     if (data.error) {
       throw new Error("arcgis: " + (data.error.message || "unknown"));
     }
-    const features = data.features || [];
+    const features = (data && data.features) || [];
     if (!features.length) {
       break;
     }
@@ -1018,26 +1021,28 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
       }
     });
     if (markers.length) {
-      await new Promise((resolve) => {
+      await new Promise((resolve, reject) => {
         const chunkSize = 400;
         let index = 0;
         const addChunk = () => {
-          const end = Math.min(index + chunkSize, markers.length);
-          for (; index < end; index += 1) {
-            populationLayer.addLayer(markers[index]);
-          }
-          // Force renderer to draw this chunk
-          if (populationRenderer && populationRenderer._redraw) {
-            populationRenderer._redraw();
-          }
-          // Enable canvas clicks after first chunk is added
-          if (index === chunkSize) {
-            enablePopulationCanvasClicks();
-          }
-          if (index < markers.length) {
-            requestAnimationFrame(addChunk);
-          } else {
-            resolve();
+          try {
+            const end = Math.min(index + chunkSize, markers.length);
+            for (; index < end; index += 1) {
+              populationLayer.addLayer(markers[index]);
+            }
+            if (map.hasLayer(populationLayer) && populationRenderer && populationRenderer._redraw) {
+              populationRenderer._redraw();
+            }
+            if (map.hasLayer(populationLayer) && index === chunkSize) {
+              enablePopulationCanvasClicks();
+            }
+            if (index < markers.length) {
+              requestAnimationFrame(addChunk);
+            } else {
+              resolve();
+            }
+          } catch (chunkErr) {
+            reject(chunkErr);
           }
         };
         addChunk();
