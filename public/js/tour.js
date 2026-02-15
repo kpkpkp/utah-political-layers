@@ -323,11 +323,24 @@ class TourController {
     callout.className = 'tour-callout';
     document.body.appendChild(callout);
 
+    // Create header row (progress + skip)
+    const header = document.createElement('div');
+    header.className = 'tour-header';
+    callout.appendChild(header);
+
     // Create progress indicator
     const progress = document.createElement('div');
     progress.id = 'tour-progress';
     progress.className = 'tour-progress';
-    callout.appendChild(progress);
+    header.appendChild(progress);
+
+    // Create Skip button (upper-right)
+    const skipBtn = document.createElement('button');
+    skipBtn.id = 'tour-skip';
+    skipBtn.className = 'tour-button tour-skip';
+    skipBtn.textContent = 'Skip';
+    skipBtn.onclick = () => this.skip();
+    header.appendChild(skipBtn);
 
     // Create title
     const title = document.createElement('h2');
@@ -341,25 +354,17 @@ class TourController {
     content.className = 'tour-content';
     callout.appendChild(content);
 
-    // Create button container
-    const buttons = document.createElement('div');
+    // Create nav buttons (inline after content)
+    const buttons = document.createElement('span');
     buttons.id = 'tour-buttons';
     buttons.className = 'tour-buttons';
-    callout.appendChild(buttons);
-
-    // Create Skip button
-    const skipBtn = document.createElement('button');
-    skipBtn.id = 'tour-skip';
-    skipBtn.className = 'tour-button tour-skip';
-    skipBtn.textContent = 'Skip Tour';
-    skipBtn.onclick = () => this.skip();
-    buttons.appendChild(skipBtn);
+    content.appendChild(buttons);
 
     // Create Previous button
     const prevBtn = document.createElement('button');
     prevBtn.id = 'tour-prev';
     prevBtn.className = 'tour-button tour-prev';
-    prevBtn.textContent = '← Previous';
+    prevBtn.textContent = '← Prev';
     prevBtn.onclick = () => this.previous();
     buttons.appendChild(prevBtn);
 

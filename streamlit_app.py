@@ -1639,12 +1639,16 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     margin-bottom: 4px;
   }}
   .tour-callout .tour-buttons {{
-    margin-top: 8px;
-    gap: 6px;
+    margin-left: 6px;
+    gap: 4px;
   }}
   .tour-callout .tour-button {{
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 11px;
+  }}
+  .tour-callout .tour-skip {{
+    padding: 3px 8px;
+    font-size: 10px;
   }}
 }}
 
@@ -1702,12 +1706,20 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   font-style: italic;
 }}
 
+/* ===== Tour Header (progress + skip) ===== */
+.tour-header {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}}
+
 /* ===== Tour Buttons ===== */
 .tour-buttons {{
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+  display: inline-flex;
+  gap: 8px;
   align-items: center;
+  margin-left: 8px;
 }}
 
 .tour-button {{
@@ -1759,12 +1771,12 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   background: #707b7c;
 }}
 
-/* Skip Button */
+/* Skip Button (upper-right, compact) */
 .tour-skip {{
   background: transparent;
   color: #7f8c8d;
-  margin-right: auto;
-  padding: 10px 16px;
+  padding: 4px 10px;
+  font-size: 12px;
   border: 1px solid #bdc3c7;
 }}
 
@@ -1817,20 +1829,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
 
   .tour-buttons {{
-    flex-wrap: nowrap;
-  }}
-
-  .tour-skip {{
-    order: 1;
-    margin-right: auto;
-  }}
-
-  .tour-prev {{
-    order: 2;
-  }}
-
-  .tour-next {{
-    order: 3;
+    display: inline-flex;
   }}
 }}
 
@@ -4392,11 +4391,24 @@ class TourController {{
     callout.className = 'tour-callout';
     document.body.appendChild(callout);
 
+    // Create header row (progress + skip)
+    const header = document.createElement('div');
+    header.className = 'tour-header';
+    callout.appendChild(header);
+
     // Create progress indicator
     const progress = document.createElement('div');
     progress.id = 'tour-progress';
     progress.className = 'tour-progress';
-    callout.appendChild(progress);
+    header.appendChild(progress);
+
+    // Create Skip button (upper-right)
+    const skipBtn = document.createElement('button');
+    skipBtn.id = 'tour-skip';
+    skipBtn.className = 'tour-button tour-skip';
+    skipBtn.textContent = 'Skip';
+    skipBtn.onclick = () => this.skip();
+    header.appendChild(skipBtn);
 
     // Create title
     const title = document.createElement('h2');
@@ -4410,25 +4422,17 @@ class TourController {{
     content.className = 'tour-content';
     callout.appendChild(content);
 
-    // Create button container
-    const buttons = document.createElement('div');
+    // Create nav buttons (inline after content)
+    const buttons = document.createElement('span');
     buttons.id = 'tour-buttons';
     buttons.className = 'tour-buttons';
-    callout.appendChild(buttons);
-
-    // Create Skip button
-    const skipBtn = document.createElement('button');
-    skipBtn.id = 'tour-skip';
-    skipBtn.className = 'tour-button tour-skip';
-    skipBtn.textContent = 'Skip Tour';
-    skipBtn.onclick = () => this.skip();
-    buttons.appendChild(skipBtn);
+    content.appendChild(buttons);
 
     // Create Previous button
     const prevBtn = document.createElement('button');
     prevBtn.id = 'tour-prev';
     prevBtn.className = 'tour-button tour-prev';
-    prevBtn.textContent = '← Previous';
+    prevBtn.textContent = '← Prev';
     prevBtn.onclick = () => this.previous();
     buttons.appendChild(prevBtn);
 

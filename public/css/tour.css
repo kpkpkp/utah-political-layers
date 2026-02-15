@@ -145,12 +145,16 @@
     margin-bottom: 4px;
   }
   .tour-callout .tour-buttons {
-    margin-top: 8px;
-    gap: 6px;
+    margin-left: 6px;
+    gap: 4px;
   }
   .tour-callout .tour-button {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  .tour-callout .tour-skip {
+    padding: 3px 8px;
+    font-size: 10px;
   }
 }
 
@@ -208,12 +212,20 @@
   font-style: italic;
 }
 
+/* ===== Tour Header (progress + skip) ===== */
+.tour-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
 /* ===== Tour Buttons ===== */
 .tour-buttons {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+  display: inline-flex;
+  gap: 8px;
   align-items: center;
+  margin-left: 8px;
 }
 
 .tour-button {
@@ -265,12 +277,12 @@
   background: #707b7c;
 }
 
-/* Skip Button */
+/* Skip Button (upper-right, compact) */
 .tour-skip {
   background: transparent;
   color: #7f8c8d;
-  margin-right: auto;
-  padding: 10px 16px;
+  padding: 4px 10px;
+  font-size: 12px;
   border: 1px solid #bdc3c7;
 }
 
@@ -323,20 +335,7 @@
   }
 
   .tour-buttons {
-    flex-wrap: nowrap;
-  }
-
-  .tour-skip {
-    order: 1;
-    margin-right: auto;
-  }
-
-  .tour-prev {
-    order: 2;
-  }
-
-  .tour-next {
-    order: 3;
+    display: inline-flex;
   }
 }
 
