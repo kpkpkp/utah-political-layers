@@ -1726,6 +1726,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   gap: 8px;
   align-items: center;
   margin-left: 8px;
+  vertical-align: baseline;
 }}
 
 .tour-button {{
