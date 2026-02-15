@@ -3219,14 +3219,7 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {{
       resultOffset: String(offset),
       resultRecordCount: String(pageSize)
     }});
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-    let response;
-    try {{
-      response = await fetch(`${{baseUrl}}?${{params.toString()}}`, {{ signal: controller.signal }});
-    }} finally {{
-      clearTimeout(timeout);
-    }}
+    const response = await fetch(`${{baseUrl}}?${{params.toString()}}`);
     if (!response.ok) {{
       throw new Error(`Population query failed: ${{response.status}}`);
     }}
