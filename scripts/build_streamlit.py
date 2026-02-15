@@ -153,14 +153,13 @@ def build() -> str:
     position: absolute !important;
     top: 8px !important;
     bottom: auto !important;
-    right: 8px !important;
-    left: auto !important;
-    width: 95vw !important;
-    max-width: 440px !important;
-    max-height: 80vh !important;
+    left: 8px !important;
+    right: auto !important;
+    width: 220px !important;
+    max-height: 70vh !important;
     min-width: unset !important;
     border-radius: 10px !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
     padding: 10px 12px !important;
     transform: none !important;
     overflow-y: auto !important;
@@ -172,7 +171,9 @@ def build() -> str:
       "legend" !important;
   }
   .control-panel.collapsed {
-    transform: translateX(calc(100% - 28px)) !important;
+    transform: translateX(-110%) !important;
+    opacity: 0;
+    pointer-events: none;
   }
   /* Show desktop toggle/corner buttons instead of mobile FAB */
   .panel-toggle,

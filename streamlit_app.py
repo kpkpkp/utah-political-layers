@@ -911,28 +911,29 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 }}
 
 /* Phone Portrait: <= 480px
-   - Bottom sheet layout
+   - Upper-left panel overlay (fits in Utah's NE empty corner)
    - Single column grid layout
    - Touch-friendly spacing
-   - Drag handle for visual affordance
+   - Close button to dismiss, FAB to reopen
 */
 @media (max-width: 480px) {{
   .control-panel {{
-    /* Bottom sheet fixed to viewport (same as tour overlay which works) */
+    /* Upper-left panel to fit in map's empty NE-Utah corner */
     position: fixed !important;
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100%;
-    max-height: 60vh;
-    max-height: 60dvh;
+    top: 8px !important;
+    left: 8px !important;
+    bottom: auto !important;
+    right: auto !important;
+    width: 220px !important;
+    max-height: 70vh;
+    max-height: 70dvh;
     min-width: unset;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
-    padding: 8px 16px 16px;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px 12px;
     transform: none;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
     overflow-y: auto;
     overflow-x: hidden;
     z-index: 10001 !important;
@@ -941,16 +942,15 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     grid-template-areas:
       "header"
       "layers"
-      "legend"
-      "fills";
-    gap: 12px;
+      "legend";
+    gap: 8px;
+    font-size: 12px;
   }}
 
   /* Hide save defaults on mobile */
   .panel-save-defaults {{
     display: none !important;
   }}
-
 
   /* Remove borders on mobile - column borders not needed in single column */
   .panel-layers {{
@@ -965,25 +965,29 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     padding-right: 0;
   }}
 
-  /* Collapsed state shows only drag handle area (~48px) */
+  /* Collapsed state: slide off-screen to the left */
   .control-panel.collapsed {{
-    transform: translateY(calc(100% - 48px)) !important;
+    transform: translateX(-110%) !important;
+    opacity: 0;
+    pointer-events: none;
   }}
 
-  /* Hide the side toggle and corner buttons on mobile */
+  /* Hide the desktop side toggle and corner buttons on mobile */
   .panel-toggle,
   .panel-corner-btn {{
     display: none;
   }}
 
-  /* Mobile FAB - floating action button to open controls */
+  /* Mobile FAB - floating action button to reopen panel */
   .mobile-fab {{
     display: flex;
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
+    top: 12px;
+    left: 12px;
+    bottom: auto;
+    right: auto;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: #ffffff;
     border: 2px solid #d0d0d0;
@@ -991,7 +995,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     z-index: 10000;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
     transition: opacity 0.3s ease, transform 0.3s ease;
   }}
@@ -1013,29 +1017,29 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     transform: scale(0.8);
   }}
 
-  /* Mobile bottom sheet header */
+  /* Mobile header with close button */
   .panel-mobile-header {{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 4px 4px;
+    padding: 0 0 4px;
   }}
 
   .panel-mobile-title {{
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     color: #1b1b1b;
   }}
 
   .panel-close-btn {{
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 18px;
     color: #666;
-    padding: 8px;
+    padding: 6px;
     cursor: pointer;
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 36px;
+    min-height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1052,110 +1056,58 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     outline-offset: 2px;
   }}
 
-  /* Drag handle styling - provides visual affordance for bottom sheet */
+  /* Hide drag handle on mobile - not a bottom sheet */
   .panel-drag-handle {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: auto;
-    background: transparent;
-    margin: 4px auto 8px;
-    padding: 4px 0;
-    cursor: grab;
+    display: none;
   }}
 
-  .panel-drag-handle:active {{
-    cursor: grabbing;
-  }}
-
-  .drag-indicator {{
-    width: 48px;
-    height: 5px;
-    background: #c0c0c0;
-    border-radius: 3px;
-    transition: background 0.2s ease;
-  }}
-
-  .panel-drag-handle:hover .drag-indicator {{
-    background: #a0a0a0;
-  }}
-
-  .panel-drag-handle:active .drag-indicator {{
-    background: #808080;
-  }}
-
-  /* Touch-friendly targets (44px minimum) */
+  /* Compact touch targets for upper-left panel */
   .toggle {{
-    padding: 4px 0;
-    min-height: 44px;
+    padding: 2px 0;
+    min-height: 36px;
   }}
 
   .toggle input[type="checkbox"] {{
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }}
 
-  /* Layer row adjustments for wrapping */
   .layer-row {{
     flex-wrap: wrap;
-    min-height: 44px;
+    min-height: 36px;
   }}
 
   .layer-row input[type="color"] {{
-    width: 40px;
-    height: 32px;
+    width: 32px;
+    height: 24px;
   }}
 
-  /* Full width tile selector */
   .tile-select {{
     width: 100%;
-    height: 36px;
-    font-size: 12px;
+    height: 30px;
+    font-size: 11px;
     margin-top: 4px;
   }}
 
-  /* Larger slider for better touch control */
   .slider-row input[type="range"] {{
-    height: 32px;
+    height: 28px;
   }}
 
-  /* Panel sections spacing */
-  .panel-section {{
-    margin-bottom: 8px;
-  }}
-
-  .panel-section + .panel-section {{
-    margin-top: 12px;
-    padding-top: 10px;
-  }}
-
-  /* Color picker rows */
   .color-picker-row {{
-    min-height: 44px;
+    min-height: 36px;
   }}
 
   .color-picker-row input[type="color"] {{
-    width: 40px;
-    height: 32px;
+    width: 32px;
+    height: 24px;
   }}
 
-  /* Reset button */
   .recenter-map-btn {{
-    min-height: 44px;
-    font-size: 14px;
+    min-height: 36px;
+    font-size: 12px;
   }}
 
-  /* Adjust Leaflet controls position to avoid bottom sheet */
-  .leaflet-bottom-left {{
-    bottom: calc(60vh + 20px) !important;
-    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }}
-
-  /* When collapsed, Leaflet controls sit above the FAB */
-  body:has(.control-panel.collapsed) .leaflet-bottom-left {{
-    bottom: 90px !important;
-  }}
+  /* Leaflet controls stay at default position - no bottom sheet to avoid */
 }}
 
 /* Phone Landscape: <= 500px height with landscape orientation
@@ -1927,14 +1879,13 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     position: absolute !important;
     top: 8px !important;
     bottom: auto !important;
-    right: 8px !important;
-    left: auto !important;
-    width: 95vw !important;
-    max-width: 440px !important;
-    max-height: 80vh !important;
+    left: 8px !important;
+    right: auto !important;
+    width: 220px !important;
+    max-height: 70vh !important;
     min-width: unset !important;
     border-radius: 10px !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
     padding: 10px 12px !important;
     transform: none !important;
     overflow-y: auto !important;
@@ -1946,7 +1897,9 @@ body.is-localhost .panel-save-defaults.localhost-only {{
       "legend" !important;
   }}
   .control-panel.collapsed {{
-    transform: translateX(calc(100% - 28px)) !important;
+    transform: translateX(-110%) !important;
+    opacity: 0;
+    pointer-events: none;
   }}
   /* Show desktop toggle/corner buttons instead of mobile FAB */
   .panel-toggle,
