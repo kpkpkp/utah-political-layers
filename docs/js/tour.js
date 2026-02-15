@@ -395,16 +395,23 @@ class TourController {
     const callout = this.elements.callout;
     if (!callout) return;
     // In iframes, position:fixed uses the iframe viewport (2000px), not the
-    // visible area (~600px). Use map height as proxy and position so the
-    // callout bottom sits at ~70% of map height (within visible area).
+    // visible area. Use map height as proxy: the visible phone screen bottom
+    // is approximately 68% of map height (map = screen.availHeight, minus
+    // browser chrome). Align callout bottom to that edge.
     const mapEl = document.getElementById('map');
     const mapH = mapEl ? mapEl.offsetHeight : (screen.availHeight || 700);
+    const visibleBottom = Math.round(mapH * 0.68);
     callout.style.position = 'fixed';
     requestAnimationFrame(() => {
       const h = callout.offsetHeight;
-      const safeBottom = Math.round(mapH * 0.7);
-      const top = safeBottom - h;
+      const top = visibleBottom - h;
       callout.style.top = Math.max(8, top) + 'px';
+      // If content is taller than available space, constrain and scroll
+      if (top < 8) {
+        callout.style.top = '8px';
+        callout.style.maxHeight = (visibleBottom - 16) + 'px';
+        callout.style.overflowY = 'auto';
+      }
     });
   }
 
