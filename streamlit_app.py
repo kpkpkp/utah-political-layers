@@ -4765,9 +4765,13 @@ class TourController {{
     // Update title
     title.textContent = step.title;
 
-    // Update content, then re-append nav buttons inline
+    // Update content, then inject nav buttons inline with last text
     content.innerHTML = step.content;
-    content.appendChild(this.elements.buttons);
+    const lastBlock = content.querySelector('p:last-of-type') ||
+                      content.querySelector('li:last-of-type') ||
+                      content;
+    lastBlock.appendChild(document.createTextNode(' '));
+    lastBlock.appendChild(this.elements.buttons);
 
     // Update button visibility
     prevBtn.style.display = this.currentStepIndex > 0 ? 'inline-block' : 'none';
