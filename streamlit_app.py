@@ -2442,7 +2442,8 @@ const populationOutlinePane = map.createPane("populationOutlinePane");
 populationOutlinePane.style.zIndex = "460";  // Just above population pane
 populationOutlinePane.style.pointerEvents = "auto";  // Allow clicks on outline to dismiss it
 
-const populationRenderer = L.canvas({{ padding: 0.5, pane: "populationPane" }});
+const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+const populationRenderer = L.canvas({{ padding: 0.5, pane: "populationPane", tolerance: isTouchDevice ? 12 : 0 }});
 const populationLayer = L.layerGroup();
 let populationHighlight = null;
 
