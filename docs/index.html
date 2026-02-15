@@ -10,8 +10,8 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""
   />
-  <link rel="stylesheet" href="styles.css?v=20260204-corner" />
-  <link rel="stylesheet" href="css/tour.css?v=20260204-corner" />
+  <link rel="stylesheet" href="styles.css?v=20260214-mobile" />
+  <link rel="stylesheet" href="css/tour.css?v=20260214-mobile" />
   <!-- Google Analytics 4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
@@ -48,7 +48,7 @@
       <div class="panel-header">
         <div class="panel-title">Utah Political Layers</div>
         <button class="tour-btn" id="tour-btn">Take Tour</button>
-        <button class="recenter-map-btn" id="recenter-map-btn">Recenter Map</button>
+        <button class="recenter-map-btn" id="recenter-map-btn">Recenter</button>
         <a class="feedback-btn" href="https://github.com/kpkpkp/utah-political-layers/issues/new?template=bug_report.md&labels=bug" target="_blank" rel="noopener">Feedback</a>
       </div>
 
@@ -111,17 +111,19 @@
 
       <!-- Right column: Party legend + sliders -->
       <div class="panel-legend">
-        <div class="panel-title">Party</div>
+        <div class="panel-title party-title-row">
+          Parties
+          <label class="toggle fill-toggle">
+            <span>Fill on map</span>
+            <input type="checkbox" id="toggle-party-fill" />
+          </label>
+        </div>
         <div class="legend">
           <div class="legend-row"><span class="swatch republican"></span>Republican</div>
           <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
           <div class="legend-row"><span class="swatch forward"></span>Forward</div>
-          <div class="legend-row"><span class="swatch other"></span>Other / Unknown</div>
+          <div class="legend-row other-row" id="other-legend-row"><span class="swatch other"></span>Other / Unknown</div>
         </div>
-        <label class="toggle fill-toggle">
-          <input type="checkbox" id="toggle-party-fill" />
-          <span>Fill on map</span>
-        </label>
         <details class="appearance-group">
           <summary>Appearance</summary>
           <div class="appearance-content">
@@ -182,7 +184,7 @@
     crossorigin=""
   ></script>
   <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
-  <script src="app.js?v=20260204-corner"></script>
-  <script src="js/tour.js?v=20260204-corner"></script>
+  <script src="app.js?v=20260214-mobile"></script>
+  <script src="js/tour.js?v=20260214-mobile"></script>
 </body>
 </html>

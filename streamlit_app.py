@@ -513,11 +513,18 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 }}
 
 .swatch.forward {{
-  background: #8b5cf6;
+  background: #808080;
 }}
 
 .swatch.other {{
-  background: #9e9e9e;
+  background: #8B7D6B;
+}}
+
+.legend-row.other-row {{
+  display: none;
+}}
+.legend-row.other-row.show {{
+  display: flex;
 }}
 
 .source {{
@@ -1391,10 +1398,21 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 }}
 
 /* ===== Fill on map toggle ===== */
+.party-title-row {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}}
+
 .fill-toggle {{
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #efefef;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }}
 
 /* ===== Population Status ===== */
@@ -1874,63 +1892,174 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 }}
 
 
-/* ===== Streamlit iframe fix: disable mobile bottom sheet ===== */
-/* position:fixed inside a 2000px iframe puts the panel off-screen.
-   Force desktop-style panel at all widths instead. */
+/* ===== Streamlit iframe fix: restore full desktop panel on mobile ===== */
+/* The base @media (max-width:480px) destroys the desktop layout.
+   This override restores EVERY desktop property for the Streamlit iframe
+   where position:fixed doesn't work (height=2000 iframe). */
 @media (max-width: 480px) {{
+  /* --- Panel container: desktop two-column grid, right-side --- */
   .control-panel {{
     position: absolute !important;
     top: 8px !important;
+    right: 8px !important;
     bottom: auto !important;
-    left: 8px !important;
-    right: auto !important;
-    width: 220px !important;
-    max-height: 70vh !important;
+    left: auto !important;
+    width: 390px !important;
     min-width: unset !important;
+    max-height: none !important;
     border-radius: 10px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
-    padding: 10px 12px !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+    padding: 8px 10px !important;
     transform: none !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
     z-index: 1000 !important;
-    grid-template-columns: 1fr !important;
+    font-size: 11px !important;
+    display: grid !important;
+    grid-template-columns: 3fr 2fr !important;
     grid-template-areas:
-      "header"
-      "layers"
-      "legend" !important;
+      "header header"
+      "layers legend"
+      "save   save" !important;
+    gap: 6px !important;
+    transition: transform 0.2s ease !important;
   }}
+
+  /* --- Collapsed: slide right, show toggle tab --- */
   .control-panel.collapsed {{
-    transform: translateX(-110%) !important;
-    opacity: 0;
-    pointer-events: none;
+    transform: translateX(calc(100% - 28px)) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }}
-  /* Show desktop toggle/corner buttons instead of mobile FAB */
-  .panel-toggle,
-  .panel-corner-btn {{
+
+  /* --- Toggle button: visible, left edge of right-side panel --- */
+  .panel-toggle {{
     display: block !important;
+    position: absolute !important;
+    top: 8px !important;
+    left: -16px !important;
+    right: auto !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 999px !important;
+    border: 1px solid #d0d0d0 !important;
+    background: #ffffff !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    z-index: 1001 !important;
   }}
-  .mobile-fab {{
-    display: none !important;
-  }}
-  .panel-mobile-header {{
-    display: none !important;
-  }}
-  .panel-drag-handle {{
-    display: none !important;
-  }}
+
+  /* --- Hide Layers heading (redundant with panel title) --- */
+  .panel-layers > .panel-title {{ display: none !important; }}
+
+  /* --- Hide mobile-only elements --- */
+  .panel-corner-btn {{ display: none !important; }}
+  .mobile-fab {{ display: none !important; }}
+  .panel-mobile-header {{ display: none !important; }}
+  .panel-drag-handle {{ display: none !important; }}
+  .panel-save-defaults {{ display: none !important; }}
+
+  /* --- Restore column borders/padding --- */
   .panel-layers {{
+    border-right: 1px solid #efefef !important;
+    padding-right: 12px !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }}
+  .panel-legend {{
     border-right: none !important;
     padding-right: 0 !important;
+    position: relative !important;
   }}
-}}
-@media (max-height: 500px) and (orientation: landscape) {{
-  .mobile-fab {{
+
+  /* --- Uniform layer rows: zero spacing --- */
+  .layer-row {{
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+  }}
+  /* Force all first-child swatches (color input + tile-swatch) to same box */
+  .layer-row input[type="color"],
+  .layer-row .tile-swatch {{
+    width: 28px !important;
+    height: 20px !important;
+    min-width: 28px !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 0 !important;
+  }}
+  /* Match browser color-input inset without visible outline */
+  .layer-row .tile-swatch {{
+    padding: 2px !important;
+    border: none !important;
+    background-clip: content-box !important;
+  }}
+  .toggle {{
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    flex: 1 !important;
+    line-height: 1 !important;
+  }}
+  .toggle input[type="checkbox"] {{
+    margin: 0 2px 0 0 !important;
+    vertical-align: middle !important;
+  }}
+  .toggle span {{
+    vertical-align: middle !important;
+  }}
+  /* Hide tile caption — tile style is in Appearance accordion */
+  .tile-caption {{
     display: none !important;
   }}
-  .panel-toggle,
-  .panel-corner-btn {{
-    display: block !important;
+  /* Hide extra inline text to keep all rows identical height */
+  .population-status {{
+    display: none !important;
   }}
+  .layer-row .note {{
+    display: none !important;
+  }}
+  .legend-row {{
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+  }}
+  .panel-header {{
+    gap: 6px !important;
+  }}
+  .fill-toggle {{
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    white-space: nowrap !important;
+  }}
+  /* Make all 3 header buttons the same height */
+  .tour-btn,
+  .recenter-map-btn,
+  .feedback-btn {{
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+  }}
+}}
+
+/* Landscape: also force desktop layout */
+@media (max-height: 500px) and (orientation: landscape) {{
+  .mobile-fab {{ display: none !important; }}
+  .panel-toggle {{ display: block !important; }}
+  .panel-corner-btn {{ display: none !important; }}
 }}
 
   </style>
@@ -1962,7 +2091,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
       <div class="panel-header">
         <div class="panel-title">Utah Political Layers</div>
         <button class="tour-btn" id="tour-btn">Take Tour</button>
-        <button class="recenter-map-btn" id="recenter-map-btn">Recenter Map</button>
+        <button class="recenter-map-btn" id="recenter-map-btn">Recenter</button>
         <a class="feedback-btn" href="https://github.com/kpkpkp/utah-political-layers/issues/new?template=bug_report.md&labels=bug" target="_blank" rel="noopener">Feedback</a>
       </div>
 
@@ -2025,17 +2154,19 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 
       <!-- Right column: Party legend + sliders -->
       <div class="panel-legend">
-        <div class="panel-title">Party</div>
+        <div class="panel-title party-title-row">
+          Parties
+          <label class="toggle fill-toggle">
+            <span>Fill on map</span>
+            <input type="checkbox" id="toggle-party-fill" />
+          </label>
+        </div>
         <div class="legend">
           <div class="legend-row"><span class="swatch republican"></span>Republican</div>
           <div class="legend-row"><span class="swatch democrat"></span>Democratic</div>
           <div class="legend-row"><span class="swatch forward"></span>Forward</div>
-          <div class="legend-row"><span class="swatch other"></span>Other / Unknown</div>
+          <div class="legend-row other-row" id="other-legend-row"><span class="swatch other"></span>Other / Unknown</div>
         </div>
-        <label class="toggle fill-toggle">
-          <input type="checkbox" id="toggle-party-fill" />
-          <span>Fill on map</span>
-        </label>
         <details class="appearance-group">
           <summary>Appearance</summary>
           <div class="appearance-content">
@@ -2282,13 +2413,21 @@ window.map = map;
 // Utah's approximate bounds: [south, west] to [north, east]
 const utahBounds = [[37.0, -114.05], [42.0, -109.04]];
 
+// In Streamlit iframe, resize map to real viewport so fitBounds works correctly
+const inIframe = window.self !== window.top;
+if (inIframe) {{
+  const realViewport = Math.min(screen.availHeight || 700, window.innerHeight);
+  const mapEl = map.getContainer();
+  mapEl.style.height = realViewport + 'px';
+  map.invalidateSize({{ animate: false }});
+}}
+
 const storedView = loadStoredView();
 if (storedView) {{
   map.setView(storedView.center, storedView.zoom);
 }} else {{
-  // Fit Utah to ~90% of viewport height
   map.fitBounds(utahBounds, {{
-    padding: [20, 20]  // 20px padding on all sides
+    padding: [10, 10]
   }});
 }}
 
@@ -2328,8 +2467,8 @@ const defaultColorConfig = {{
   party: {{
     republican: "#d73027",
     democratic: "#4575b4",
-    forward: "#8b5cf6",
-    other: "#9e9e9e"
+    forward: "#808080",
+    other: "#8B7D6B"
   }},
   // Outline colors for districts
   outline: {{
@@ -3254,12 +3393,27 @@ const recenterMap = (parties) => {{
   // Refresh map styling
   refreshPartyFill(parties);
 
-  // Reset map view to fit Utah
-  map.fitBounds([[36.9, -114.1], [42.1, -109.0]], {{
-    padding: [20, 20],
-    animate: true,
-    duration: 1.0
-  }});
+  // Reset map view to fit Utah to viewport
+  // In Streamlit iframe, map container is 2000px but viewport is ~700px,
+  // so fitBounds zooms out too far. Detect iframe and use setView instead.
+  const inIframe = window.self !== window.top;
+  if (inIframe) {{
+    // Iframe is 2000px tall but only the phone screen is visible.
+    // window.innerHeight returns 2000 (iframe height), not the real viewport.
+    // Use screen.availHeight as the real visible area estimate.
+    const realViewport = Math.min(screen.availHeight || 700, window.innerHeight);
+    // Temporarily resize map to real viewport, fitBounds, leave it.
+    const mapEl = map.getContainer();
+    mapEl.style.height = realViewport + 'px';
+    map.invalidateSize({{ animate: false }});
+    map.fitBounds(utahBounds, {{ padding: [10, 10], animate: true, duration: 1.0 }});
+  }} else {{
+    map.fitBounds(utahBounds, {{
+      padding: [10, 10],
+      animate: true,
+      duration: 1.0
+    }});
+  }}
 }};
 
 const bindPopulationColor = () => {{
@@ -3497,6 +3651,15 @@ const init = async () => {{
     }}
     // Background load is started separately in init, don't call here
   }});
+
+  // Show "Other / Unknown" legend row only when congress-future is enabled
+  const otherRow = document.getElementById("other-legend-row");
+  const congressFutureToggle = document.getElementById("toggle-congress-future");
+  const syncOtherRow = () => {{
+    if (otherRow) otherRow.classList.toggle("show", congressFutureToggle?.checked);
+  }};
+  syncOtherRow();
+  if (congressFutureToggle) congressFutureToggle.addEventListener("change", syncOtherRow);
 
   const partyFillToggle = document.getElementById("toggle-party-fill");
   if (partyFillToggle) {{

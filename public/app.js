@@ -180,13 +180,21 @@ window.map = map;
 // Utah's approximate bounds: [south, west] to [north, east]
 const utahBounds = [[37.0, -114.05], [42.0, -109.04]];
 
+// In Streamlit iframe, resize map to real viewport so fitBounds works correctly
+const inIframe = window.self !== window.top;
+if (inIframe) {
+  const realViewport = Math.min(screen.availHeight || 700, window.innerHeight);
+  const mapEl = map.getContainer();
+  mapEl.style.height = realViewport + 'px';
+  map.invalidateSize({ animate: false });
+}
+
 const storedView = loadStoredView();
 if (storedView) {
   map.setView(storedView.center, storedView.zoom);
 } else {
-  // Fit Utah to ~90% of viewport height
   map.fitBounds(utahBounds, {
-    padding: [20, 20]  // 20px padding on all sides
+    padding: [10, 10]
   });
 }
 
@@ -225,8 +233,8 @@ const defaultColorConfig = {
   party: {
     republican: "#d73027",
     democratic: "#4575b4",
-    forward: "#8b5cf6",
-    other: "#9e9e9e"
+    forward: "#808080",
+    other: "#8B7D6B"
   },
   // Outline colors for districts
   outline: {
@@ -1149,12 +1157,27 @@ const recenterMap = (parties) => {
   // Refresh map styling
   refreshPartyFill(parties);
 
-  // Reset map view to fit Utah
-  map.fitBounds([[36.9, -114.1], [42.1, -109.0]], {
-    padding: [20, 20],
-    animate: true,
-    duration: 1.0
-  });
+  // Reset map view to fit Utah to viewport
+  // In Streamlit iframe, map container is 2000px but viewport is ~700px,
+  // so fitBounds zooms out too far. Detect iframe and use setView instead.
+  const inIframe = window.self !== window.top;
+  if (inIframe) {
+    // Iframe is 2000px tall but only the phone screen is visible.
+    // window.innerHeight returns 2000 (iframe height), not the real viewport.
+    // Use screen.availHeight as the real visible area estimate.
+    const realViewport = Math.min(screen.availHeight || 700, window.innerHeight);
+    // Temporarily resize map to real viewport, fitBounds, leave it.
+    const mapEl = map.getContainer();
+    mapEl.style.height = realViewport + 'px';
+    map.invalidateSize({ animate: false });
+    map.fitBounds(utahBounds, { padding: [10, 10], animate: true, duration: 1.0 });
+  } else {
+    map.fitBounds(utahBounds, {
+      padding: [10, 10],
+      animate: true,
+      duration: 1.0
+    });
+  }
 };
 
 const bindPopulationColor = () => {
@@ -1392,6 +1415,15 @@ const init = async () => {
     }
     // Background load is started separately in init, don't call here
   });
+
+  // Show "Other / Unknown" legend row only when congress-future is enabled
+  const otherRow = document.getElementById("other-legend-row");
+  const congressFutureToggle = document.getElementById("toggle-congress-future");
+  const syncOtherRow = () => {
+    if (otherRow) otherRow.classList.toggle("show", congressFutureToggle?.checked);
+  };
+  syncOtherRow();
+  if (congressFutureToggle) congressFutureToggle.addEventListener("change", syncOtherRow);
 
   const partyFillToggle = document.getElementById("toggle-party-fill");
   if (partyFillToggle) {

@@ -458,11 +458,18 @@ body.is-localhost .panel-save-defaults.localhost-only {
 }
 
 .swatch.forward {
-  background: #8b5cf6;
+  background: #808080;
 }
 
 .swatch.other {
-  background: #9e9e9e;
+  background: #8B7D6B;
+}
+
+.legend-row.other-row {
+  display: none;
+}
+.legend-row.other-row.show {
+  display: flex;
 }
 
 .source {
@@ -1336,10 +1343,21 @@ body.is-localhost .panel-save-defaults.localhost-only {
 }
 
 /* ===== Fill on map toggle ===== */
+.party-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .fill-toggle {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #efefef;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* ===== Population Status ===== */

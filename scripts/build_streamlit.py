@@ -145,63 +145,174 @@ def build() -> str:
     # Instead, force the desktop panel layout at all viewport widths.
     streamlit_mobile_override = """
 
-/* ===== Streamlit iframe fix: disable mobile bottom sheet ===== */
-/* position:fixed inside a 2000px iframe puts the panel off-screen.
-   Force desktop-style panel at all widths instead. */
+/* ===== Streamlit iframe fix: restore full desktop panel on mobile ===== */
+/* The base @media (max-width:480px) destroys the desktop layout.
+   This override restores EVERY desktop property for the Streamlit iframe
+   where position:fixed doesn't work (height=2000 iframe). */
 @media (max-width: 480px) {
+  /* --- Panel container: desktop two-column grid, right-side --- */
   .control-panel {
     position: absolute !important;
     top: 8px !important;
+    right: 8px !important;
     bottom: auto !important;
-    left: 8px !important;
-    right: auto !important;
-    width: 220px !important;
-    max-height: 70vh !important;
+    left: auto !important;
+    width: 390px !important;
     min-width: unset !important;
+    max-height: none !important;
     border-radius: 10px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
-    padding: 10px 12px !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+    padding: 8px 10px !important;
     transform: none !important;
-    overflow-y: auto !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
     z-index: 1000 !important;
-    grid-template-columns: 1fr !important;
+    font-size: 11px !important;
+    display: grid !important;
+    grid-template-columns: 3fr 2fr !important;
     grid-template-areas:
-      "header"
-      "layers"
-      "legend" !important;
+      "header header"
+      "layers legend"
+      "save   save" !important;
+    gap: 6px !important;
+    transition: transform 0.2s ease !important;
   }
+
+  /* --- Collapsed: slide right, show toggle tab --- */
   .control-panel.collapsed {
-    transform: translateX(-110%) !important;
-    opacity: 0;
-    pointer-events: none;
+    transform: translateX(calc(100% - 28px)) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
-  /* Show desktop toggle/corner buttons instead of mobile FAB */
-  .panel-toggle,
-  .panel-corner-btn {
+
+  /* --- Toggle button: visible, left edge of right-side panel --- */
+  .panel-toggle {
     display: block !important;
+    position: absolute !important;
+    top: 8px !important;
+    left: -16px !important;
+    right: auto !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 999px !important;
+    border: 1px solid #d0d0d0 !important;
+    background: #ffffff !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    z-index: 1001 !important;
   }
-  .mobile-fab {
-    display: none !important;
-  }
-  .panel-mobile-header {
-    display: none !important;
-  }
-  .panel-drag-handle {
-    display: none !important;
-  }
+
+  /* --- Hide Layers heading (redundant with panel title) --- */
+  .panel-layers > .panel-title { display: none !important; }
+
+  /* --- Hide mobile-only elements --- */
+  .panel-corner-btn { display: none !important; }
+  .mobile-fab { display: none !important; }
+  .panel-mobile-header { display: none !important; }
+  .panel-drag-handle { display: none !important; }
+  .panel-save-defaults { display: none !important; }
+
+  /* --- Restore column borders/padding --- */
   .panel-layers {
+    border-right: 1px solid #efefef !important;
+    padding-right: 12px !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+  .panel-legend {
     border-right: none !important;
     padding-right: 0 !important;
+    position: relative !important;
   }
-}
-@media (max-height: 500px) and (orientation: landscape) {
-  .mobile-fab {
+
+  /* --- Uniform layer rows: zero spacing --- */
+  .layer-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+  }
+  /* Force all first-child swatches (color input + tile-swatch) to same box */
+  .layer-row input[type="color"],
+  .layer-row .tile-swatch {
+    width: 28px !important;
+    height: 20px !important;
+    min-width: 28px !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 0 !important;
+  }
+  /* Match browser color-input inset without visible outline */
+  .layer-row .tile-swatch {
+    padding: 2px !important;
+    border: none !important;
+    background-clip: content-box !important;
+  }
+  .toggle {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+    flex: 1 !important;
+    line-height: 1 !important;
+  }
+  .toggle input[type="checkbox"] {
+    margin: 0 2px 0 0 !important;
+    vertical-align: middle !important;
+  }
+  .toggle span {
+    vertical-align: middle !important;
+  }
+  /* Hide tile caption — tile style is in Appearance accordion */
+  .tile-caption {
     display: none !important;
   }
-  .panel-toggle,
-  .panel-corner-btn {
-    display: block !important;
+  /* Hide extra inline text to keep all rows identical height */
+  .population-status {
+    display: none !important;
   }
+  .layer-row .note {
+    display: none !important;
+  }
+  .legend-row {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+  }
+  .panel-header {
+    gap: 6px !important;
+  }
+  .fill-toggle {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    white-space: nowrap !important;
+  }
+  /* Make all 3 header buttons the same height */
+  .tour-btn,
+  .recenter-map-btn,
+  .feedback-btn {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+  }
+}
+
+/* Landscape: also force desktop layout */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-fab { display: none !important; }
+  .panel-toggle { display: block !important; }
+  .panel-corner-btn { display: none !important; }
 }
 """
     combined_css = styles_css + "\n\n/* ===== Tour CSS ===== */\n" + tour_css + streamlit_mobile_override
