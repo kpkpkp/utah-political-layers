@@ -4005,13 +4005,16 @@ window.addEventListener('load', () => {{
       const tourBtn = document.getElementById('tour-btn');
       if (tourBtn) {{
         tourBtn.addEventListener('click', () => {{
-          tour.start();
-
-          // Track button click
-          if (typeof trackEvent !== 'undefined') {{
-            trackEvent('tour_button_clicked');
+          console.log('Tour button clicked, isActive:', tour.isActive);
+          try {{
+            tour.start();
+            console.log('Tour started, overlay:', !!document.getElementById('tour-overlay'));
+          }} catch (err) {{
+            console.error('Tour start error:', err);
           }}
         }});
+      }} else {{
+        console.warn('Tour button not found');
       }}
 
       // Auto-start tour for first-time visitors
