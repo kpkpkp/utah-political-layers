@@ -1817,24 +1817,20 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   }}
 
   .tour-buttons {{
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }}
 
   .tour-skip {{
-    order: 3;
-    width: 100%;
-    margin-right: 0;
-    margin-top: 8px;
+    order: 1;
+    margin-right: auto;
   }}
 
   .tour-prev {{
-    order: 1;
-    flex: 1;
+    order: 2;
   }}
 
   .tour-next {{
-    order: 2;
-    flex: 1;
+    order: 3;
   }}
 }}
 
