@@ -3209,25 +3209,35 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {{
     if (status) {{
       const total = populationState.totalCount;
       const fetchMsg = total
-        ? `fetching ${{received.toLocaleString()}} / ${{total.toLocaleString()}}...`
-        : `fetching ${{received.toLocaleString()}}...`;
+        ? `${{received.toLocaleString()}} / ${{total.toLocaleString()}}`
+        : `${{received.toLocaleString()}}`;
       status.textContent = fetchMsg;
     }}
     const params = new URLSearchParams({{
       where: "STATEFP10='49'",
-      outFields: "*",
+      outFields: "FID,PopDensity,POP10",
+      geometryType: "esriGeometryEnvelope",
       outSR: "4326",
       f: "geojson",
       resultOffset: String(offset),
       resultRecordCount: String(pageSize)
     }});
-    const response = await fetch(`${{baseUrl}}?${{params.toString()}}`);
-    if (!response.ok) {{
-      throw new Error(`Population query failed: ${{response.status}}`);
+    let response, data;
+    try {{
+      response = await fetch(`${{baseUrl}}?${{params.toString()}}`);
+    }} catch (fetchErr) {{
+      throw new Error("fetch failed: " + (fetchErr.message || fetchErr));
     }}
-    const data = await response.json();
+    if (!response.ok) {{
+      throw new Error("http " + response.status);
+    }}
+    try {{
+      data = await response.json();
+    }} catch (jsonErr) {{
+      throw new Error("json parse: " + (jsonErr.message || jsonErr));
+    }}
     if (data.error) {{
-      throw new Error(`ArcGIS error: ${{data.error.message || JSON.stringify(data.error)}}`);
+      throw new Error("arcgis: " + (data.error.message || "unknown"));
     }}
     const features = data.features || [];
     if (!features.length) {{
@@ -3721,7 +3731,7 @@ const init = async () => {{
     console.log('Background population preload complete');
   }}).catch((error) => {{
     console.error('Background population load failed:', error);
-    if (bgStatus) bgStatus.textContent = 'preload failed';
+    if (bgStatus) bgStatus.textContent = String(error.message || error).substring(0, 60);
   }});
 
   const panel = document.getElementById("controls");
