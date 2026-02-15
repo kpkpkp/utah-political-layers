@@ -272,9 +272,10 @@ def build() -> str:
   .tile-caption {
     display: none !important;
   }
-  /* Hide extra inline text to keep all rows identical height */
+  /* Show population status text */
   .population-status {
-    display: none !important;
+    font-size: 9px !important;
+    opacity: 0.7 !important;
   }
   .layer-row .note {
     display: none !important;
