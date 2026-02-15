@@ -223,7 +223,7 @@ def build() -> str:
 
     # Disable mobile auto-collapse since Streamlit uses desktop layout at all widths
     combined_js = combined_js.replace(
-        'if (panel && window.innerWidth <= 480) {{\n    panel.classList.add("collapsed");\n  }}',
+        'if (panel && window.matchMedia("(max-width: 480px)").matches) {{\n    panel.classList.add("collapsed");\n  }}',
         '// Mobile auto-collapse disabled for Streamlit iframe',
     )
 

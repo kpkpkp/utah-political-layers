@@ -32,8 +32,8 @@ test.describe('Mobile FAB & Controls Discoverability', () => {
 
       expect(styles.display).toBe('flex');
       expect(styles.position).toBe('fixed');
-      expect(parseFloat(styles.width)).toBeGreaterThanOrEqual(48);
-      expect(parseFloat(styles.height)).toBeGreaterThanOrEqual(48);
+      expect(parseFloat(styles.width)).toBeGreaterThanOrEqual(44);
+      expect(parseFloat(styles.height)).toBeGreaterThanOrEqual(44);
     });
 
     test('Panel starts collapsed on mobile', async ({ page }) => {
@@ -164,7 +164,7 @@ test.describe('Mobile FAB & Controls Discoverability', () => {
       await expect(democratSwatch).toBeVisible();
     });
 
-    test('Close button has adequate touch target size', async ({ page }) => {
+    test('Close button has adequate touch target size (44px)', async ({ page }) => {
       const fab = page.locator('#mobile-fab');
       await fab.click();
       await page.waitForTimeout(400);

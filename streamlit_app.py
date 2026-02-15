@@ -57,8 +57,10 @@ html_content = f'''
   box-sizing: border-box;
 }}
 
-body {{
+html, body {{
   margin: 0;
+  height: 100%;
+  overflow: hidden;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: #1b1b1b;
 }}
@@ -67,6 +69,7 @@ body {{
   position: relative;
   height: 100vh;
   height: 100dvh;
+  overflow: hidden;
 }}
 
 .header {{
@@ -85,7 +88,7 @@ body {{
 }}
 
 #map {{
-  height: 100vh;
+  height: 100%;
   width: 100%;
 }}
 
@@ -1038,8 +1041,8 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     color: #666;
     padding: 6px;
     cursor: pointer;
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 44px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1202,8 +1205,8 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     color: #666;
     padding: 6px;
     cursor: pointer;
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 44px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3554,9 +3557,7 @@ const init = async () => {{
 
   // Start collapsed on mobile so users see the full map + FAB
   // Use matchMedia (CSS pixels) instead of innerWidth (device pixels on some phones)
-  if (panel && window.matchMedia("(max-width: 480px)").matches) {{
-    panel.classList.add("collapsed");
-  }}
+  // Mobile auto-collapse disabled for Streamlit iframe
 
   // Mobile FAB click handler - opens the control panel
   const fab = document.getElementById("mobile-fab");
