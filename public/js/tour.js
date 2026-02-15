@@ -398,12 +398,9 @@ class TourController {
     const visibleH = inIframe
       ? (screen.availHeight || screen.height || 700)
       : window.innerHeight;
-    // After scale(0.75) with transform-origin: bottom center,
-    // the visual bottom aligns with the element's CSS bottom.
-    // Place element so its bottom sits 8px above viewport bottom.
     requestAnimationFrame(() => {
-      const scaledH = callout.offsetHeight * 0.75;
-      const top = visibleH - scaledH - 8;
+      const h = callout.offsetHeight;
+      const top = visibleH - h - 8;
       callout.style.top = Math.max(8, top) + 'px';
     });
   }

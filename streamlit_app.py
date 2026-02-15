@@ -1610,14 +1610,41 @@ body.is-localhost .panel-save-defaults.localhost-only {{
     bottom: auto !important;
     left: 8px !important;
     right: 8px !important;
+    transform: none !important;
     max-width: none;
     min-width: unset;
-    border-radius: 12px;
-    max-height: 50vh;
+    border-radius: 10px;
+    max-height: 40vh;
     overflow-y: auto;
-    transform: scale(0.75) !important;
-    transform-origin: bottom center;
-    padding: 18px;
+    padding: 14px 16px;
+    font-size: 12px;
+  }}
+  .tour-callout .tour-title {{
+    font-size: 16px;
+    margin-bottom: 8px;
+  }}
+  .tour-callout .tour-content {{
+    font-size: 12px;
+    line-height: 1.4;
+  }}
+  .tour-callout .tour-content p {{
+    margin: 4px 0;
+  }}
+  .tour-callout .tour-content ul {{
+    margin: 4px 0;
+    padding-left: 18px;
+  }}
+  .tour-callout .tour-progress {{
+    font-size: 10px;
+    margin-bottom: 4px;
+  }}
+  .tour-callout .tour-buttons {{
+    margin-top: 8px;
+    gap: 6px;
+  }}
+  .tour-callout .tour-button {{
+    padding: 6px 12px;
+    font-size: 12px;
   }}
 }}
 
@@ -4444,12 +4471,9 @@ class TourController {{
     const visibleH = inIframe
       ? (screen.availHeight || screen.height || 700)
       : window.innerHeight;
-    // After scale(0.75) with transform-origin: bottom center,
-    // the visual bottom aligns with the element's CSS bottom.
-    // Place element so its bottom sits 8px above viewport bottom.
     requestAnimationFrame(() => {{
-      const scaledH = callout.offsetHeight * 0.75;
-      const top = visibleH - scaledH - 8;
+      const h = callout.offsetHeight;
+      const top = visibleH - h - 8;
       callout.style.top = Math.max(8, top) + 'px';
     }});
   }}
