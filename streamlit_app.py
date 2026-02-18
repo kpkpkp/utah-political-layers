@@ -3734,12 +3734,13 @@ const init = async () => {{
   }}
 
   // Set initial pointer-events based on party fill state
-  refreshPartyFill(parties);
-
   bindColorPickers(parties);
   bindLineControls(parties);
   bindPopulationColor();
   bindTileStylePicker();
+
+  // Render after all controls are bound and styleState is set from HTML inputs
+  refreshPartyFill(parties);
 
   // Tile swatch opens Appearance group and focuses tile dropdown
   const tileSwatch = document.getElementById("tile-swatch");
