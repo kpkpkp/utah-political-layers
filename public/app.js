@@ -244,7 +244,7 @@ const defaultColorConfig = {
     boundary: "#2c3e50",
     house: "#ff6f00",
     senate: "#66777f",
-    congressCurrent: "#fbd037",
+    congressCurrent: "#524619",
     congressFuture: "#f68a0e"
   }
 };
@@ -334,7 +334,7 @@ const loadStoredUi = () => {
 
 const storedUi = loadStoredUi();
 const uiState = { ...storedUi };
-const defaultPopulationColor = "#8b6bff";
+const defaultPopulationColor = "#ccb43e";
 let populationTintColor = storedUi.populationColor ?? defaultPopulationColor;
 let populationPointCache = null;
 
@@ -1704,14 +1704,55 @@ const getCurrentDefaults = () => ({
 const saveDefaults = (target) => {
   const defaults = getCurrentDefaults();
   const json = JSON.stringify(defaults, null, 2);
-  console.log(`// Defaults for ${target}:`);
+  
+  console.log(`\n========== DEFAULTS FOR ${target.toUpperCase()} ==========`);
   console.log(json);
-  navigator.clipboard.writeText(json).then(() => {
-    alert("Defaults copied to clipboard for " + target + ". Check console for JSON output.");
-  }).catch((err) => {
-    console.error('Failed to copy to clipboard:', err);
-    alert(`Failed to copy to clipboard. Check console for JSON output.`);
-  });
+  console.log(`========== END DEFAULTS ==========\n`);
+  
+  // Try to show modal
+  try {
+    let modal = document.getElementById('defaults-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'defaults-modal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;font-family:system-ui;';
+      modal.innerHTML = `
+        <div style="background:white;border-radius:10px;padding:20px;max-width:600px;max-height:80vh;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+          <h3 style="margin:0 0 10px 0;font-size:16px;font-weight:600;">Defaults for ${target}</h3>
+          <p style="margin:0 0 10px 0;font-size:12px;color:#666;">Copy this and share with Claude to deploy:</p>
+          <textarea id="defaults-json" readonly style="width:100%;height:300px;font-family:'Courier New', monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:4px;resize:none;"></textarea>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button id="copy-defaults-btn" style="flex:1;padding:10px;background:#3b6ea5;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px;">Copy</button>
+            <button id="close-defaults-modal" style="flex:1;padding:10px;background:#e0e0e0;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px;">Close</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('copy-defaults-btn').addEventListener('click', () => {
+        const textarea = document.getElementById('defaults-json');
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          alert('✓ Copied to clipboard!');
+        } catch (err) {
+          alert('Copy failed - please highlight and copy manually');
+        }
+      });
+      
+      document.getElementById('close-defaults-modal').addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+    }
+    
+    document.getElementById('defaults-json').value = json;
+    modal.style.display = 'flex';
+  } catch (err) {
+    console.error('Modal error:', err);
+    // Fallback: just alert the user to check console
+    alert(`Defaults for ${target} saved to console. Press Ctrl+Shift+J (or F12) to view.`);
+  }
+  
   trackEvent('save_defaults', { target });
 };
 
