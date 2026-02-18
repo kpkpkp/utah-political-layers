@@ -2146,7 +2146,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           <span class="tile-caption" id="tile-caption">Open Street Map</span>
         </div>
         <div class="layer-row">
-          <input type="color" id="color-population" value="#8b6bff" aria-label="Population color" />
+          <input type="color" id="color-population" value="#ccb43e" aria-label="Population color" />
           <label class="toggle">
             <input type="checkbox" id="toggle-population" />
             <span>Population</span>
@@ -2177,7 +2177,7 @@ body.is-localhost .panel-save-defaults.localhost-only {{
         <div class="layer-row has-note">
           <input type="color" id="outline-color-congress-future" value="#f68a0e" aria-label="Congress coming outline color" />
           <label class="toggle">
-            <input type="checkbox" id="toggle-congress-future" />
+            <input type="checkbox" id="toggle-congress-future" checked />
             <span>U.S. Congress (coming)</span>
           </label>
           <div class="note">Parties to be determined.</div>
@@ -2204,15 +2204,15 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           <div class="appearance-content">
             <div class="slider-row">
               <label for="line-width">Line width</label>
-              <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.83" />
+              <input type="range" id="line-width" min="0" max="1" step="0.01" value="0.57" />
             </div>
             <div class="slider-row">
               <label for="line-opacity">Line opacity</label>
-              <input type="range" id="line-opacity" min="0" max="1" step="0.01" value="1" />
+              <input type="range" id="line-opacity" min="0" max="1" step="0.01" value="0.83" />
             </div>
             <div class="slider-row">
               <label for="fill-opacity">Fill opacity</label>
-              <input type="range" id="fill-opacity" min="0" max="1" step="0.01" value="1" />
+              <input type="range" id="fill-opacity" min="0" max="1" step="0.01" value="0.58" />
             </div>
             <select class="tile-select" id="tile-style-select" aria-label="Map tile style">
               <option value="osm">Open Street Map</option>
