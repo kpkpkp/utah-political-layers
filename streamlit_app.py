@@ -2710,9 +2710,9 @@ const ensurePopulationStatus = () => {{
 const styleState = {{
   partyFill: storedUi.partyFill ?? false,
   lineColors: loadStoredColors(),
-  lineWidth: storedUi.lineWidth ?? 1.2,
-  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1),
-  fillOpacity: storedUi.fillOpacity ?? 1.0
+  lineWidth: storedUi.lineWidth ?? 0.57,
+  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 0.83),
+  fillOpacity: storedUi.fillOpacity ?? 0.58
 }};
 
 // Expose for debugging
@@ -3539,7 +3539,7 @@ const bindLineControls = (parties) => {{
   const fillOpacityInput = document.getElementById("fill-opacity");
 
   if (widthInput) {{
-    widthInput.value = String(storedUi.widthSlider ?? 0.6);
+    widthInput.value = String(storedUi.widthSlider ?? 0.57);
     widthInput.addEventListener("input", () => {{
       const t = parseFloat(widthInput.value);
       styleState.lineWidth = expScale(t, widthRange.min, widthRange.max, widthRange.exponent);
@@ -3550,7 +3550,7 @@ const bindLineControls = (parties) => {{
   }}
 
   if (opacityInput) {{
-    opacityInput.value = String(storedUi.opacitySlider ?? 1);
+    opacityInput.value = String(storedUi.opacitySlider ?? 0.83);
     opacityInput.addEventListener("input", () => {{
       const t = parseFloat(opacityInput.value);
       styleState.lineOpacity = expScale(t, opacityRange.min, opacityRange.max, opacityRange.exponent);
@@ -3561,7 +3561,7 @@ const bindLineControls = (parties) => {{
   }}
 
   if (fillOpacityInput) {{
-    fillOpacityInput.value = String(storedUi.fillOpacity ?? 1);
+    fillOpacityInput.value = String(storedUi.fillOpacity ?? 0.58);
     fillOpacityInput.addEventListener("input", () => {{
       styleState.fillOpacity = parseFloat(fillOpacityInput.value);
       persistUi({{ fillOpacity: styleState.fillOpacity }});
@@ -3959,9 +3959,9 @@ const getCurrentDefaults = () => ({{
     partyFill: document.getElementById('toggle-party-fill')?.checked ?? true
   }},
   sliders: {{
-    lineWidth: document.getElementById('line-width')?.value ?? '0.6',
-    lineOpacity: document.getElementById('line-opacity')?.value ?? '1',
-    fillOpacity: document.getElementById('fill-opacity')?.value ?? '1'
+    lineWidth: document.getElementById('line-width')?.value ?? '0.57',
+    lineOpacity: document.getElementById('line-opacity')?.value ?? '0.83',
+    fillOpacity: document.getElementById('fill-opacity')?.value ?? '0.58'
   }},
   tileStyle: document.getElementById('tile-style-select')?.value ?? 'osm',
   populationColor: document.getElementById('color-population')?.value ?? '#ff0000'
