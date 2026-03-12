@@ -185,8 +185,8 @@ test.describe('Panel Layout Tests', () => {
     const pickerCount = await allColorPickers.count();
     console.log('Total color pickers found:', pickerCount);
 
-    // Expected: 6 color pickers (boundary, population, house, senate, congress-current, congress-future)
-    expect(pickerCount).toBe(6);
+    // Expected: 8 color pickers (boundary, population, house, senate, congress-current, congress-future, parcels, contours)
+    expect(pickerCount).toBe(8);
 
     // Collect all IDs
     const ids = [];

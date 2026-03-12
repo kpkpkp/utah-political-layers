@@ -1422,6 +1422,35 @@ body.is-localhost .panel-save-defaults.localhost-only {{
   white-space: nowrap;
 }}
 
+/* ===== Parcel Status ===== */
+.parcel-status {{
+  font-size: 10px;
+  color: #6b6b6b;
+  white-space: nowrap;
+}}
+
+/* ===== Contour Labels ===== */
+.contour-label {{
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid #8B4513 !important;
+  box-shadow: none !important;
+  color: #8B4513;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 1px 4px !important;
+  border-radius: 3px;
+}}
+
+.contour-label-permanent {{
+  color: #6B3410;
+  font-size: 10px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px white, -1px -1px 2px white, 0 0 4px white;
+  text-align: center;
+  line-height: 14px;
+  white-space: nowrap;
+}}
+
 /* ===== Save Defaults Button (localhost only) ===== */
 .save-defaults-btn {{
   width: 100%;
@@ -2182,6 +2211,21 @@ body.is-localhost .panel-save-defaults.localhost-only {{
           </label>
           <div class="note">Parties to be determined.</div>
         </div>
+        <div class="layer-row">
+          <input type="color" id="color-parcels" value="#888888" aria-label="Parcel line color" />
+          <label class="toggle">
+            <input type="checkbox" id="toggle-parcels" />
+            <span>Property Lines</span>
+          </label>
+          <span class="parcel-status" id="parcel-status"></span>
+        </div>
+        <div class="layer-row">
+          <input type="color" id="color-contours" value="#8B4513" aria-label="Contour line color" />
+          <label class="toggle">
+            <input type="checkbox" id="toggle-contours" />
+            <span>Elevation Contours</span>
+          </label>
+        </div>
       </div>
 
       <!-- Right column: Party legend + sliders -->
@@ -2473,10 +2517,40 @@ const populationOutlinePane = map.createPane("populationOutlinePane");
 populationOutlinePane.style.zIndex = "460";  // Just above population pane
 populationOutlinePane.style.pointerEvents = "auto";  // Allow clicks on outline to dismiss it
 
+const parcelPane = map.createPane("parcelPane");
+parcelPane.style.zIndex = "455";  // Above population (450) so parcels are clickable when both layers on
+parcelPane.style.pointerEvents = "auto";
+
+const contourPane = map.createPane("contourPane");
+contourPane.style.zIndex = "435";  // Below parcels and population
+contourPane.style.pointerEvents = "auto";  // Allow hover for elevation labels
+
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
 const populationRenderer = L.canvas({{ padding: 0.5, pane: "populationPane", tolerance: isTouchDevice ? 12 : 0 }});
 const populationLayer = L.layerGroup();
 let populationHighlight = null;
+
+const parcelRenderer = L.canvas({{ padding: 0.5, pane: "parcelPane", tolerance: isTouchDevice ? 12 : 0 }});
+const parcelLayer = L.layerGroup();
+const contourLayer = L.layerGroup();
+
+const parcelState = {{
+  loading: false,
+  enabled: false,
+  loadedBounds: null,
+  abortController: null,
+  minZoom: 15
+}};
+
+const contourState = {{
+  loading: false,
+  enabled: false,
+  loadedBounds: null,
+  abortController: null,
+  minZoom: 13
+}};
+
+let countyBoundsData = null;
 
 // Helper to enable pointer-events on the population canvas
 // Called after canvas is created (when first marker is added)
@@ -2574,7 +2648,9 @@ const defaultLineColors = {{
   house: colorConfig.outline.house,
   senate: colorConfig.outline.senate,
   congressCurrent: colorConfig.outline.congressCurrent,
-  congressFuture: colorConfig.outline.congressFuture
+  congressFuture: colorConfig.outline.congressFuture,
+  parcels: "#888888",
+  contours: "#8B4513"
 }};
 
 const loadStoredColors = () => {{
@@ -2807,7 +2883,9 @@ const layerState = {{
   house: null,
   senate: null,
   congressCurrent: null,
-  congressFuture: null
+  congressFuture: null,
+  parcels: parcelLayer,
+  contours: contourLayer
 }};
 
 // Expose for debugging
@@ -2844,6 +2922,30 @@ const attachToggle = (checkboxId, layerKey) => {{
         populationPane.style.display = "none";
         populationOutlinePane.style.display = "none";
         trackEvent('population_toggle', {{ enabled: false }});
+      }}
+    }} else if (layerKey === "parcels") {{
+      if (checkbox.checked) {{
+        parcelState.enabled = true;
+        if (!map.hasLayer(parcelLayer)) parcelLayer.addTo(map);
+        parcelPane.style.display = "";
+        loadParcelsForView().catch(err => console.error("Parcel load:", err));
+        trackEvent('layer_toggle', {{ layer: 'parcels', enabled: true }});
+      }} else {{
+        parcelState.enabled = false;
+        parcelPane.style.display = "none";
+        trackEvent('layer_toggle', {{ layer: 'parcels', enabled: false }});
+      }}
+    }} else if (layerKey === "contours") {{
+      if (checkbox.checked) {{
+        contourState.enabled = true;
+        if (!map.hasLayer(contourLayer)) contourLayer.addTo(map);
+        contourPane.style.display = "";
+        loadContoursForView().catch(err => console.error("Contour load:", err));
+        trackEvent('layer_toggle', {{ layer: 'contours', enabled: true }});
+      }} else {{
+        contourState.enabled = false;
+        contourPane.style.display = "none";
+        trackEvent('layer_toggle', {{ layer: 'contours', enabled: false }});
       }}
     }} else if (checkbox.checked) {{
       layer.addTo(map);
@@ -3190,7 +3292,7 @@ const buildPopulationMarker = (feature, baseColor, cache) => {{
   }});
 
   // Click handler to highlight the block boundary
-  marker.on("click", (e) => {{
+  marker.on("click", async (e) => {{
     L.DomEvent.stopPropagation(e);
 
     const highlightId = String(feature.properties?.FID ?? "");
@@ -3204,6 +3306,10 @@ const buildPopulationMarker = (feature, baseColor, cache) => {{
       populationHighlight = null;
     }}
 
+    // Fetch elevation for popup
+    let elevText = "Loading elevation...";
+    const makeTooltipHtml = () => `${{popupHtml}}<br />${{elevText}}`;
+
     populationHighlight = L.geoJSON(feature.geometry, {{
       pane: "populationOutlinePane",
       style: {{
@@ -3213,7 +3319,7 @@ const buildPopulationMarker = (feature, baseColor, cache) => {{
       }}
     }}).addTo(map);
     populationHighlight._highlightId = highlightId;
-    populationHighlight.bindTooltip(popupHtml, {{
+    populationHighlight.bindTooltip(makeTooltipHtml(), {{
       direction: "top",
       offset: [0, -8],
       opacity: 0.95,
@@ -3224,6 +3330,24 @@ const buildPopulationMarker = (feature, baseColor, cache) => {{
       map.removeLayer(populationHighlight);
       populationHighlight = null;
     }});
+
+    // Async elevation fetch
+    try {{
+      const elev = await fetchElevation(e.latlng.lat, e.latlng.lng);
+      elevText = `Elevation: ${{Math.round(elev).toLocaleString()}} ft`;
+    }} catch {{
+      elevText = "Elevation: unavailable";
+    }}
+    if (populationHighlight && populationHighlight._highlightId === highlightId) {{
+      populationHighlight.unbindTooltip();
+      populationHighlight.bindTooltip(makeTooltipHtml(), {{
+        direction: "top",
+        offset: [0, -8],
+        opacity: 0.95,
+        className: "population-tooltip",
+        sticky: true
+      }});
+    }}
   }});
 
   return marker;
@@ -3386,6 +3510,359 @@ const loadPopulationPoints = async () => {{
   }}
 }};
 
+// ===== Elevation Point Query =====
+const fetchElevation = async (lat, lng) => {{
+  const resp = await fetch(`https://epqs.nationalmap.gov/v1/json?x=${{lng}}&y=${{lat}}&units=Feet`);
+  if (!resp.ok) throw new Error("Elevation query failed");
+  const data = await resp.json();
+  return data.value;
+}};
+
+// ===== County Bounds Intersection =====
+const getCountiesInBounds = (mapBounds) => {{
+  if (!countyBoundsData) return [];
+  const w = mapBounds.getWest();
+  const s = mapBounds.getSouth();
+  const e = mapBounds.getEast();
+  const n = mapBounds.getNorth();
+  const matches = [];
+  for (const [county, bbox] of Object.entries(countyBoundsData)) {{
+    // bbox = [west, south, east, north]
+    if (bbox[0] <= e && bbox[2] >= w && bbox[1] <= n && bbox[3] >= s) {{
+      matches.push(county);
+    }}
+  }}
+  return matches;
+}};
+
+// ===== Parcel Popup Builder =====
+const buildParcelPopup = (props, elevationHtml) => {{
+  const lines = [];
+  if (props.PARCEL_ADD) lines.push(`<strong>${{props.PARCEL_ADD}}</strong>`);
+  if (props.PARCEL_CITY) lines.push(props.PARCEL_CITY);
+  if (props.PARCEL_ACRES) lines.push(`${{Number(props.PARCEL_ACRES).toFixed(2)}} acres`);
+  if (props.TOTAL_MKT_VALUE) lines.push(`Market value: $${{Number(props.TOTAL_MKT_VALUE).toLocaleString()}}`);
+  if (props.LAND_MKT_VALUE) lines.push(`Land value: $${{Number(props.LAND_MKT_VALUE).toLocaleString()}}`);
+  if (props.BLDG_SQFT) lines.push(`Building: ${{Number(props.BLDG_SQFT).toLocaleString()}} sq ft`);
+  if (props.BUILT_YR && props.BUILT_YR > 0) lines.push(`Built: ${{props.BUILT_YR}}`);
+  if (props.FLOORS_CNT && props.FLOORS_CNT > 0) lines.push(`Floors: ${{props.FLOORS_CNT}}`);
+  if (props.PROP_CLASS) lines.push(`Class: ${{props.PROP_CLASS}}`);
+  if (props.TAX_DISTRICT) lines.push(`Tax district: ${{props.TAX_DISTRICT}}`);
+  lines.push(elevationHtml);
+  if (props.SERIAL_NUM) lines.push(`<small>Serial: ${{props.SERIAL_NUM}}</small>`);
+  return lines.join('<br />');
+}};
+
+// ===== Parcel Loading Engine =====
+const PARCEL_BASE_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services";
+const PARCEL_OUT_FIELDS = "PARCEL_ID,PARCEL_ADD,PARCEL_CITY,TOTAL_MKT_VALUE,LAND_MKT_VALUE,PARCEL_ACRES,PROP_CLASS,BLDG_SQFT,FLOORS_CNT,BUILT_YR,TAX_DISTRICT,SERIAL_NUM";
+
+const loadParcelsForView = async () => {{
+  const status = document.getElementById("parcel-status");
+  const zoom = map.getZoom();
+
+  if (zoom < parcelState.minZoom) {{
+    parcelLayer.clearLayers();
+    parcelState.loadedBounds = null;
+    if (status) status.textContent = "zoom in to see";
+    return;
+  }}
+
+  const bounds = map.getBounds().pad(0.1);
+
+  // Skip if already loaded for these bounds
+  if (parcelState.loadedBounds && parcelState.loadedBounds.contains(bounds)) {{
+    return;
+  }}
+
+  // Abort previous in-flight requests
+  if (parcelState.abortController) {{
+    parcelState.abortController.abort();
+  }}
+  parcelState.abortController = new AbortController();
+  const signal = parcelState.abortController.signal;
+
+  parcelState.loading = true;
+  if (status) status.textContent = "loading...";
+
+  const counties = getCountiesInBounds(bounds);
+  if (!counties.length) {{
+    parcelState.loading = false;
+    if (status) status.textContent = "";
+    return;
+  }}
+
+  // Convert bounds to envelope for ArcGIS query
+  const envelope = `${{bounds.getWest()}},${{bounds.getSouth()}},${{bounds.getEast()}},${{bounds.getNorth()}}`;
+  const parcelColor = styleState.lineColors.parcels || "#888888";
+
+  parcelLayer.clearLayers();
+  let totalFeatures = 0;
+  const maxTotal = 4000;
+
+  try {{
+    for (const county of counties) {{
+      if (signal.aborted || totalFeatures >= maxTotal) break;
+
+      const serviceUrl = `${{PARCEL_BASE_URL}}/Parcels_${{county}}_LIR/FeatureServer/0/query`;
+      let offset = 0;
+
+      while (totalFeatures < maxTotal) {{
+        if (signal.aborted) break;
+        const params = new URLSearchParams({{
+          geometry: envelope,
+          geometryType: "esriGeometryEnvelope",
+          spatialRel: "esriSpatialRelIntersects",
+          inSR: "4326",
+          outFields: PARCEL_OUT_FIELDS,
+          outSR: "4326",
+          f: "geojson",
+          resultOffset: String(offset),
+          resultRecordCount: "2000"
+        }});
+
+        const response = await fetch(`${{serviceUrl}}?${{params.toString()}}`, {{ signal }});
+        if (!response.ok) {{
+          console.warn(`Parcel query failed for ${{county}}: ${{response.status}}`);
+          break;
+        }}
+        const data = await response.json();
+        if (data.error) {{
+          console.warn(`Parcel query error for ${{county}}:`, data.error.message);
+          break;
+        }}
+
+        const features = data.features || [];
+        if (!features.length) break;
+
+        const geoLayer = L.geoJSON({{ type: "FeatureCollection", features }}, {{
+          renderer: parcelRenderer,
+          pane: "parcelPane",
+          style: () => ({{
+            color: parcelColor,
+            weight: 1,
+            opacity: 0.7,
+            fillColor: "transparent",
+            fillOpacity: 0
+          }}),
+          onEachFeature: (feature, layer) => {{
+            layer.on("click", async (e) => {{
+              L.DomEvent.stopPropagation(e);
+              // Highlight clicked parcel
+              if (map._parcelHighlight) {{
+                map.removeLayer(map._parcelHighlight);
+                map._parcelHighlight = null;
+              }}
+              const hl = L.geoJSON(feature, {{
+                pane: "parcelPane",
+                style: () => ({{
+                  color: "#FFD700",
+                  weight: 3,
+                  opacity: 1,
+                  fillColor: "#FFD700",
+                  fillOpacity: 0.12
+                }}),
+                interactive: false
+              }}).addTo(map);
+              map._parcelHighlight = hl;
+
+              const p = feature.properties;
+              let elevHtml = '<em>Loading elevation...</em>';
+              const popup = L.popup().setLatLng(e.latlng).setContent(buildParcelPopup(p, elevHtml)).openOn(map);
+              map.on("popupclose", function onClose() {{
+                if (map._parcelHighlight) {{
+                  map.removeLayer(map._parcelHighlight);
+                  map._parcelHighlight = null;
+                }}
+                map.off("popupclose", onClose);
+              }});
+              try {{
+                const elev = await fetchElevation(e.latlng.lat, e.latlng.lng);
+                elevHtml = `Elevation: ${{Math.round(elev).toLocaleString()}} ft`;
+              }} catch {{
+                elevHtml = 'Elevation: unavailable';
+              }}
+              popup.setContent(buildParcelPopup(p, elevHtml));
+            }});
+          }}
+        }});
+
+        parcelLayer.addLayer(geoLayer);
+        totalFeatures += features.length;
+
+        if (status) status.textContent = `${{totalFeatures.toLocaleString()}} parcels`;
+
+        // Check if more pages
+        if (data.exceededTransferLimit || features.length === 2000) {{
+          offset += features.length;
+        }} else {{
+          break;
+        }}
+      }}
+    }}
+
+    parcelState.loadedBounds = bounds;
+    parcelState.loading = false;
+    if (status) {{
+      status.textContent = totalFeatures > 0 ? `${{totalFeatures.toLocaleString()}} parcels` : "";
+    }}
+  }} catch (err) {{
+    if (err.name === "AbortError") return;
+    parcelState.loading = false;
+    if (status) status.textContent = "error";
+    console.error("Parcel load error:", err);
+  }}
+}};
+
+// ===== Contour Loading Engine =====
+const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services/Contours500Ft/FeatureServer/0/query";
+
+const loadContoursForView = async () => {{
+  const zoom = map.getZoom();
+
+  if (zoom < contourState.minZoom) {{
+    contourLayer.clearLayers();
+    contourState.loadedBounds = null;
+    return;
+  }}
+
+  const bounds = map.getBounds().pad(0.1);
+
+  if (contourState.loadedBounds && contourState.loadedBounds.contains(bounds)) {{
+    return;
+  }}
+
+  if (contourState.abortController) {{
+    contourState.abortController.abort();
+  }}
+  contourState.abortController = new AbortController();
+  const signal = contourState.abortController.signal;
+
+  contourState.loading = true;
+  const envelope = `${{bounds.getWest()}},${{bounds.getSouth()}},${{bounds.getEast()}},${{bounds.getNorth()}}`;
+  const contourColor = styleState.lineColors.contours || "#8B4513";
+
+  contourLayer.clearLayers();
+
+  try {{
+    let offset = 0;
+    let total = 0;
+    const maxContours = 4000;
+
+    while (total < maxContours) {{
+      if (signal.aborted) break;
+      const params = new URLSearchParams({{
+        geometry: envelope,
+        geometryType: "esriGeometryEnvelope",
+        spatialRel: "esriSpatialRelIntersects",
+        inSR: "4326",
+        outFields: "ELEV",
+        outSR: "4326",
+        f: "geojson",
+        resultOffset: String(offset),
+        resultRecordCount: "2000"
+      }});
+
+      const response = await fetch(`${{CONTOUR_URL}}?${{params.toString()}}`, {{ signal }});
+      if (!response.ok) break;
+      const data = await response.json();
+      if (data.error) break;
+
+      const features = data.features || [];
+      if (!features.length) break;
+
+      const geoLayer = L.geoJSON({{ type: "FeatureCollection", features }}, {{
+        pane: "contourPane",
+        style: () => ({{
+          color: contourColor,
+          weight: 1.5,
+          opacity: 0.6,
+          fill: false
+        }}),
+        onEachFeature: (feature, layer) => {{
+          if (feature.properties?.ELEV) {{
+            layer.bindTooltip(`${{feature.properties.ELEV}} ft`, {{
+              sticky: true,
+              direction: "top",
+              className: "contour-label",
+              offset: [0, -8],
+              opacity: 0.95
+            }});
+          }}
+        }}
+      }});
+
+      contourLayer.addLayer(geoLayer);
+
+      // Add permanent elevation labels at visible midpoints
+      const mapCenter = map.getCenter();
+      features.forEach((f) => {{
+        if (!f.properties?.ELEV || !f.geometry?.coordinates) return;
+        try {{
+          const coords = f.geometry.type === "MultiLineString"
+            ? f.geometry.coordinates[0]
+            : f.geometry.coordinates;
+          if (!coords || coords.length < 2) return;
+          // Pick coordinate closest to map center for label placement
+          let bestCoord = coords[0];
+          let bestDist = Infinity;
+          for (const c of coords) {{
+            const d = Math.pow(c[0] - mapCenter.lng, 2) + Math.pow(c[1] - mapCenter.lat, 2);
+            if (d < bestDist) {{ bestDist = d; bestCoord = c; }}
+          }}
+          contourLayer.addLayer(L.marker([bestCoord[1], bestCoord[0]], {{
+            icon: L.divIcon({{
+              className: "contour-label-permanent",
+              html: `${{f.properties.ELEV}} ft`,
+              iconSize: [50, 14],
+              iconAnchor: [25, 7]
+            }}),
+            interactive: false,
+            pane: "tooltipPane"
+          }}));
+        }} catch {{ /* skip label errors */ }}
+      }});
+
+      total += features.length;
+
+      if (data.exceededTransferLimit || features.length === 2000) {{
+        offset += features.length;
+      }} else {{
+        break;
+      }}
+    }}
+
+    contourState.loadedBounds = bounds;
+    contourState.loading = false;
+  }} catch (err) {{
+    if (err.name === "AbortError") return;
+    contourState.loading = false;
+    console.error("Contour load error:", err);
+  }}
+}};
+
+// ===== Debounced Viewport-Driven Loading =====
+let parcelLoadTimeout = null;
+let contourLoadTimeout = null;
+
+const debouncedParcelLoad = () => {{
+  clearTimeout(parcelLoadTimeout);
+  parcelLoadTimeout = setTimeout(() => {{
+    if (parcelState.enabled) {{
+      loadParcelsForView().catch(err => console.error("Parcel load:", err));
+    }}
+  }}, 400);
+}};
+
+const debouncedContourLoad = () => {{
+  clearTimeout(contourLoadTimeout);
+  contourLoadTimeout = setTimeout(() => {{
+    if (contourState.enabled) {{
+      loadContoursForView().catch(err => console.error("Contour load:", err));
+    }}
+  }}, 400);
+}};
+
 const bindColorPickers = (parties) => {{
   // Outline color pickers
   const outlineConfig = [
@@ -3494,6 +3971,35 @@ const bindPopulationColor = () => {{
   }});
 }};
 
+const bindParcelContourColors = () => {{
+  const parcelInput = document.getElementById("color-parcels");
+  if (parcelInput) {{
+    parcelInput.value = styleState.lineColors.parcels || "#888888";
+    parcelInput.addEventListener("input", () => {{
+      styleState.lineColors.parcels = parcelInput.value;
+      persistColors();
+      // Update existing parcel layers with new color
+      parcelLayer.eachLayer((group) => {{
+        if (group.setStyle) group.setStyle({{ color: parcelInput.value }});
+      }});
+      trackEvent('color_changed', {{ type: 'parcels', value: parcelInput.value }});
+    }});
+  }}
+
+  const contourInput = document.getElementById("color-contours");
+  if (contourInput) {{
+    contourInput.value = styleState.lineColors.contours || "#8B4513";
+    contourInput.addEventListener("input", () => {{
+      styleState.lineColors.contours = contourInput.value;
+      persistColors();
+      contourLayer.eachLayer((group) => {{
+        if (group.setStyle) group.setStyle({{ color: contourInput.value }});
+      }});
+      trackEvent('color_changed', {{ type: 'contours', value: contourInput.value }});
+    }});
+  }}
+}};
+
 const tileNames = {{
   osm: "Open Street Map",
   opentopo: "OpenTopoMap",
@@ -3572,14 +4078,16 @@ const bindLineControls = (parties) => {{
 }};
 
 const init = async () => {{
-  const [boundary, house, senate, congressCurrent, congressFuture, parties] = await Promise.all([
+  const [boundary, house, senate, congressCurrent, congressFuture, parties, countyBounds] = await Promise.all([
     loadJson(DATA_BASE_URL + "/utah_boundary.geojson"),
     loadJson(DATA_BASE_URL + "/utah_house_2022.geojson"),
     loadJson(DATA_BASE_URL + "/utah_senate_2022.geojson"),
     loadJson(DATA_BASE_URL + "/utah_congress_2022.geojson"),
     loadJson(DATA_BASE_URL + "/utah_congress_2026.geojson"),
-    loadJson(DATA_BASE_URL + "/utah_parties.json")
+    loadJson(DATA_BASE_URL + "/utah_parties.json"),
+    loadJson(DATA_BASE_URL + "/utah_county_bounds.json")
   ]);
+  countyBoundsData = countyBounds;
 
   layerState.boundary = L.geoJSON(boundary, {{ style: boundaryStyle }}).addTo(map);
   if (!storedView) {{
@@ -3696,7 +4204,9 @@ const init = async () => {{
     {{ id: "toggle-house", key: "house" }},
     {{ id: "toggle-senate", key: "senate" }},
     {{ id: "toggle-congress-current", key: "congressCurrent" }},
-    {{ id: "toggle-congress-future", key: "congressFuture" }}
+    {{ id: "toggle-congress-future", key: "congressFuture" }},
+    {{ id: "toggle-parcels", key: "parcels" }},
+    {{ id: "toggle-contours", key: "contours" }}
   ];
 
   toggleConfig.forEach(({{ id, key }}) => {{
@@ -3706,7 +4216,26 @@ const init = async () => {{
       checkbox.checked = storedUi.toggles[id];
     }}
     attachToggle(id, key);
-    if (!checkbox.checked) {{
+    // Parcels and contours use pane visibility, not add/remove
+    if (key === "parcels") {{
+      parcelLayer.addTo(map);
+      if (checkbox.checked) {{
+        parcelState.enabled = true;
+        parcelPane.style.display = "";
+        loadParcelsForView().catch(err => console.error("Parcel load:", err));
+      }} else {{
+        parcelPane.style.display = "none";
+      }}
+    }} else if (key === "contours") {{
+      contourLayer.addTo(map);
+      if (checkbox.checked) {{
+        contourState.enabled = true;
+        contourPane.style.display = "";
+        loadContoursForView().catch(err => console.error("Contour load:", err));
+      }} else {{
+        contourPane.style.display = "none";
+      }}
+    }} else if (!checkbox.checked) {{
       map.removeLayer(layerState[key]);
     }} else if (!map.hasLayer(layerState[key])) {{
       layerState[key].addTo(map);
@@ -3737,6 +4266,7 @@ const init = async () => {{
   bindColorPickers(parties);
   bindLineControls(parties);
   bindPopulationColor();
+  bindParcelContourColors();
   bindTileStylePicker();
 
   // Render after all controls are bound and styleState is set from HTML inputs
@@ -3925,6 +4455,16 @@ const init = async () => {{
   storeView();
   map.on("moveend", storeView);
   map.on("zoomend", storeView);
+
+  // Viewport-driven loading for parcels and contours
+  map.on("moveend", () => {{
+    debouncedParcelLoad();
+    debouncedContourLoad();
+  }});
+  map.on("zoomend", () => {{
+    debouncedParcelLoad();
+    debouncedContourLoad();
+  }});
 }};
 
 init().catch((error) => {{
@@ -3972,41 +4512,54 @@ const saveDefaults = (target) => {{
   const defaults = getCurrentDefaults();
   const json = JSON.stringify(defaults, null, 2);
   
-  // Show modal with JSON
-  let modal = document.getElementById('defaults-modal');
-  if (!modal) {{
-    modal = document.createElement('div');
-    modal.id = 'defaults-modal';
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML = `
-      <div style="background:white;border-radius:10px;padding:20px;max-width:500px;max-height:80vh;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
-        <h3 style="margin:0 0 10px 0;">Defaults for ${{target}}</h3>
-        <p style="margin:0 0 10px 0;font-size:12px;color:#666;">Copy this and paste it to deploy:</p>
-        <textarea id="defaults-json" readonly style="width:100%;height:300px;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:4px;"></textarea>
-        <div style="margin-top:10px;display:flex;gap:8px;">
-          <button id="copy-defaults-btn" style="flex:1;padding:8px;background:#3b6ea5;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Copy to Clipboard</button>
-          <button id="close-defaults-modal" style="flex:1;padding:8px;background:#ccc;border:none;border-radius:4px;cursor:pointer;">Close</button>
+  console.log(`\n========== DEFAULTS FOR ${{target.toUpperCase()}} ==========`);
+  console.log(json);
+  console.log(`========== END DEFAULTS ==========\n`);
+  
+  // Try to show modal
+  try {{
+    let modal = document.getElementById('defaults-modal');
+    if (!modal) {{
+      modal = document.createElement('div');
+      modal.id = 'defaults-modal';
+      modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;font-family:system-ui;';
+      modal.innerHTML = `
+        <div style="background:white;border-radius:10px;padding:20px;max-width:600px;max-height:80vh;overflow:auto;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+          <h3 style="margin:0 0 10px 0;font-size:16px;font-weight:600;">Defaults for ${{target}}</h3>
+          <p style="margin:0 0 10px 0;font-size:12px;color:#666;">Copy this and share with Claude to deploy:</p>
+          <textarea id="defaults-json" readonly style="width:100%;height:300px;font-family:'Courier New', monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:4px;resize:none;"></textarea>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <button id="copy-defaults-btn" style="flex:1;padding:10px;background:#3b6ea5;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px;">Copy</button>
+            <button id="close-defaults-modal" style="flex:1;padding:10px;background:#e0e0e0;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px;">Close</button>
+          </div>
         </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('copy-defaults-btn').addEventListener('click', () => {{
+        const textarea = document.getElementById('defaults-json');
+        textarea.select();
+        try {{
+          document.execCommand('copy');
+          alert('✓ Copied to clipboard!');
+        }} catch (err) {{
+          alert('Copy failed - please highlight and copy manually');
+        }}
+      }});
+      
+      document.getElementById('close-defaults-modal').addEventListener('click', () => {{
+        modal.style.display = 'none';
+      }});
+    }}
     
-    document.getElementById('copy-defaults-btn').addEventListener('click', () => {{
-      document.getElementById('defaults-json').select();
-      document.execCommand('copy');
-      alert('Copied to clipboard!');
-    }});
-    
-    document.getElementById('close-defaults-modal').addEventListener('click', () => {{
-      modal.remove();
-    }});
+    document.getElementById('defaults-json').value = json;
+    modal.style.display = 'flex';
+  }} catch (err) {{
+    console.error('Modal error:', err);
+    // Fallback: just alert the user to check console
+    alert(`Defaults for ${{target}} saved to console. Press Ctrl+Shift+J (or F12) to view.`);
   }}
   
-  document.getElementById('defaults-json').value = json;
-  modal.style.display = 'flex';
-  
-  console.log(`// Defaults for ${{target}}:`);
-  console.log(json);
   trackEvent('save_defaults', {{ target }});
 }};
 

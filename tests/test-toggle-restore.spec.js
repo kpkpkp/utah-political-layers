@@ -18,6 +18,8 @@ const TOGGLE_CONFIG = [
   { id: 'toggle-senate', key: 'senate' },
   { id: 'toggle-congress-current', key: 'congressCurrent' },
   { id: 'toggle-congress-future', key: 'congressFuture' },
+  { id: 'toggle-parcels', key: 'parcels' },
+  { id: 'toggle-contours', key: 'contours' },
 ];
 
 /**
@@ -76,6 +78,8 @@ test.describe('Toggle restore from localStorage', () => {
       'toggle-senate': false,
       'toggle-congress-current': true,
       'toggle-congress-future': true, // the bug case
+      'toggle-parcels': false,
+      'toggle-contours': false,
     });
 
     const status = await getSyncStatus(page);
@@ -92,6 +96,8 @@ test.describe('Toggle restore from localStorage', () => {
     const status = await getSyncStatus(page);
     for (const s of status) {
       expect(s.checked, `${s.key} checkbox should be unchecked`).toBe(false);
+      // Parcels and contours use pane visibility, always on map
+      if (s.key === 'parcels' || s.key === 'contours') continue;
       expect(s.onMap, `${s.key} should not be on map`).toBe(false);
     }
   });
@@ -117,6 +123,8 @@ test.describe('Toggle restore from localStorage', () => {
       'toggle-senate': true,
       'toggle-congress-current': false,
       'toggle-congress-future': false,
+      'toggle-parcels': false,
+      'toggle-contours': false,
     });
 
     const status = await getSyncStatus(page);
@@ -128,11 +136,14 @@ test.describe('Toggle restore from localStorage', () => {
       senate: true,
       congressCurrent: false,
       congressFuture: false,
+      parcels: false,
+      contours: false,
     };
 
     for (const s of status) {
       const exp = expected[s.key];
       expect(s.checked, `${s.key} checked`).toBe(exp);
+      if (s.key === 'parcels' || s.key === 'contours') continue;
       expect(s.onMap, `${s.key} onMap`).toBe(exp);
     }
   });
@@ -158,11 +169,15 @@ test.describe('Toggle restore from localStorage', () => {
       senate: false,
       congressCurrent: true,
       congressFuture: false,
+      parcels: false,
+      contours: false,
     };
 
     for (const s of status) {
       const exp = defaults[s.key];
       expect(s.checked, `${s.key} checked`).toBe(exp);
+      // Parcels and contours use pane visibility, not add/remove from map
+      if (s.key === 'parcels' || s.key === 'contours') continue;
       expect(s.onMap, `${s.key} onMap`).toBe(exp);
     }
   });
