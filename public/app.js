@@ -1275,10 +1275,11 @@ const loadParcelsForView = async () => {
     return;
   }
 
-  const bounds = map.getBounds().pad(0.1);
+  const viewBounds = map.getBounds();
+  const fetchBounds = viewBounds.pad(0.3);
 
   // Skip if already loaded for these bounds
-  if (parcelState.loadedBounds && parcelState.loadedBounds.contains(bounds)) {
+  if (parcelState.loadedBounds && parcelState.loadedBounds.contains(viewBounds)) {
     return;
   }
 
@@ -1292,7 +1293,7 @@ const loadParcelsForView = async () => {
   parcelState.loading = true;
   if (status) status.textContent = "loading...";
 
-  const counties = getCountiesInBounds(bounds);
+  const counties = getCountiesInBounds(fetchBounds);
   if (!counties.length) {
     parcelState.loading = false;
     if (status) status.textContent = "";
@@ -1300,10 +1301,10 @@ const loadParcelsForView = async () => {
   }
 
   // Convert bounds to envelope for ArcGIS query
-  const envelope = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+  const envelope = `${fetchBounds.getWest()},${fetchBounds.getSouth()},${fetchBounds.getEast()},${fetchBounds.getNorth()}`;
   const parcelColor = styleState.lineColors.parcels || "#888888";
 
-  parcelLayer.clearLayers();
+  const tempParcelGroup = L.layerGroup();
   let totalFeatures = 0;
   const maxTotal = 4000;
 
@@ -1394,7 +1395,7 @@ const loadParcelsForView = async () => {
           }
         });
 
-        parcelLayer.addLayer(geoLayer);
+        tempParcelGroup.addLayer(geoLayer);
         totalFeatures += features.length;
 
         if (status) status.textContent = `${totalFeatures.toLocaleString()} parcels`;
@@ -1408,7 +1409,13 @@ const loadParcelsForView = async () => {
       }
     }
 
-    parcelState.loadedBounds = bounds;
+    if (signal.aborted) return;
+
+    // Atomic swap: clear old, add new — no visible gap
+    parcelLayer.clearLayers();
+    tempParcelGroup.eachLayer(l => parcelLayer.addLayer(l));
+
+    parcelState.loadedBounds = fetchBounds;
     parcelState.loading = false;
     if (status) {
       status.textContent = totalFeatures > 0 ? `${totalFeatures.toLocaleString()} parcels` : "";
@@ -1592,10 +1599,12 @@ const loadContoursForView = async () => {
     return;
   }
 
-  const bounds = map.getBounds().pad(0.1);
+  // Pad generously so small pans stay within cached bounds (no reload)
+  const viewBounds = map.getBounds();
+  const fetchBounds = viewBounds.pad(0.3);
 
-  // Reload if bounds changed OR zoom tier changed (need different WHERE filter)
-  if (contourState.loadedBounds && contourState.loadedBounds.contains(bounds) &&
+  // Reload if viewport escaped cached bounds OR zoom tier changed
+  if (contourState.loadedBounds && contourState.loadedBounds.contains(viewBounds) &&
       contourState.loadedZoomTier === tier.interval) {
     return;
   }
@@ -1607,11 +1616,12 @@ const loadContoursForView = async () => {
   const signal = contourState.abortController.signal;
 
   contourState.loading = true;
-  const envelope = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+  const envelope = `${fetchBounds.getWest()},${fetchBounds.getSouth()},${fetchBounds.getEast()},${fetchBounds.getNorth()}`;
   const contourColor = styleState.lineColors.contours || "#8B4513";
 
-  contourLayer.clearLayers();
-  contourLabelPositions = [];
+  // Build into a temp group, then swap atomically to avoid flicker
+  const tempGroup = L.layerGroup();
+  const tempLabelPositions = [];
 
   try {
     let offset = 0;
@@ -1640,7 +1650,6 @@ const loadContoursForView = async () => {
       const features = data.features || [];
       if (!features.length) break;
 
-      // Process each feature: compute labels, cut gaps, render line + labels
       const contourStyle = {
         color: contourColor,
         weight: tier.weight,
@@ -1659,10 +1668,8 @@ const loadContoursForView = async () => {
           allCoords.forEach((coords) => {
             if (!coords || coords.length < 2) return;
 
-            // Compute labels for this ring/line
             const labels = placeContourLabels(coords, elev, tier, null);
 
-            // Always draw the full unbroken line
             const lineGeom = { type: "LineString", coordinates: coords };
             const lineLayer = L.geoJSON(lineGeom, {
               pane: "contourPane",
@@ -1674,11 +1681,10 @@ const loadContoursForView = async () => {
                 });
               }
             });
-            contourLayer.addLayer(lineLayer);
+            tempGroup.addLayer(lineLayer);
 
-            // Overlay labels on top of the line
             labels.forEach(({ lat, lng, angleDeg }) => {
-              contourLayer.addLayer(L.marker([lat, lng], {
+              tempGroup.addLayer(L.marker([lat, lng], {
                 icon: L.divIcon({
                   className: "contour-label-inline",
                   html: `<span style="transform:rotate(${angleDeg.toFixed(1)}deg)">${elev}</span>`,
@@ -1702,7 +1708,14 @@ const loadContoursForView = async () => {
       }
     }
 
-    contourState.loadedBounds = bounds;
+    if (signal.aborted) return;
+
+    // Atomic swap: clear old, add new — no visible gap
+    contourLayer.clearLayers();
+    tempGroup.eachLayer(l => contourLayer.addLayer(l));
+    contourLabelPositions = tempLabelPositions;
+
+    contourState.loadedBounds = fetchBounds;
     contourState.loadedZoomTier = tier.interval;
     contourState.loading = false;
   } catch (err) {
