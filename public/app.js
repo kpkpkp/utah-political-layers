@@ -128,7 +128,8 @@ const ZoomIndicator = L.Control.extend({
     return div;
   },
   _update: function () {
-    this._div.textContent = `Zoom: ${map.getZoom().toFixed(1)}`;
+    const z = map.getZoom();
+    this._div.textContent = z != null ? `Zoom: ${z.toFixed(1)}` : '';
   }
 });
 new ZoomIndicator().addTo(map);
