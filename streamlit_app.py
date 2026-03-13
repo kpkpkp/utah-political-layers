@@ -2546,8 +2546,9 @@ const contourState = {{
   loading: false,
   enabled: false,
   loadedBounds: null,
+  loadedZoomTier: null,
   abortController: null,
-  minZoom: 13
+  minZoom: 9
 }};
 
 let countyBoundsData = null;
@@ -3717,18 +3718,31 @@ const loadParcelsForView = async () => {{
 // ===== Contour Loading Engine =====
 const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services/Contours500Ft/FeatureServer/0/query";
 
+// Zoom-dependent contour detail tiers
+// At low zoom show only major ridgelines, progressively add detail closer to ground
+const getContourTier = (zoom) => {{
+  if (zoom >= 13) return {{ where: "1=1", interval: 500, maxContours: 4000, weight: 1.5, opacity: 0.6, labelMinInterval: 500 }};
+  if (zoom >= 11) return {{ where: "(ELEV % 1000) = 0", interval: 1000, maxContours: 3000, weight: 1.2, opacity: 0.5, labelMinInterval: 1000 }};
+  if (zoom >= 9)  return {{ where: "(ELEV % 2000) = 0", interval: 2000, maxContours: 2000, weight: 1.0, opacity: 0.4, labelMinInterval: 2000 }};
+  return null;
+}};
+
 const loadContoursForView = async () => {{
   const zoom = map.getZoom();
+  const tier = getContourTier(zoom);
 
-  if (zoom < contourState.minZoom) {{
+  if (zoom < contourState.minZoom || !tier) {{
     contourLayer.clearLayers();
     contourState.loadedBounds = null;
+    contourState.loadedZoomTier = null;
     return;
   }}
 
   const bounds = map.getBounds().pad(0.1);
 
-  if (contourState.loadedBounds && contourState.loadedBounds.contains(bounds)) {{
+  // Reload if bounds changed OR zoom tier changed (need different WHERE filter)
+  if (contourState.loadedBounds && contourState.loadedBounds.contains(bounds) &&
+      contourState.loadedZoomTier === tier.interval) {{
     return;
   }}
 
@@ -3747,11 +3761,11 @@ const loadContoursForView = async () => {{
   try {{
     let offset = 0;
     let total = 0;
-    const maxContours = 4000;
 
-    while (total < maxContours) {{
+    while (total < tier.maxContours) {{
       if (signal.aborted) break;
       const params = new URLSearchParams({{
+        where: tier.where,
         geometry: envelope,
         geometryType: "esriGeometryEnvelope",
         spatialRel: "esriSpatialRelIntersects",
@@ -3775,8 +3789,8 @@ const loadContoursForView = async () => {{
         pane: "contourPane",
         style: () => ({{
           color: contourColor,
-          weight: 1.5,
-          opacity: 0.6,
+          weight: tier.weight,
+          opacity: tier.opacity,
           fill: false
         }}),
         onEachFeature: (feature, layer) => {{
@@ -3798,6 +3812,8 @@ const loadContoursForView = async () => {{
       const mapCenter = map.getCenter();
       features.forEach((f) => {{
         if (!f.properties?.ELEV || !f.geometry?.coordinates) return;
+        // Only label at tier-appropriate intervals
+        if (f.properties.ELEV % tier.labelMinInterval !== 0) return;
         try {{
           const coords = f.geometry.type === "MultiLineString"
             ? f.geometry.coordinates[0]
@@ -3833,6 +3849,7 @@ const loadContoursForView = async () => {{
     }}
 
     contourState.loadedBounds = bounds;
+    contourState.loadedZoomTier = tier.interval;
     contourState.loading = false;
   }} catch (err) {{
     if (err.name === "AbortError") return;
