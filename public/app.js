@@ -1579,17 +1579,16 @@ const placeContourLabels = (coords, elev, tier, elevNeighbors) => {
 
 // Zoom-dependent contour detail tiers using USGS National Map layers
 // Layer 26: 40ft normal intermediate (large scale)
-// Layer 18: 50ft intermediate
 // Layer 13: 100ft intermediate
 // Layer 11: 500ft index contours (wide zoom)
-// Field: contourelevation
+// Field: contourelevation — MOD() filters reduce features server-side
 const getContourTier = (zoom) => {
-  if (zoom >= 14) return { layerId: 26, where: "1=1",  interval: 40,   maxContours: 4000, weight: 1.0, opacity: 0.55, labelMinInterval: 200 };
-  if (zoom >= 12) return { layerId: 26, where: "1=1",  interval: 40,   maxContours: 3000, weight: 1.0, opacity: 0.5,  labelMinInterval: 400 };
-  if (zoom >= 10) return { layerId: 18, where: "1=1",  interval: 50,   maxContours: 2500, weight: 0.9, opacity: 0.45, labelMinInterval: 500 };
-  if (zoom >= 8)  return { layerId: 13, where: "1=1",  interval: 100,  maxContours: 2000, weight: 0.8, opacity: 0.4,  labelMinInterval: 1000 };
-  if (zoom >= 7)  return { layerId: 11, where: "1=1",  interval: 500,  maxContours: 1500, weight: 0.7, opacity: 0.35, labelMinInterval: 2000 };
-  return                  { layerId: 11, where: "1=1",  interval: 500,  maxContours: 1000, weight: 0.6, opacity: 0.3,  labelMinInterval: 2000 };
+  if (zoom >= 14) return { layerId: 26, where: "1=1",                              interval: 40,   maxContours: 4000, weight: 1.0, opacity: 0.55, labelMinInterval: 200 };
+  if (zoom >= 12) return { layerId: 26, where: "MOD(contourelevation,100)=0",      interval: 100,  maxContours: 3000, weight: 1.0, opacity: 0.5,  labelMinInterval: 500 };
+  if (zoom >= 10) return { layerId: 13, where: "MOD(contourelevation,100)=0",      interval: 100,  maxContours: 2500, weight: 0.9, opacity: 0.45, labelMinInterval: 500 };
+  if (zoom >= 8)  return { layerId: 13, where: "MOD(contourelevation,200)=0",      interval: 200,  maxContours: 2000, weight: 0.8, opacity: 0.4,  labelMinInterval: 1000 };
+  if (zoom >= 7)  return { layerId: 11, where: "MOD(contourelevation,500)=0",      interval: 500,  maxContours: 1500, weight: 0.7, opacity: 0.35, labelMinInterval: 2000 };
+  return                  { layerId: 11, where: "MOD(contourelevation,500)=0",      interval: 500,  maxContours: 1000, weight: 0.6, opacity: 0.3,  labelMinInterval: 2000 };
 };
 
 const loadContoursForView = async () => {
