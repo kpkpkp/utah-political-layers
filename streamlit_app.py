@@ -3887,38 +3887,11 @@ const placeContourLabels = (coords, elev, tier, elevNeighbors) => {{
     contourLabelPositions.push(pt);
     usedIndices.add(cand.idx);
 
-    // Compute gap indices: which coordinate indices the label covers
-    // so we can break the line there
-    const gapHalf = 3; // indices on each side of label to gap
-    const gapStart = Math.max(0, cand.idx - gapHalf);
-    const gapEnd = Math.min(coords.length - 1, cand.idx + gapHalf);
-
-    labels.push({{ lat, lng, angleDeg, elev, gapStart, gapEnd }});
+    labels.push({{ lat, lng, angleDeg, elev }});
   }}
   return labels;
 }};
 
-// Build a GeoJSON line with gaps cut out where labels sit
-const cutLineGaps = (coords, labels, geomType) => {{
-  if (!labels.length) return null; // no gaps needed
-  // Sort labels by gap start index
-  const sorted = [...labels].sort((a, b) => a.gapStart - b.gapStart);
-  const segments = [];
-  let cursor = 0;
-  for (const label of sorted) {{
-    if (label.gapStart > cursor) {{
-      const seg = coords.slice(cursor, label.gapStart + 1);
-      if (seg.length >= 2) segments.push(seg);
-    }}
-    cursor = label.gapEnd;
-  }}
-  if (cursor < coords.length) {{
-    const seg = coords.slice(cursor);
-    if (seg.length >= 2) segments.push(seg);
-  }}
-  if (!segments.length) return null;
-  return {{ type: "MultiLineString", coordinates: segments }};
-}};
 
 // Zoom-dependent contour detail tiers
 // At low zoom show only major ridgelines, progressively add detail closer to ground
@@ -4013,51 +3986,33 @@ const loadContoursForView = async () => {{
             // Compute labels for this ring/line
             const labels = placeContourLabels(coords, elev, tier, null);
 
-            if (labels.length > 0) {{
-              // Draw line with gaps where labels sit
-              const gapped = cutLineGaps(coords, labels, "LineString");
-              if (gapped) {{
-                const gapLayer = L.geoJSON(gapped, {{
-                  pane: "contourPane",
-                  style: () => contourStyle,
-                  onEachFeature: (feat, layer) => {{
-                    layer.bindTooltip(`${{elev}}`, {{
-                      sticky: true, direction: "top",
-                      className: "contour-label", offset: [0, -8], opacity: 0.95
-                    }});
-                  }}
+            // Always draw the full unbroken line
+            const lineGeom = {{ type: "LineString", coordinates: coords }};
+            const lineLayer = L.geoJSON(lineGeom, {{
+              pane: "contourPane",
+              style: () => contourStyle,
+              onEachFeature: (feat, layer) => {{
+                layer.bindTooltip(`${{elev}}`, {{
+                  sticky: true, direction: "top",
+                  className: "contour-label", offset: [0, -8], opacity: 0.95
                 }});
-                contourLayer.addLayer(gapLayer);
               }}
+            }});
+            contourLayer.addLayer(lineLayer);
 
-              // Place label markers
-              labels.forEach(({{ lat, lng, angleDeg }}) => {{
-                contourLayer.addLayer(L.marker([lat, lng], {{
-                  icon: L.divIcon({{
-                    className: "contour-label-inline",
-                    html: `<span style="transform:rotate(${{angleDeg.toFixed(1)}}deg)">${{elev}}</span>`,
-                    iconSize: [44, 14],
-                    iconAnchor: [22, 7]
-                  }}),
-                  interactive: false,
-                  pane: "tooltipPane"
-                }}));
-              }});
-            }} else {{
-              // No labels — draw unbroken line
-              const lineGeom = {{ type: "LineString", coordinates: coords }};
-              const lineLayer = L.geoJSON(lineGeom, {{
-                pane: "contourPane",
-                style: () => contourStyle,
-                onEachFeature: (feat, layer) => {{
-                  layer.bindTooltip(`${{elev}}`, {{
-                    sticky: true, direction: "top",
-                    className: "contour-label", offset: [0, -8], opacity: 0.95
-                  }});
-                }}
-              }});
-              contourLayer.addLayer(lineLayer);
-            }}
+            // Overlay labels on top of the line
+            labels.forEach(({{ lat, lng, angleDeg }}) => {{
+              contourLayer.addLayer(L.marker([lat, lng], {{
+                icon: L.divIcon({{
+                  className: "contour-label-inline",
+                  html: `<span style="transform:rotate(${{angleDeg.toFixed(1)}}deg)">${{elev}}</span>`,
+                  iconSize: [44, 14],
+                  iconAnchor: [22, 7]
+                }}),
+                interactive: false,
+                pane: "tooltipPane"
+              }}));
+            }});
           }});
         }} catch {{ /* skip feature errors */ }}
       }});
