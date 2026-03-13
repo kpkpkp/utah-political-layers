@@ -3899,10 +3899,10 @@ const getContourTier = (zoom) => {{
   // Utah elevation range: ~2500–13500 ft; contour data at 500 ft intervals
   // Use MOD() for ArcGIS REST SQL compatibility (% operator not supported)
   if (zoom >= 13) return {{ where: "1=1",                    interval: 500,  maxContours: 4000, weight: 1.5, opacity: 0.6,  labelMinInterval: 500 }};
-  if (zoom >= 11) return {{ where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 3000, weight: 1.2, opacity: 0.5,  labelMinInterval: 1000 }};
-  if (zoom >= 9)  return {{ where: "MOD(ELEV,2000)=0",       interval: 2000, maxContours: 2000, weight: 1.0, opacity: 0.45, labelMinInterval: 2000 }};
-  if (zoom >= 7)  return {{ where: "MOD(ELEV,2500)=0",       interval: 2500, maxContours: 1500, weight: 0.8, opacity: 0.4,  labelMinInterval: 2500 }};
-  return                  {{ where: "MOD(ELEV,2500)=0",       interval: 2500, maxContours: 1000, weight: 0.7, opacity: 0.35, labelMinInterval: 2500 }};
+  if (zoom >= 11) return {{ where: "MOD(ELEV,500)=0",        interval: 500,  maxContours: 3000, weight: 1.2, opacity: 0.5,  labelMinInterval: 1000 }};
+  if (zoom >= 9)  return {{ where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 2000, weight: 1.0, opacity: 0.45, labelMinInterval: 1000 }};
+  if (zoom >= 7)  return {{ where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 1500, weight: 0.8, opacity: 0.4,  labelMinInterval: 2000 }};
+  return                  {{ where: "MOD(ELEV,2000)=0",       interval: 2000, maxContours: 1000, weight: 0.7, opacity: 0.35, labelMinInterval: 2000 }};
 }};
 
 const loadContoursForView = async () => {{
