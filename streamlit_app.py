@@ -1431,23 +1431,35 @@ body.is-localhost .panel-save-defaults.localhost-only {{
 
 /* ===== Contour Labels ===== */
 .contour-label {{
-  background: rgba(255, 255, 255, 0.85) !important;
-  border: 1px solid #8B4513 !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(139, 69, 19, 0.5) !important;
   box-shadow: none !important;
-  color: #8B4513;
+  color: rgba(139, 69, 19, 0.7);
   font-size: 11px;
   font-weight: bold;
   padding: 1px 4px !important;
   border-radius: 3px;
 }}
 
-.contour-label-permanent {{
-  color: #6B3410;
+.contour-label-inline {{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  overflow: visible !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}}
+
+.contour-label-inline span {{
+  display: inline-block;
+  color: rgba(107, 52, 16, 0.25);
   font-size: 10px;
   font-weight: bold;
-  text-shadow: 1px 1px 2px white, -1px -1px 2px white, 0 0 4px white;
-  text-align: center;
-  line-height: 14px;
+  text-shadow: 1px 0 1px rgba(255,255,255,0.6), -1px 0 1px rgba(255,255,255,0.6),
+               0 1px 1px rgba(255,255,255,0.6), 0 -1px 1px rgba(255,255,255,0.6);
+  line-height: 1;
   white-space: nowrap;
 }}
 
@@ -3736,6 +3748,93 @@ const loadParcelsForView = async () => {{
 // ===== Contour Loading Engine =====
 const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services/Contours500Ft/FeatureServer/0/query";
 
+// ===== Contour Label Placement Along Lines =====
+// Track placed label pixel positions to avoid overlaps
+let contourLabelPositions = [];
+const LABEL_MIN_PX_APART = 120; // minimum pixel distance between any two labels
+
+const pixelDist = (a, b) => Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+
+const labelOverlaps = (pt) => contourLabelPositions.some(p => pixelDist(p, pt) < LABEL_MIN_PX_APART);
+
+// Measure straightness: max deviation of intermediate points from the line between start and end
+const segmentStraightness = (coords, iStart, iEnd) => {{
+  const [x1, y1] = coords[iStart];
+  const [x2, y2] = coords[iEnd];
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return 0;
+  let maxDev = 0;
+  for (let i = iStart + 1; i < iEnd; i++) {{
+    const [px, py] = coords[i];
+    // Perpendicular distance from point to line
+    const t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+    const dev = Math.sqrt(Math.pow(px - projX, 2) + Math.pow(py - projY, 2));
+    if (dev > maxDev) maxDev = dev;
+  }}
+  return maxDev;
+}};
+
+// Find best straight stretch of at least `minPts` points, return {{ midIdx, angle }}
+const findStraightStretch = (coords, minPts) => {{
+  if (coords.length < minPts) return null;
+  let bestMid = -1;
+  let bestDev = Infinity;
+  let bestAngle = 0;
+  const windowSize = Math.min(minPts, coords.length);
+  for (let i = 0; i <= coords.length - windowSize; i++) {{
+    const dev = segmentStraightness(coords, i, i + windowSize - 1);
+    if (dev < bestDev) {{
+      bestDev = dev;
+      bestMid = i + Math.floor(windowSize / 2);
+      const [x1, y1] = coords[i];
+      const [x2, y2] = coords[i + windowSize - 1];
+      bestAngle = Math.atan2(y2 - y1, x2 - x1);
+    }}
+  }}
+  if (bestMid < 0) return null;
+  return {{ idx: bestMid, angle: bestAngle }};
+}};
+
+// Place labels along a contour line at regular intervals, picking straight stretches
+const placeContourLabels = (coords, elev, tier) => {{
+  if (!coords || coords.length < 4) return [];
+  if (elev % tier.labelMinInterval !== 0) return [];
+
+  const labels = [];
+  // Walk along the line and place labels every ~300px worth of geo distance
+  // Use segments of ~8 points to find straight stretches
+  const segLen = Math.min(8, Math.floor(coords.length / 2));
+  if (segLen < 3) return [];
+  const step = Math.max(segLen * 2, Math.floor(coords.length / 4));
+
+  for (let start = 0; start + segLen < coords.length; start += step) {{
+    const end = Math.min(start + segLen * 2, coords.length);
+    const subCoords = coords.slice(start, end);
+    const stretch = findStraightStretch(subCoords, Math.min(4, subCoords.length));
+    if (!stretch) continue;
+
+    const globalIdx = start + stretch.idx;
+    const [lng, lat] = coords[globalIdx];
+    const pt = map.latLngToLayerPoint([lat, lng]);
+
+    if (labelOverlaps(pt)) continue;
+
+    // Convert geo angle to screen angle (y is flipped in screen coords)
+    let angleDeg = -(stretch.angle * 180 / Math.PI);
+    // Keep text upright: flip if pointing left
+    if (angleDeg > 90) angleDeg -= 180;
+    if (angleDeg < -90) angleDeg += 180;
+
+    contourLabelPositions.push(pt);
+    labels.push({{ lat, lng, angleDeg, elev }});
+  }}
+  return labels;
+}};
+
 // Zoom-dependent contour detail tiers
 // At low zoom show only major ridgelines, progressively add detail closer to ground
 const getContourTier = (zoom) => {{
@@ -3778,6 +3877,7 @@ const loadContoursForView = async () => {{
   const contourColor = styleState.lineColors.contours || "#8B4513";
 
   contourLayer.clearLayers();
+  contourLabelPositions = [];
 
   try {{
     let offset = 0;
@@ -3816,7 +3916,7 @@ const loadContoursForView = async () => {{
         }}),
         onEachFeature: (feature, layer) => {{
           if (feature.properties?.ELEV) {{
-            layer.bindTooltip(`${{feature.properties.ELEV}} ft`, {{
+            layer.bindTooltip(`${{feature.properties.ELEV}}`, {{
               sticky: true,
               direction: "top",
               className: "contour-label",
@@ -3829,34 +3929,29 @@ const loadContoursForView = async () => {{
 
       contourLayer.addLayer(geoLayer);
 
-      // Add permanent elevation labels at visible midpoints
-      const mapCenter = map.getCenter();
+      // Place rotated labels along straight stretches of contour lines
       features.forEach((f) => {{
         if (!f.properties?.ELEV || !f.geometry?.coordinates) return;
-        // Only label at tier-appropriate intervals
-        if (f.properties.ELEV % tier.labelMinInterval !== 0) return;
         try {{
-          const coords = f.geometry.type === "MultiLineString"
-            ? f.geometry.coordinates[0]
-            : f.geometry.coordinates;
-          if (!coords || coords.length < 2) return;
-          // Pick coordinate closest to map center for label placement
-          let bestCoord = coords[0];
-          let bestDist = Infinity;
-          for (const c of coords) {{
-            const d = Math.pow(c[0] - mapCenter.lng, 2) + Math.pow(c[1] - mapCenter.lat, 2);
-            if (d < bestDist) {{ bestDist = d; bestCoord = c; }}
-          }}
-          contourLayer.addLayer(L.marker([bestCoord[1], bestCoord[0]], {{
-            icon: L.divIcon({{
-              className: "contour-label-permanent",
-              html: `${{f.properties.ELEV}} ft`,
-              iconSize: [50, 14],
-              iconAnchor: [25, 7]
-            }}),
-            interactive: false,
-            pane: "tooltipPane"
-          }}));
+          const allCoords = f.geometry.type === "MultiLineString"
+            ? f.geometry.coordinates
+            : [f.geometry.coordinates];
+          allCoords.forEach((coords) => {{
+            if (!coords || coords.length < 4) return;
+            const labels = placeContourLabels(coords, f.properties.ELEV, tier);
+            labels.forEach(({{ lat, lng, angleDeg, elev }}) => {{
+              contourLayer.addLayer(L.marker([lat, lng], {{
+                icon: L.divIcon({{
+                  className: "contour-label-inline",
+                  html: `<span style="transform:rotate(${{angleDeg.toFixed(1)}}deg)">${{elev}}</span>`,
+                  iconSize: [40, 14],
+                  iconAnchor: [20, 7]
+                }}),
+                interactive: false,
+                pane: "tooltipPane"
+              }}));
+            }});
+          }});
         }} catch {{ /* skip label errors */ }}
       }});
 
