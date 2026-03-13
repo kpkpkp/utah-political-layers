@@ -1429,7 +1429,8 @@ const loadParcelsForView = async () => {
 };
 
 // ===== Contour Loading Engine =====
-const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services/Contours500Ft/FeatureServer/0/query";
+// USGS National Map contour service — free, no API key, nationwide 40ft contours
+const CONTOUR_BASE = "https://carto.nationalmap.gov/arcgis/rest/services/contours/MapServer";
 
 // ===== Contour Label Placement (Cartographic Rules) =====
 // - Every closed contour loop gets at least one label
@@ -1576,17 +1577,19 @@ const placeContourLabels = (coords, elev, tier, elevNeighbors) => {
 };
 
 
-// Zoom-dependent contour detail tiers
-// Data source: Contours500Ft — polyline service with ELEV field at 500ft intervals
-// Best used on non-topo tiles (OSM, Carto) where base map has no contours
+// Zoom-dependent contour detail tiers using USGS National Map layers
+// Layer 26: 40ft normal intermediate (large scale)
+// Layer 18: 50ft intermediate
+// Layer 13: 100ft intermediate
+// Layer 11: 500ft index contours (wide zoom)
+// Field: contourelevation
 const getContourTier = (zoom) => {
-  // Utah elevation range: ~2500–13500 ft; contour data at 500 ft intervals
-  // Use MOD() for ArcGIS REST SQL compatibility (% operator not supported)
-  if (zoom >= 13) return { where: "1=1",                    interval: 500,  maxContours: 4000, weight: 1.5, opacity: 0.6,  labelMinInterval: 500 };
-  if (zoom >= 11) return { where: "1=1",                    interval: 500,  maxContours: 3000, weight: 1.2, opacity: 0.5,  labelMinInterval: 1000 };
-  if (zoom >= 9)  return { where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 2000, weight: 1.0, opacity: 0.45, labelMinInterval: 1000 };
-  if (zoom >= 7)  return { where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 1500, weight: 0.8, opacity: 0.4,  labelMinInterval: 2000 };
-  return                  { where: "MOD(ELEV,2000)=0",       interval: 2000, maxContours: 1000, weight: 0.7, opacity: 0.35, labelMinInterval: 2000 };
+  if (zoom >= 14) return { layerId: 26, where: "1=1",  interval: 40,   maxContours: 4000, weight: 1.0, opacity: 0.55, labelMinInterval: 200 };
+  if (zoom >= 12) return { layerId: 26, where: "1=1",  interval: 40,   maxContours: 3000, weight: 1.0, opacity: 0.5,  labelMinInterval: 400 };
+  if (zoom >= 10) return { layerId: 18, where: "1=1",  interval: 50,   maxContours: 2500, weight: 0.9, opacity: 0.45, labelMinInterval: 500 };
+  if (zoom >= 8)  return { layerId: 13, where: "1=1",  interval: 100,  maxContours: 2000, weight: 0.8, opacity: 0.4,  labelMinInterval: 1000 };
+  if (zoom >= 7)  return { layerId: 11, where: "1=1",  interval: 500,  maxContours: 1500, weight: 0.7, opacity: 0.35, labelMinInterval: 2000 };
+  return                  { layerId: 11, where: "1=1",  interval: 500,  maxContours: 1000, weight: 0.6, opacity: 0.3,  labelMinInterval: 2000 };
 };
 
 const loadContoursForView = async () => {
@@ -1606,7 +1609,7 @@ const loadContoursForView = async () => {
 
   // Reload if viewport escaped cached bounds OR zoom tier changed
   if (contourState.loadedBounds && contourState.loadedBounds.contains(viewBounds) &&
-      contourState.loadedZoomTier === tier.interval) {
+      contourState.loadedZoomTier === tier.layerId) {
     return;
   }
 
@@ -1636,14 +1639,15 @@ const loadContoursForView = async () => {
         geometryType: "esriGeometryEnvelope",
         spatialRel: "esriSpatialRelIntersects",
         inSR: "4326",
-        outFields: "ELEV",
+        outFields: "contourelevation",
         outSR: "4326",
         f: "geojson",
         resultOffset: String(offset),
         resultRecordCount: "2000"
       });
 
-      const response = await fetch(`${CONTOUR_URL}?${params.toString()}`, { signal });
+      const contourUrl = `${CONTOUR_BASE}/${tier.layerId}/query`;
+      const response = await fetch(`${contourUrl}?${params.toString()}`, { signal });
       if (!response.ok) break;
       const data = await response.json();
       if (data.error) break;
@@ -1659,8 +1663,8 @@ const loadContoursForView = async () => {
       };
 
       features.forEach((f) => {
-        if (!f.properties?.ELEV || !f.geometry?.coordinates) return;
-        const elev = f.properties.ELEV;
+        if (f.properties?.contourelevation == null || !f.geometry?.coordinates) return;
+        const elev = f.properties.contourelevation;
         try {
           const allCoords = f.geometry.type === "MultiLineString"
             ? f.geometry.coordinates
@@ -1718,7 +1722,7 @@ const loadContoursForView = async () => {
     contourLabelPositions = tempLabelPositions;
 
     contourState.loadedBounds = fetchBounds;
-    contourState.loadedZoomTier = tier.interval;
+    contourState.loadedZoomTier = tier.layerId;
     contourState.loading = false;
   } catch (err) {
     if (err.name === "AbortError") return;
