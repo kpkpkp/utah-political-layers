@@ -116,6 +116,23 @@ L.control.scale({
   metric: true
 }).addTo(map);
 
+// Zoom level indicator (bottom-right corner of map)
+const ZoomIndicator = L.Control.extend({
+  options: { position: 'bottomright' },
+  onAdd: function () {
+    const div = L.DomUtil.create('div', 'zoom-indicator');
+    div.style.cssText = 'background:rgba(255,255,255,0.85);padding:2px 6px;border-radius:4px;font-size:11px;color:#333;border:1px solid #aaa;pointer-events:none;';
+    this._div = div;
+    this._update();
+    map.on('zoomend', () => this._update());
+    return div;
+  },
+  _update: function () {
+    this._div.textContent = `Zoom: ${map.getZoom().toFixed(1)}`;
+  }
+});
+new ZoomIndicator().addTo(map);
+
 // Ensure Leaflet controls are visible - diagnostic and fix
 window.addEventListener('load', () => {
   setTimeout(() => {
@@ -1409,11 +1426,13 @@ const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/s
 // Zoom-dependent contour detail tiers
 // At low zoom show only major ridgelines, progressively add detail closer to ground
 const getContourTier = (zoom) => {
-  if (zoom >= 13) return { where: "1=1", interval: 500, maxContours: 4000, weight: 1.5, opacity: 0.6, labelMinInterval: 500 };
-  if (zoom >= 11) return { where: "(ELEV % 1000) = 0", interval: 1000, maxContours: 3000, weight: 1.2, opacity: 0.5, labelMinInterval: 1000 };
-  if (zoom >= 9)  return { where: "(ELEV % 2000) = 0", interval: 2000, maxContours: 2000, weight: 1.0, opacity: 0.4, labelMinInterval: 2000 };
-  if (zoom >= 7)  return { where: "(ELEV % 4000) = 0", interval: 4000, maxContours: 1000, weight: 0.8, opacity: 0.35, labelMinInterval: 4000 };
-  return              { where: "(ELEV % 5000) = 0", interval: 5000, maxContours: 500, weight: 0.6, opacity: 0.3, labelMinInterval: 5000 };
+  // Utah elevation range: ~2500–13500 ft; contour data at 500 ft intervals
+  // Use MOD() for ArcGIS REST SQL compatibility (% operator not supported)
+  if (zoom >= 13) return { where: "1=1",                    interval: 500,  maxContours: 4000, weight: 1.5, opacity: 0.6,  labelMinInterval: 500 };
+  if (zoom >= 11) return { where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 3000, weight: 1.2, opacity: 0.5,  labelMinInterval: 1000 };
+  if (zoom >= 9)  return { where: "MOD(ELEV,2000)=0",       interval: 2000, maxContours: 2000, weight: 1.0, opacity: 0.45, labelMinInterval: 2000 };
+  if (zoom >= 7)  return { where: "MOD(ELEV,2500)=0",       interval: 2500, maxContours: 1500, weight: 0.8, opacity: 0.4,  labelMinInterval: 2500 };
+  return                  { where: "MOD(ELEV,2500)=0",       interval: 2500, maxContours: 1000, weight: 0.7, opacity: 0.35, labelMinInterval: 2500 };
 };
 
 const loadContoursForView = async () => {
