@@ -2580,7 +2580,7 @@ const contourState = {{
   loadedBounds: null,
   loadedZoomTier: null,
   abortController: null,
-  minZoom: 0
+  minZoom: 9
 }};
 
 let countyBoundsData = null;
@@ -3909,18 +3909,16 @@ const placeContourLabels = (coords, elev, tier, elevNeighbors) => {{
 // Layer 11: 500ft index contours (wide zoom)
 // Field: contourelevation — MOD() filters reduce features server-side
 const getContourTier = (zoom) => {{
+  // minZoom is 9 — below that the USGS viewport is too large and returns 500 errors
   if (zoom >= 14) return {{ layerId: 26, where: "1=1",                              interval: 40,   maxContours: 4000, weight: 1.0, opacity: 0.55, labelMinInterval: 200 }};
   if (zoom >= 12) return {{ layerId: 26, where: "MOD(contourelevation,100)=0",      interval: 100,  maxContours: 3000, weight: 1.0, opacity: 0.5,  labelMinInterval: 500 }};
   if (zoom >= 10) return {{ layerId: 13, where: "MOD(contourelevation,100)=0",      interval: 100,  maxContours: 2500, weight: 0.9, opacity: 0.45, labelMinInterval: 500 }};
-  if (zoom >= 8)  return {{ layerId: 13, where: "MOD(contourelevation,200)=0",      interval: 200,  maxContours: 2000, weight: 0.8, opacity: 0.4,  labelMinInterval: 1000 }};
-  if (zoom >= 7)  return {{ layerId: 11, where: "MOD(contourelevation,500)=0",      interval: 500,  maxContours: 1500, weight: 0.7, opacity: 0.35, labelMinInterval: 2000 }};
-  return                  {{ layerId: 11, where: "MOD(contourelevation,500)=0",      interval: 500,  maxContours: 1000, weight: 0.6, opacity: 0.3,  labelMinInterval: 2000 }};
+  return                  {{ layerId: 13, where: "MOD(contourelevation,200)=0",      interval: 200,  maxContours: 2000, weight: 0.8, opacity: 0.4,  labelMinInterval: 1000 }};
 }};
 
 const loadContoursForView = async () => {{
   const zoom = map.getZoom();
   const tier = getContourTier(zoom);
-
   if (zoom < contourState.minZoom) {{
     contourLayer.clearLayers();
     contourState.loadedBounds = null;
@@ -3974,7 +3972,8 @@ const loadContoursForView = async () => {{
       const contourUrl = `${{CONTOUR_BASE}}/${{tier.layerId}}/query`;
       const response = await fetch(`${{contourUrl}}?${{params.toString()}}`, {{ signal }});
       if (!response.ok) break;
-      const data = await response.json();
+      let data;
+      try {{ data = await response.json(); }} catch {{ break; }}
       if (data.error) break;
 
       const features = data.features || [];
