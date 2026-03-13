@@ -1662,8 +1662,8 @@ const loadContoursForView = async () => {
       };
 
       features.forEach((f) => {
-        if (f.properties?.contourelevation == null || !f.geometry?.coordinates) return;
-        const elev = f.properties.contourelevation;
+        if (f.properties?.CONTOURELEVATION == null || !f.geometry?.coordinates) return;
+        const elev = f.properties.CONTOURELEVATION;
         try {
           const allCoords = f.geometry.type === "MultiLineString"
             ? f.geometry.coordinates
