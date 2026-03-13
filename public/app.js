@@ -239,7 +239,7 @@ const contourState = {
   loadedBounds: null,
   loadedZoomTier: null,
   abortController: null,
-  minZoom: 9
+  minZoom: 0
 };
 
 let countyBoundsData = null;
@@ -1412,14 +1412,15 @@ const getContourTier = (zoom) => {
   if (zoom >= 13) return { where: "1=1", interval: 500, maxContours: 4000, weight: 1.5, opacity: 0.6, labelMinInterval: 500 };
   if (zoom >= 11) return { where: "(ELEV % 1000) = 0", interval: 1000, maxContours: 3000, weight: 1.2, opacity: 0.5, labelMinInterval: 1000 };
   if (zoom >= 9)  return { where: "(ELEV % 2000) = 0", interval: 2000, maxContours: 2000, weight: 1.0, opacity: 0.4, labelMinInterval: 2000 };
-  return null;
+  if (zoom >= 7)  return { where: "(ELEV % 4000) = 0", interval: 4000, maxContours: 1000, weight: 0.8, opacity: 0.35, labelMinInterval: 4000 };
+  return              { where: "(ELEV % 5000) = 0", interval: 5000, maxContours: 500, weight: 0.6, opacity: 0.3, labelMinInterval: 5000 };
 };
 
 const loadContoursForView = async () => {
   const zoom = map.getZoom();
   const tier = getContourTier(zoom);
 
-  if (zoom < contourState.minZoom || !tier) {
+  if (zoom < contourState.minZoom) {
     contourLayer.clearLayers();
     contourState.loadedBounds = null;
     contourState.loadedZoomTier = null;
