@@ -1424,91 +1424,176 @@ const loadParcelsForView = async () => {
 // ===== Contour Loading Engine =====
 const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services/Contours500Ft/FeatureServer/0/query";
 
-// ===== Contour Label Placement Along Lines =====
-// Track placed label pixel positions to avoid overlaps
-let contourLabelPositions = [];
-const LABEL_MIN_PX_APART = 120; // minimum pixel distance between any two labels
+// ===== Contour Label Placement (Cartographic Rules) =====
+// - Every closed contour loop gets at least one label
+// - Larger loops get more labels proportional to perimeter
+// - Labels placed at straightest stretch, rotated to follow the line
+// - Text reads "uphill" (top of digits faces higher elevation)
+// - Line gaps behind labels for clarity
+// - No overlapping labels (minimum pixel distance enforced)
 
-const pixelDist = (a, b) => Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+let contourLabelPositions = [];
+const LABEL_MIN_PX_APART = 100; // minimum pixel distance between any two labels
+const LABEL_SPACING_PX = 450;   // target spacing along a contour (one label per ~450px of line)
+
+const pixelDist = (a, b) => Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 
 const labelOverlaps = (pt) => contourLabelPositions.some(p => pixelDist(p, pt) < LABEL_MIN_PX_APART);
 
-// Measure straightness: max deviation of intermediate points from the line between start and end
+// Measure straightness: max perpendicular deviation from the chord
 const segmentStraightness = (coords, iStart, iEnd) => {
   const [x1, y1] = coords[iStart];
   const [x2, y2] = coords[iEnd];
   const dx = x2 - x1;
   const dy = y2 - y1;
   const lenSq = dx * dx + dy * dy;
-  if (lenSq === 0) return 0;
+  if (lenSq === 0) return Infinity;
   let maxDev = 0;
   for (let i = iStart + 1; i < iEnd; i++) {
     const [px, py] = coords[i];
-    // Perpendicular distance from point to line
     const t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
     const projX = x1 + t * dx;
     const projY = y1 + t * dy;
-    const dev = Math.sqrt(Math.pow(px - projX, 2) + Math.pow(py - projY, 2));
+    const dev = Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
     if (dev > maxDev) maxDev = dev;
   }
   return maxDev;
 };
 
-// Find best straight stretch of at least `minPts` points, return { midIdx, angle }
-const findStraightStretch = (coords, minPts) => {
-  if (coords.length < minPts) return null;
-  let bestMid = -1;
-  let bestDev = Infinity;
-  let bestAngle = 0;
-  const windowSize = Math.min(minPts, coords.length);
-  for (let i = 0; i <= coords.length - windowSize; i++) {
-    const dev = segmentStraightness(coords, i, i + windowSize - 1);
-    if (dev < bestDev) {
-      bestDev = dev;
-      bestMid = i + Math.floor(windowSize / 2);
-      const [x1, y1] = coords[i];
-      const [x2, y2] = coords[i + windowSize - 1];
-      bestAngle = Math.atan2(y2 - y1, x2 - x1);
-    }
-  }
-  if (bestMid < 0) return null;
-  return { idx: bestMid, angle: bestAngle };
+// Compute angle at a point from neighboring coords
+const angleAtIndex = (coords, idx) => {
+  const before = Math.max(0, idx - 2);
+  const after = Math.min(coords.length - 1, idx + 2);
+  const [x1, y1] = coords[before];
+  const [x2, y2] = coords[after];
+  return Math.atan2(y2 - y1, x2 - x1);
 };
 
-// Place labels along a contour line at regular intervals, picking straight stretches
-const placeContourLabels = (coords, elev, tier) => {
+// Score all candidate positions along a line, ranking by straightness
+const scoreCandidates = (coords, windowSize) => {
+  const candidates = [];
+  const w = Math.min(windowSize, Math.floor(coords.length / 2));
+  if (w < 3) return candidates;
+  for (let i = 0; i <= coords.length - w; i++) {
+    const dev = segmentStraightness(coords, i, i + w - 1);
+    const midIdx = i + Math.floor(w / 2);
+    candidates.push({ idx: midIdx, dev });
+  }
+  candidates.sort((a, b) => a.dev - b.dev);
+  return candidates;
+};
+
+// Detect if a coordinate ring is closed (first ~= last)
+const isClosedRing = (coords) => {
+  if (coords.length < 4) return false;
+  const [x1, y1] = coords[0];
+  const [x2, y2] = coords[coords.length - 1];
+  return Math.abs(x1 - x2) < 1e-6 && Math.abs(y1 - y2) < 1e-6;
+};
+
+// Compute approximate pixel perimeter of a line
+const pixelPerimeter = (coords) => {
+  let len = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const a = map.latLngToLayerPoint([coords[i - 1][1], coords[i - 1][0]]);
+    const b = map.latLngToLayerPoint([coords[i][1], coords[i][0]]);
+    len += pixelDist(a, b);
+  }
+  return len;
+};
+
+// Determine how many labels a contour line should get
+const targetLabelCount = (coords) => {
+  const perim = pixelPerimeter(coords);
+  const closed = isClosedRing(coords);
+  // Every loop gets at least 1; open lines with enough length get 1+
+  const fromPerim = Math.floor(perim / LABEL_SPACING_PX);
+  return Math.max(closed ? 1 : (perim > 200 ? 1 : 0), fromPerim);
+};
+
+// Place labels along a contour line following cartographic conventions
+const placeContourLabels = (coords, elev, tier, elevNeighbors) => {
   if (!coords || coords.length < 4) return [];
   if (elev % tier.labelMinInterval !== 0) return [];
 
+  const target = targetLabelCount(coords);
+  if (target === 0) return [];
+
+  const candidates = scoreCandidates(coords, Math.min(8, Math.max(4, Math.floor(coords.length / 6))));
+  if (!candidates.length) return [];
+
   const labels = [];
-  // Walk along the line and place labels every ~300px worth of geo distance
-  // Use segments of ~8 points to find straight stretches
-  const segLen = Math.min(8, Math.floor(coords.length / 2));
-  if (segLen < 3) return [];
-  const step = Math.max(segLen * 2, Math.floor(coords.length / 4));
+  const usedIndices = new Set();
 
-  for (let start = 0; start + segLen < coords.length; start += step) {
-    const end = Math.min(start + segLen * 2, coords.length);
-    const subCoords = coords.slice(start, end);
-    const stretch = findStraightStretch(subCoords, Math.min(4, subCoords.length));
-    if (!stretch) continue;
+  for (const cand of candidates) {
+    if (labels.length >= target) break;
 
-    const globalIdx = start + stretch.idx;
-    const [lng, lat] = coords[globalIdx];
+    // Skip if too close to an already-chosen index on this line
+    let tooCloseOnLine = false;
+    for (const used of usedIndices) {
+      if (Math.abs(cand.idx - used) < Math.floor(coords.length / (target + 1) * 0.6)) {
+        tooCloseOnLine = true;
+        break;
+      }
+    }
+    if (tooCloseOnLine) continue;
+
+    const [lng, lat] = coords[cand.idx];
     const pt = map.latLngToLayerPoint([lat, lng]);
 
     if (labelOverlaps(pt)) continue;
 
-    // Convert geo angle to screen angle (y is flipped in screen coords)
-    let angleDeg = -(stretch.angle * 180 / Math.PI);
-    // Keep text upright: flip if pointing left
+    // Compute angle from line direction
+    let angleDeg = -(angleAtIndex(coords, cand.idx) * 180 / Math.PI);
+    // Keep text upright
     if (angleDeg > 90) angleDeg -= 180;
     if (angleDeg < -90) angleDeg += 180;
 
+    // "Read uphill" convention: top of text faces higher elevation
+    // If we know neighboring contour is higher to the left of travel direction,
+    // flip text so top faces that side
+    if (elevNeighbors && elevNeighbors.higher === "left") {
+      // Text is already correct (top faces left of travel = uphill)
+    } else if (elevNeighbors && elevNeighbors.higher === "right") {
+      angleDeg += 180;
+      if (angleDeg > 90) angleDeg -= 360;
+      if (angleDeg < -90) angleDeg += 360;
+    }
+
     contourLabelPositions.push(pt);
-    labels.push({ lat, lng, angleDeg, elev });
+    usedIndices.add(cand.idx);
+
+    // Compute gap indices: which coordinate indices the label covers
+    // so we can break the line there
+    const gapHalf = 3; // indices on each side of label to gap
+    const gapStart = Math.max(0, cand.idx - gapHalf);
+    const gapEnd = Math.min(coords.length - 1, cand.idx + gapHalf);
+
+    labels.push({ lat, lng, angleDeg, elev, gapStart, gapEnd });
   }
   return labels;
+};
+
+// Build a GeoJSON line with gaps cut out where labels sit
+const cutLineGaps = (coords, labels, geomType) => {
+  if (!labels.length) return null; // no gaps needed
+  // Sort labels by gap start index
+  const sorted = [...labels].sort((a, b) => a.gapStart - b.gapStart);
+  const segments = [];
+  let cursor = 0;
+  for (const label of sorted) {
+    if (label.gapStart > cursor) {
+      const seg = coords.slice(cursor, label.gapStart + 1);
+      if (seg.length >= 2) segments.push(seg);
+    }
+    cursor = label.gapEnd;
+  }
+  if (cursor < coords.length) {
+    const seg = coords.slice(cursor);
+    if (seg.length >= 2) segments.push(seg);
+  }
+  if (!segments.length) return null;
+  return { type: "MultiLineString", coordinates: segments };
 };
 
 // Zoom-dependent contour detail tiers
@@ -1582,53 +1667,75 @@ const loadContoursForView = async () => {
       const features = data.features || [];
       if (!features.length) break;
 
-      const geoLayer = L.geoJSON({ type: "FeatureCollection", features }, {
-        pane: "contourPane",
-        style: () => ({
-          color: contourColor,
-          weight: tier.weight,
-          opacity: tier.opacity,
-          fill: false
-        }),
-        onEachFeature: (feature, layer) => {
-          if (feature.properties?.ELEV) {
-            layer.bindTooltip(`${feature.properties.ELEV}`, {
-              sticky: true,
-              direction: "top",
-              className: "contour-label",
-              offset: [0, -8],
-              opacity: 0.95
-            });
-          }
-        }
-      });
+      // Process each feature: compute labels, cut gaps, render line + labels
+      const contourStyle = {
+        color: contourColor,
+        weight: tier.weight,
+        opacity: tier.opacity,
+        fill: false
+      };
 
-      contourLayer.addLayer(geoLayer);
-
-      // Place rotated labels along straight stretches of contour lines
       features.forEach((f) => {
         if (!f.properties?.ELEV || !f.geometry?.coordinates) return;
+        const elev = f.properties.ELEV;
         try {
           const allCoords = f.geometry.type === "MultiLineString"
             ? f.geometry.coordinates
             : [f.geometry.coordinates];
+
           allCoords.forEach((coords) => {
-            if (!coords || coords.length < 4) return;
-            const labels = placeContourLabels(coords, f.properties.ELEV, tier);
-            labels.forEach(({ lat, lng, angleDeg, elev }) => {
-              contourLayer.addLayer(L.marker([lat, lng], {
-                icon: L.divIcon({
-                  className: "contour-label-inline",
-                  html: `<span style="transform:rotate(${angleDeg.toFixed(1)}deg)">${elev}</span>`,
-                  iconSize: [40, 14],
-                  iconAnchor: [20, 7]
-                }),
-                interactive: false,
-                pane: "tooltipPane"
-              }));
-            });
+            if (!coords || coords.length < 2) return;
+
+            // Compute labels for this ring/line
+            const labels = placeContourLabels(coords, elev, tier, null);
+
+            if (labels.length > 0) {
+              // Draw line with gaps where labels sit
+              const gapped = cutLineGaps(coords, labels, "LineString");
+              if (gapped) {
+                const gapLayer = L.geoJSON(gapped, {
+                  pane: "contourPane",
+                  style: () => contourStyle,
+                  onEachFeature: (feat, layer) => {
+                    layer.bindTooltip(`${elev}`, {
+                      sticky: true, direction: "top",
+                      className: "contour-label", offset: [0, -8], opacity: 0.95
+                    });
+                  }
+                });
+                contourLayer.addLayer(gapLayer);
+              }
+
+              // Place label markers
+              labels.forEach(({ lat, lng, angleDeg }) => {
+                contourLayer.addLayer(L.marker([lat, lng], {
+                  icon: L.divIcon({
+                    className: "contour-label-inline",
+                    html: `<span style="transform:rotate(${angleDeg.toFixed(1)}deg)">${elev}</span>`,
+                    iconSize: [44, 14],
+                    iconAnchor: [22, 7]
+                  }),
+                  interactive: false,
+                  pane: "tooltipPane"
+                }));
+              });
+            } else {
+              // No labels — draw unbroken line
+              const lineGeom = { type: "LineString", coordinates: coords };
+              const lineLayer = L.geoJSON(lineGeom, {
+                pane: "contourPane",
+                style: () => contourStyle,
+                onEachFeature: (feat, layer) => {
+                  layer.bindTooltip(`${elev}`, {
+                    sticky: true, direction: "top",
+                    className: "contour-label", offset: [0, -8], opacity: 0.95
+                  });
+                }
+              });
+              contourLayer.addLayer(lineLayer);
+            }
           });
-        } catch { /* skip label errors */ }
+        } catch { /* skip feature errors */ }
       });
 
       total += features.length;
