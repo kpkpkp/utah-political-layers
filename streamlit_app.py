@@ -3753,7 +3753,7 @@ const loadParcelsForView = async () => {{
 }};
 
 // ===== Contour Loading Engine =====
-const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services/ContoursGeneralized200Ft/FeatureServer/0/query";
+const CONTOUR_URL = "https://services1.arcgis.com/99lidPhWCzftIe9K/ArcGIS/rest/services/Contours500Ft/FeatureServer/0/query";
 
 // ===== Contour Label Placement (Cartographic Rules) =====
 // - Every closed contour loop gets at least one label
@@ -3901,16 +3901,16 @@ const placeContourLabels = (coords, elev, tier, elevNeighbors) => {{
 
 
 // Zoom-dependent contour detail tiers
-// Data source: ContoursGeneralized200Ft — polygon service with ContourElevation field at 200ft intervals
-// Rendered as outlines only (fill: false) to approximate contour lines
+// Data source: Contours500Ft — polyline service with ELEV field at 500ft intervals
+// Best used on non-topo tiles (OSM, Carto) where base map has no contours
 const getContourTier = (zoom) => {{
-  // Utah elevation range: ~2500–13500 ft; contour data at 200 ft intervals
+  // Utah elevation range: ~2500–13500 ft; contour data at 500 ft intervals
   // Use MOD() for ArcGIS REST SQL compatibility (% operator not supported)
-  if (zoom >= 13) return {{ where: "1=1",                                interval: 200,  maxContours: 4000, weight: 1.2, opacity: 0.55, labelMinInterval: 1000, elevField: "ContourElevation" }};
-  if (zoom >= 11) return {{ where: "MOD(ContourElevation,400)=0",        interval: 400,  maxContours: 3000, weight: 1.0, opacity: 0.5,  labelMinInterval: 1000, elevField: "ContourElevation" }};
-  if (zoom >= 9)  return {{ where: "MOD(ContourElevation,1000)=0",       interval: 1000, maxContours: 2000, weight: 0.9, opacity: 0.45, labelMinInterval: 1000, elevField: "ContourElevation" }};
-  if (zoom >= 7)  return {{ where: "MOD(ContourElevation,1000)=0",       interval: 1000, maxContours: 1500, weight: 0.8, opacity: 0.4,  labelMinInterval: 2000, elevField: "ContourElevation" }};
-  return                  {{ where: "MOD(ContourElevation,2000)=0",       interval: 2000, maxContours: 1000, weight: 0.7, opacity: 0.35, labelMinInterval: 2000, elevField: "ContourElevation" }};
+  if (zoom >= 13) return {{ where: "1=1",                    interval: 500,  maxContours: 4000, weight: 1.5, opacity: 0.6,  labelMinInterval: 500 }};
+  if (zoom >= 11) return {{ where: "1=1",                    interval: 500,  maxContours: 3000, weight: 1.2, opacity: 0.5,  labelMinInterval: 1000 }};
+  if (zoom >= 9)  return {{ where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 2000, weight: 1.0, opacity: 0.45, labelMinInterval: 1000 }};
+  if (zoom >= 7)  return {{ where: "MOD(ELEV,1000)=0",       interval: 1000, maxContours: 1500, weight: 0.8, opacity: 0.4,  labelMinInterval: 2000 }};
+  return                  {{ where: "MOD(ELEV,2000)=0",       interval: 2000, maxContours: 1000, weight: 0.7, opacity: 0.35, labelMinInterval: 2000 }};
 }};
 
 const loadContoursForView = async () => {{
@@ -3954,14 +3954,13 @@ const loadContoursForView = async () => {{
 
     while (total < tier.maxContours) {{
       if (signal.aborted) break;
-      const elevField = tier.elevField || "ContourElevation";
       const params = new URLSearchParams({{
         where: tier.where,
         geometry: envelope,
         geometryType: "esriGeometryEnvelope",
         spatialRel: "esriSpatialRelIntersects",
         inSR: "4326",
-        outFields: elevField,
+        outFields: "ELEV",
         outSR: "4326",
         f: "geojson",
         resultOffset: String(offset),
@@ -3984,23 +3983,14 @@ const loadContoursForView = async () => {{
       }};
 
       features.forEach((f) => {{
-        const elev = f.properties?.[elevField];
-        if (elev == null || !f.geometry?.coordinates) return;
+        if (!f.properties?.ELEV || !f.geometry?.coordinates) return;
+        const elev = f.properties.ELEV;
         try {{
-          // Polygon data: extract rings as contour lines
-          const geomType = f.geometry.type;
-          let rings = [];
-          if (geomType === "Polygon") {{
-            rings = f.geometry.coordinates; // array of rings
-          }} else if (geomType === "MultiPolygon") {{
-            f.geometry.coordinates.forEach(poly => rings.push(...poly));
-          }} else if (geomType === "LineString") {{
-            rings = [f.geometry.coordinates];
-          }} else if (geomType === "MultiLineString") {{
-            rings = f.geometry.coordinates;
-          }}
+          const allCoords = f.geometry.type === "MultiLineString"
+            ? f.geometry.coordinates
+            : [f.geometry.coordinates];
 
-          rings.forEach((coords) => {{
+          allCoords.forEach((coords) => {{
             if (!coords || coords.length < 2) return;
 
             const labels = placeContourLabels(coords, elev, tier, null);
