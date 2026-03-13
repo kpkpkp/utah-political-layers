@@ -230,10 +230,6 @@ const parcelPane = map.createPane("parcelPane");
 parcelPane.style.zIndex = "455";  // Above population (450) so parcels are clickable when both layers on
 parcelPane.style.pointerEvents = "auto";
 
-const contourPane = map.createPane("contourPane");
-contourPane.style.zIndex = "435";  // Below parcels and population
-contourPane.style.pointerEvents = "auto";  // Allow hover for elevation labels
-
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
 const populationRenderer = L.canvas({ padding: 0.5, pane: "populationPane", tolerance: isTouchDevice ? 12 : 0 });
 const populationLayer = L.layerGroup();
@@ -241,7 +237,6 @@ let populationHighlight = null;
 
 const parcelRenderer = L.canvas({ padding: 0.5, pane: "parcelPane", tolerance: isTouchDevice ? 12 : 0 });
 const parcelLayer = L.layerGroup();
-const contourLayer = L.layerGroup();
 
 const parcelState = {
   loading: false,
@@ -249,15 +244,6 @@ const parcelState = {
   loadedBounds: null,
   abortController: null,
   minZoom: 15
-};
-
-const contourState = {
-  loading: false,
-  enabled: false,
-  loadedBounds: null,
-  loadedZoomTier: null,
-  abortController: null,
-  minZoom: 9
 };
 
 let countyBoundsData = null;
@@ -356,8 +342,7 @@ const defaultLineColors = {
   senate: colorConfig.outline.senate,
   congressCurrent: colorConfig.outline.congressCurrent,
   congressFuture: colorConfig.outline.congressFuture,
-  parcels: "#888888",
-  contours: "#8B4513"
+  parcels: "#888888"
 };
 
 const loadStoredColors = () => {
@@ -591,8 +576,7 @@ const layerState = {
   senate: null,
   congressCurrent: null,
   congressFuture: null,
-  parcels: parcelLayer,
-  contours: contourLayer
+  parcels: parcelLayer
 };
 
 // Expose for debugging
@@ -641,18 +625,6 @@ const attachToggle = (checkboxId, layerKey) => {
         parcelState.enabled = false;
         parcelPane.style.display = "none";
         trackEvent('layer_toggle', { layer: 'parcels', enabled: false });
-      }
-    } else if (layerKey === "contours") {
-      if (checkbox.checked) {
-        contourState.enabled = true;
-        if (!map.hasLayer(contourLayer)) contourLayer.addTo(map);
-        contourPane.style.display = "";
-        loadContoursForView().catch(err => console.error("Contour load:", err));
-        trackEvent('layer_toggle', { layer: 'contours', enabled: true });
-      } else {
-        contourState.enabled = false;
-        contourPane.style.display = "none";
-        trackEvent('layer_toggle', { layer: 'contours', enabled: false });
       }
     } else if (checkbox.checked) {
       layer.addTo(map);
@@ -1428,325 +1400,14 @@ const loadParcelsForView = async () => {
   }
 };
 
-// ===== Contour Loading Engine =====
-// USGS National Map contour service — free, no API key, nationwide 40ft contours
-const CONTOUR_BASE = "https://carto.nationalmap.gov/arcgis/rest/services/contours/MapServer";
-
-// ===== Contour Label Placement (Cartographic Rules) =====
-// - Every closed contour loop gets at least one label
-// - Larger loops get more labels proportional to perimeter
-// - Labels placed at straightest stretch, rotated to follow the line
-// - Text reads "uphill" (top of digits faces higher elevation)
-// - Line gaps behind labels for clarity
-// - No overlapping labels (minimum pixel distance enforced)
-
-let contourLabelPositions = [];
-const LABEL_MIN_PX_APART = 100; // minimum pixel distance between any two labels
-const LABEL_SPACING_PX = 450;   // target spacing along a contour (one label per ~450px of line)
-
-const pixelDist = (a, b) => Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
-
-const labelOverlaps = (pt) => contourLabelPositions.some(p => pixelDist(p, pt) < LABEL_MIN_PX_APART);
-
-// Measure straightness: max perpendicular deviation from the chord
-const segmentStraightness = (coords, iStart, iEnd) => {
-  const [x1, y1] = coords[iStart];
-  const [x2, y2] = coords[iEnd];
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const lenSq = dx * dx + dy * dy;
-  if (lenSq === 0) return Infinity;
-  let maxDev = 0;
-  for (let i = iStart + 1; i < iEnd; i++) {
-    const [px, py] = coords[i];
-    const t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
-    const projX = x1 + t * dx;
-    const projY = y1 + t * dy;
-    const dev = Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
-    if (dev > maxDev) maxDev = dev;
-  }
-  return maxDev;
-};
-
-// Compute angle at a point from neighboring coords
-const angleAtIndex = (coords, idx) => {
-  const before = Math.max(0, idx - 2);
-  const after = Math.min(coords.length - 1, idx + 2);
-  const [x1, y1] = coords[before];
-  const [x2, y2] = coords[after];
-  return Math.atan2(y2 - y1, x2 - x1);
-};
-
-// Score all candidate positions along a line, ranking by straightness
-const scoreCandidates = (coords, windowSize) => {
-  const candidates = [];
-  const w = Math.min(windowSize, Math.floor(coords.length / 2));
-  if (w < 3) return candidates;
-  for (let i = 0; i <= coords.length - w; i++) {
-    const dev = segmentStraightness(coords, i, i + w - 1);
-    const midIdx = i + Math.floor(w / 2);
-    candidates.push({ idx: midIdx, dev });
-  }
-  candidates.sort((a, b) => a.dev - b.dev);
-  return candidates;
-};
-
-// Detect if a coordinate ring is closed (first ~= last)
-const isClosedRing = (coords) => {
-  if (coords.length < 4) return false;
-  const [x1, y1] = coords[0];
-  const [x2, y2] = coords[coords.length - 1];
-  return Math.abs(x1 - x2) < 1e-6 && Math.abs(y1 - y2) < 1e-6;
-};
-
-// Compute approximate pixel perimeter of a line
-const pixelPerimeter = (coords) => {
-  let len = 0;
-  for (let i = 1; i < coords.length; i++) {
-    const a = map.latLngToLayerPoint([coords[i - 1][1], coords[i - 1][0]]);
-    const b = map.latLngToLayerPoint([coords[i][1], coords[i][0]]);
-    len += pixelDist(a, b);
-  }
-  return len;
-};
-
-// Determine how many labels a contour line should get
-const targetLabelCount = (coords) => {
-  const perim = pixelPerimeter(coords);
-  const closed = isClosedRing(coords);
-  // Every loop gets at least 1; open lines with enough length get 1+
-  const fromPerim = Math.floor(perim / LABEL_SPACING_PX);
-  return Math.max(closed ? 1 : (perim > 200 ? 1 : 0), fromPerim);
-};
-
-// Place labels along a contour line following cartographic conventions
-const placeContourLabels = (coords, elev, tier, elevNeighbors) => {
-  if (!coords || coords.length < 4) return [];
-  if (elev % tier.labelMinInterval !== 0) return [];
-
-  const target = targetLabelCount(coords);
-  if (target === 0) return [];
-
-  const candidates = scoreCandidates(coords, Math.min(8, Math.max(4, Math.floor(coords.length / 6))));
-  if (!candidates.length) return [];
-
-  const labels = [];
-  const usedIndices = new Set();
-
-  for (const cand of candidates) {
-    if (labels.length >= target) break;
-
-    // Skip if too close to an already-chosen index on this line
-    let tooCloseOnLine = false;
-    for (const used of usedIndices) {
-      if (Math.abs(cand.idx - used) < Math.floor(coords.length / (target + 1) * 0.6)) {
-        tooCloseOnLine = true;
-        break;
-      }
-    }
-    if (tooCloseOnLine) continue;
-
-    const [lng, lat] = coords[cand.idx];
-    const pt = map.latLngToLayerPoint([lat, lng]);
-
-    if (labelOverlaps(pt)) continue;
-
-    // Compute angle from line direction
-    let angleDeg = -(angleAtIndex(coords, cand.idx) * 180 / Math.PI);
-    // Keep text upright
-    if (angleDeg > 90) angleDeg -= 180;
-    if (angleDeg < -90) angleDeg += 180;
-
-    // "Read uphill" convention: top of text faces higher elevation
-    // If we know neighboring contour is higher to the left of travel direction,
-    // flip text so top faces that side
-    if (elevNeighbors && elevNeighbors.higher === "left") {
-      // Text is already correct (top faces left of travel = uphill)
-    } else if (elevNeighbors && elevNeighbors.higher === "right") {
-      angleDeg += 180;
-      if (angleDeg > 90) angleDeg -= 360;
-      if (angleDeg < -90) angleDeg += 360;
-    }
-
-    contourLabelPositions.push(pt);
-    usedIndices.add(cand.idx);
-
-    labels.push({ lat, lng, angleDeg, elev });
-  }
-  return labels;
-};
-
-
-// Zoom-dependent contour detail tiers using USGS National Map layers
-// Layer 26: 40ft normal intermediate (large scale)
-// Layer 13: 100ft intermediate
-// Layer 11: 500ft index contours (wide zoom)
-// Field: contourelevation — MOD() filters reduce features server-side
-const getContourTier = (zoom) => {
-  // minZoom is 9 — below that the USGS viewport is too large and returns 500 errors
-  if (zoom >= 14) return { layerId: 26, where: "1=1",                              interval: 40,   maxContours: 4000, weight: 1.0, opacity: 0.55, labelMinInterval: 200 };
-  if (zoom >= 12) return { layerId: 26, where: "MOD(contourelevation,100)=0",      interval: 100,  maxContours: 3000, weight: 1.0, opacity: 0.5,  labelMinInterval: 500 };
-  if (zoom >= 10) return { layerId: 13, where: "MOD(contourelevation,100)=0",      interval: 100,  maxContours: 2500, weight: 0.9, opacity: 0.45, labelMinInterval: 500 };
-  return                  { layerId: 13, where: "MOD(contourelevation,200)=0",      interval: 200,  maxContours: 2000, weight: 0.8, opacity: 0.4,  labelMinInterval: 1000 };
-};
-
-const loadContoursForView = async () => {
-  const zoom = map.getZoom();
-  const tier = getContourTier(zoom);
-  if (zoom < contourState.minZoom) {
-    contourLayer.clearLayers();
-    contourState.loadedBounds = null;
-    contourState.loadedZoomTier = null;
-    return;
-  }
-
-  // Pad generously so small pans stay within cached bounds (no reload)
-  const viewBounds = map.getBounds();
-  const fetchBounds = viewBounds.pad(0.3);
-
-  // Reload if viewport escaped cached bounds OR zoom tier changed
-  if (contourState.loadedBounds && contourState.loadedBounds.contains(viewBounds) &&
-      contourState.loadedZoomTier === tier.layerId) {
-    return;
-  }
-
-  if (contourState.abortController) {
-    contourState.abortController.abort();
-  }
-  contourState.abortController = new AbortController();
-  const signal = contourState.abortController.signal;
-
-  contourState.loading = true;
-  const envelope = `${fetchBounds.getWest()},${fetchBounds.getSouth()},${fetchBounds.getEast()},${fetchBounds.getNorth()}`;
-  const contourColor = styleState.lineColors.contours || "#8B4513";
-
-  // Build into a temp group, then swap atomically to avoid flicker
-  const tempGroup = L.layerGroup();
-  const tempLabelPositions = [];
-
-  try {
-    let offset = 0;
-    let total = 0;
-
-    while (total < tier.maxContours) {
-      if (signal.aborted) break;
-      const params = new URLSearchParams({
-        where: tier.where,
-        geometry: envelope,
-        geometryType: "esriGeometryEnvelope",
-        spatialRel: "esriSpatialRelIntersects",
-        inSR: "4326",
-        outFields: "contourelevation",
-        outSR: "4326",
-        f: "geojson",
-        resultOffset: String(offset),
-        resultRecordCount: "2000"
-      });
-
-      const contourUrl = `${CONTOUR_BASE}/${tier.layerId}/query`;
-      const response = await fetch(`${contourUrl}?${params.toString()}`, { signal });
-      if (!response.ok) break;
-      let data;
-      try { data = await response.json(); } catch { break; }
-      if (data.error) break;
-
-      const features = data.features || [];
-      if (!features.length) break;
-
-      const contourStyle = {
-        color: contourColor,
-        weight: tier.weight,
-        opacity: tier.opacity,
-        fill: false
-      };
-
-      features.forEach((f) => {
-        if (f.properties?.CONTOURELEVATION == null || !f.geometry?.coordinates) return;
-        const elev = f.properties.CONTOURELEVATION;
-        try {
-          const allCoords = f.geometry.type === "MultiLineString"
-            ? f.geometry.coordinates
-            : [f.geometry.coordinates];
-
-          allCoords.forEach((coords) => {
-            if (!coords || coords.length < 2) return;
-
-            const labels = placeContourLabels(coords, elev, tier, null);
-
-            // Render ring as a polyline (outline only, no fill)
-            const lineGeom = { type: "LineString", coordinates: coords };
-            const lineLayer = L.geoJSON(lineGeom, {
-              pane: "contourPane",
-              style: () => contourStyle,
-              onEachFeature: (feat, layer) => {
-                layer.bindTooltip(`${elev}`, {
-                  sticky: true, direction: "top",
-                  className: "contour-label", offset: [0, -8], opacity: 0.95
-                });
-              }
-            });
-            tempGroup.addLayer(lineLayer);
-
-            labels.forEach(({ lat, lng, angleDeg }) => {
-              tempGroup.addLayer(L.marker([lat, lng], {
-                icon: L.divIcon({
-                  className: "contour-label-inline",
-                  html: `<span style="transform:rotate(${angleDeg.toFixed(1)}deg)">${elev}</span>`,
-                  iconSize: [44, 14],
-                  iconAnchor: [22, 7]
-                }),
-                interactive: false,
-                pane: "tooltipPane"
-              }));
-            });
-          });
-        } catch { /* skip feature errors */ }
-      });
-
-      total += features.length;
-
-      if (data.exceededTransferLimit || features.length === 2000) {
-        offset += features.length;
-      } else {
-        break;
-      }
-    }
-
-    if (signal.aborted) return;
-
-    // Atomic swap: clear old, add new — no visible gap
-    contourLayer.clearLayers();
-    tempGroup.eachLayer(l => contourLayer.addLayer(l));
-    contourLabelPositions = tempLabelPositions;
-
-    contourState.loadedBounds = fetchBounds;
-    contourState.loadedZoomTier = tier.layerId;
-    contourState.loading = false;
-  } catch (err) {
-    if (err.name === "AbortError") return;
-    contourState.loading = false;
-    console.error("Contour load error:", err);
-  }
-};
-
 // ===== Debounced Viewport-Driven Loading =====
 let parcelLoadTimeout = null;
-let contourLoadTimeout = null;
 
 const debouncedParcelLoad = () => {
   clearTimeout(parcelLoadTimeout);
   parcelLoadTimeout = setTimeout(() => {
     if (parcelState.enabled) {
       loadParcelsForView().catch(err => console.error("Parcel load:", err));
-    }
-  }, 400);
-};
-
-const debouncedContourLoad = () => {
-  clearTimeout(contourLoadTimeout);
-  contourLoadTimeout = setTimeout(() => {
-    if (contourState.enabled) {
-      loadContoursForView().catch(err => console.error("Contour load:", err));
     }
   }, 400);
 };
@@ -1859,31 +1520,17 @@ const bindPopulationColor = () => {
   });
 };
 
-const bindParcelContourColors = () => {
+const bindParcelColors = () => {
   const parcelInput = document.getElementById("color-parcels");
   if (parcelInput) {
     parcelInput.value = styleState.lineColors.parcels || "#888888";
     parcelInput.addEventListener("input", () => {
       styleState.lineColors.parcels = parcelInput.value;
       persistColors();
-      // Update existing parcel layers with new color
       parcelLayer.eachLayer((group) => {
         if (group.setStyle) group.setStyle({ color: parcelInput.value });
       });
       trackEvent('color_changed', { type: 'parcels', value: parcelInput.value });
-    });
-  }
-
-  const contourInput = document.getElementById("color-contours");
-  if (contourInput) {
-    contourInput.value = styleState.lineColors.contours || "#8B4513";
-    contourInput.addEventListener("input", () => {
-      styleState.lineColors.contours = contourInput.value;
-      persistColors();
-      contourLayer.eachLayer((group) => {
-        if (group.setStyle) group.setStyle({ color: contourInput.value });
-      });
-      trackEvent('color_changed', { type: 'contours', value: contourInput.value });
     });
   }
 };
@@ -2093,8 +1740,7 @@ const init = async () => {
     { id: "toggle-senate", key: "senate" },
     { id: "toggle-congress-current", key: "congressCurrent" },
     { id: "toggle-congress-future", key: "congressFuture" },
-    { id: "toggle-parcels", key: "parcels" },
-    { id: "toggle-contours", key: "contours" }
+    { id: "toggle-parcels", key: "parcels" }
   ];
 
   toggleConfig.forEach(({ id, key }) => {
@@ -2104,7 +1750,7 @@ const init = async () => {
       checkbox.checked = storedUi.toggles[id];
     }
     attachToggle(id, key);
-    // Parcels and contours use pane visibility, not add/remove
+    // Parcels use pane visibility, not add/remove
     if (key === "parcels") {
       parcelLayer.addTo(map);
       if (checkbox.checked) {
@@ -2113,15 +1759,6 @@ const init = async () => {
         loadParcelsForView().catch(err => console.error("Parcel load:", err));
       } else {
         parcelPane.style.display = "none";
-      }
-    } else if (key === "contours") {
-      contourLayer.addTo(map);
-      if (checkbox.checked) {
-        contourState.enabled = true;
-        contourPane.style.display = "";
-        loadContoursForView().catch(err => console.error("Contour load:", err));
-      } else {
-        contourPane.style.display = "none";
       }
     } else if (!checkbox.checked) {
       map.removeLayer(layerState[key]);
@@ -2154,7 +1791,7 @@ const init = async () => {
   bindColorPickers(parties);
   bindLineControls(parties);
   bindPopulationColor();
-  bindParcelContourColors();
+  bindParcelColors();
   bindTileStylePicker();
 
   // Render after all controls are bound and styleState is set from HTML inputs
@@ -2346,14 +1983,12 @@ const init = async () => {
   map.on("moveend", storeView);
   map.on("zoomend", storeView);
 
-  // Viewport-driven loading for parcels and contours
+  // Viewport-driven loading for parcels
   map.on("moveend", () => {
     debouncedParcelLoad();
-    debouncedContourLoad();
   });
   map.on("zoomend", () => {
     debouncedParcelLoad();
-    debouncedContourLoad();
   });
 };
 
