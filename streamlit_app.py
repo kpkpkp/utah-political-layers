@@ -2523,7 +2523,9 @@ const parcelState = {{
   loading: false,
   enabled: false,
   loadedBounds: null,
+  loadingBounds: null,
   abortController: null,
+  parcelCount: 0,
   minZoom: 15
 }};
 
@@ -3525,9 +3527,15 @@ const loadParcelsForView = async () => {{
   const zoom = map.getZoom();
 
   if (zoom < parcelState.minZoom) {{
+    if (parcelState.abortController) {{
+      parcelState.abortController.abort();
+      parcelState.abortController = null;
+    }}
     parcelLayer.clearLayers();
     parcelState.loadedBounds = null;
+    parcelState.loadingBounds = null;
     parcelState.parcelCount = 0;
+    parcelState.loading = false;
     if (status) status.textContent = "zoom in to see";
     return;
   }}
@@ -3540,7 +3548,12 @@ const loadParcelsForView = async () => {{
     return;
   }}
 
-  // Abort previous in-flight requests
+  // Skip if an in-progress load already covers this viewport
+  if (parcelState.loading && parcelState.loadingBounds && parcelState.loadingBounds.contains(viewBounds)) {{
+    return;
+  }}
+
+  // Abort previous in-flight requests only if we actually need a different area
   if (parcelState.abortController) {{
     parcelState.abortController.abort();
   }}
@@ -3548,6 +3561,7 @@ const loadParcelsForView = async () => {{
   const signal = parcelState.abortController.signal;
 
   parcelState.loading = true;
+  parcelState.loadingBounds = fetchBounds;
   if (status) status.textContent = "loading…";
 
   const counties = getCountiesInBounds(fetchBounds);
@@ -3630,9 +3644,20 @@ const loadParcelsForView = async () => {{
               }}).addTo(map);
               map._parcelHighlight = hl;
 
+              // Position popup at the northernmost vertex of the parcel boundary
+              // so the callout stem touches the actual property line, not empty space
+              const coords = feature.geometry.type === "MultiPolygon"
+                ? feature.geometry.coordinates.flat(2)
+                : feature.geometry.coordinates.flat();
+              let apex = coords[0];
+              for (const pt of coords) {{
+                if (pt[1] > apex[1]) apex = pt;
+              }}
+              const popupLatLng = L.latLng(apex[1], apex[0]);
+
               const p = feature.properties;
               let elevHtml = '<em>Loading elevation...</em>';
-              const popup = L.popup().setLatLng(e.latlng).setContent(buildParcelPopup(p, elevHtml)).openOn(map);
+              const popup = L.popup().setLatLng(popupLatLng).setContent(buildParcelPopup(p, elevHtml)).openOn(map);
               map.on("popupclose", function onClose() {{
                 if (map._parcelHighlight) {{
                   map.removeLayer(map._parcelHighlight);
@@ -3677,12 +3702,14 @@ const loadParcelsForView = async () => {{
     }}
     parcelState.parcelCount = (parcelState.parcelCount || 0) + newFeatures;
     parcelState.loading = false;
+    parcelState.loadingBounds = null;
     if (status) {{
       status.textContent = parcelState.parcelCount > 0 ? `${{parcelState.parcelCount.toLocaleString()}} parcels` : "";
     }}
   }} catch (err) {{
     if (err.name === "AbortError") return;
     parcelState.loading = false;
+    parcelState.loadingBounds = null;
     if (status) status.textContent = "error";
     console.error("Parcel load error:", err);
   }}
