@@ -2519,10 +2519,11 @@ let populationHighlight = null;
 const parcelRenderer = L.canvas({{ padding: 0.5, pane: "parcelPane", tolerance: isTouchDevice ? 12 : 0 }});
 const parcelLayer = L.layerGroup();
 
+const PARCEL_TILE_SIZE = 0.008; // ~900m per tile
 const parcelState = {{
   loading: false,
   enabled: false,
-  loadedBounds: null,
+  loadedTiles: new Set(),   // keys like "col_row" for globally-aligned grid
   loadingBounds: null,
   abortController: null,
   parcelCount: 0,
@@ -3532,7 +3533,7 @@ const loadParcelsForView = async () => {{
       parcelState.abortController = null;
     }}
     parcelLayer.clearLayers();
-    parcelState.loadedBounds = null;
+    parcelState.loadedTiles.clear();
     parcelState.loadingBounds = null;
     parcelState.parcelCount = 0;
     parcelState.loading = false;
@@ -3543,17 +3544,28 @@ const loadParcelsForView = async () => {{
   const viewBounds = map.getBounds();
   const fetchBounds = viewBounds.pad(0.3);
 
-  // Skip if already loaded for these bounds
-  if (parcelState.loadedBounds && parcelState.loadedBounds.contains(viewBounds)) {{
-    return;
+  // Build globally-aligned tile grid covering the fetch area
+  // Using a fixed global grid means the same geographic area always maps to the
+  // same tile key, so already-loaded tiles are skipped on pan.
+  const ts = PARCEL_TILE_SIZE;
+  const colMin = Math.floor(fetchBounds.getWest() / ts);
+  const colMax = Math.floor(fetchBounds.getEast() / ts);
+  const rowMin = Math.floor(fetchBounds.getSouth() / ts);
+  const rowMax = Math.floor(fetchBounds.getNorth() / ts);
+
+  const newTiles = [];
+  for (let r = rowMin; r <= rowMax; r++) {{
+    for (let c = colMin; c <= colMax; c++) {{
+      const key = `${{c}}_${{r}}`;
+      if (!parcelState.loadedTiles.has(key)) {{
+        newTiles.push({{ c, r, key, w: c * ts, s: r * ts, e: (c + 1) * ts, n: (r + 1) * ts }});
+      }}
+    }}
   }}
 
-  // Skip if an in-progress load already covers this viewport
-  if (parcelState.loading && parcelState.loadingBounds && parcelState.loadingBounds.contains(viewBounds)) {{
-    return;
-  }}
+  if (!newTiles.length) return; // all tiles already cached
 
-  // Abort previous in-flight requests only if we actually need a different area
+  // Abort previous in-flight requests
   if (parcelState.abortController) {{
     parcelState.abortController.abort();
   }}
@@ -3564,143 +3576,140 @@ const loadParcelsForView = async () => {{
   parcelState.loadingBounds = fetchBounds;
   if (status) status.textContent = "loading…";
 
-  const counties = getCountiesInBounds(fetchBounds);
-  if (!counties.length) {{
-    parcelState.loading = false;
-    if (status) status.textContent = "";
-    return;
-  }}
-
-  // Convert bounds to envelope for ArcGIS query
-  const envelope = `${{fetchBounds.getWest()}},${{fetchBounds.getSouth()}},${{fetchBounds.getEast()}},${{fetchBounds.getNorth()}}`;
   const parcelColor = styleState.lineColors.parcels || "#888888";
-
   let newFeatures = 0;
-  const maxTotal = 6000;
+
+  // Shared click handler factory for parcel features
+  const onParcelClick = (feature, layer) => {{
+    layer.on("click", async (e) => {{
+      L.DomEvent.stopPropagation(e);
+      if (map._parcelHighlight) {{
+        map.removeLayer(map._parcelHighlight);
+        map._parcelHighlight = null;
+      }}
+      const hl = L.geoJSON(feature, {{
+        pane: "parcelPane",
+        style: () => ({{
+          color: "#FFD700",
+          weight: 3,
+          opacity: 1,
+          fillColor: "#FFD700",
+          fillOpacity: 0.12
+        }}),
+        interactive: false
+      }}).addTo(map);
+      map._parcelHighlight = hl;
+
+      const coords = feature.geometry.type === "MultiPolygon"
+        ? feature.geometry.coordinates.flat(2)
+        : feature.geometry.coordinates.flat();
+      let apex = coords[0];
+      for (const pt of coords) {{
+        if (pt[1] > apex[1]) apex = pt;
+      }}
+      const popupLatLng = L.latLng(apex[1], apex[0]);
+
+      const p = feature.properties;
+      let elevHtml = '<em>Loading elevation...</em>';
+      const popup = L.popup().setLatLng(popupLatLng).setContent(buildParcelPopup(p, elevHtml)).openOn(map);
+      map.on("popupclose", function onClose() {{
+        if (map._parcelHighlight) {{
+          map.removeLayer(map._parcelHighlight);
+          map._parcelHighlight = null;
+        }}
+        map.off("popupclose", onClose);
+      }});
+      try {{
+        const elev = await fetchElevation(e.latlng.lat, e.latlng.lng);
+        elevHtml = `Elevation: ${{Math.round(elev).toLocaleString()}} ft`;
+      }} catch {{
+        elevHtml = 'Elevation: unavailable';
+      }}
+      popup.setContent(buildParcelPopup(p, elevHtml));
+    }});
+  }};
 
   try {{
-    for (const county of counties) {{
-      if (signal.aborted || (parcelState.parcelCount || 0) + newFeatures >= maxTotal) break;
+    for (const tile of newTiles) {{
+      if (signal.aborted) break;
 
-      const serviceUrl = `${{PARCEL_BASE_URL}}/Parcels_${{county}}_LIR/FeatureServer/0/query`;
-      let offset = 0;
+      const tileEnvelope = `${{tile.w}},${{tile.s}},${{tile.e}},${{tile.n}}`;
+      const tileCounties = getCountiesInBounds(L.latLngBounds(
+        L.latLng(tile.s, tile.w), L.latLng(tile.n, tile.e)
+      ));
 
-      while ((parcelState.parcelCount || 0) + newFeatures < maxTotal) {{
+      for (const county of tileCounties) {{
         if (signal.aborted) break;
-        const params = new URLSearchParams({{
-          geometry: envelope,
-          geometryType: "esriGeometryEnvelope",
-          spatialRel: "esriSpatialRelIntersects",
-          inSR: "4326",
-          outFields: PARCEL_OUT_FIELDS,
-          outSR: "4326",
-          f: "geojson",
-          resultOffset: String(offset),
-          resultRecordCount: "2000"
-        }});
 
-        const response = await fetch(`${{serviceUrl}}?${{params.toString()}}`, {{ signal }});
-        if (!response.ok) {{
-          console.warn(`Parcel query failed for ${{county}}: ${{response.status}}`);
-          break;
-        }}
-        const data = await response.json();
-        if (data.error) {{
-          console.warn(`Parcel query error for ${{county}}:`, data.error.message);
-          break;
-        }}
+        const serviceUrl = `${{PARCEL_BASE_URL}}/Parcels_${{county}}_LIR/FeatureServer/0/query`;
+        let offset = 0;
+        let pages = 0;
 
-        const features = data.features || [];
-        if (!features.length) break;
+        while (pages < 3) {{
+          if (signal.aborted) break;
+          const params = new URLSearchParams({{
+            geometry: tileEnvelope,
+            geometryType: "esriGeometryEnvelope",
+            spatialRel: "esriSpatialRelIntersects",
+            inSR: "4326",
+            outFields: PARCEL_OUT_FIELDS,
+            outSR: "4326",
+            f: "geojson",
+            resultOffset: String(offset),
+            resultRecordCount: "2000"
+          }});
 
-        const geoLayer = L.geoJSON({{ type: "FeatureCollection", features }}, {{
-          renderer: parcelRenderer,
-          pane: "parcelPane",
-          style: () => ({{
-            color: parcelColor,
-            weight: 1,
-            opacity: 0.7,
-            fillColor: "transparent",
-            fillOpacity: 0
-          }}),
-          onEachFeature: (feature, layer) => {{
-            layer.on("click", async (e) => {{
-              L.DomEvent.stopPropagation(e);
-              // Highlight clicked parcel
-              if (map._parcelHighlight) {{
-                map.removeLayer(map._parcelHighlight);
-                map._parcelHighlight = null;
-              }}
-              const hl = L.geoJSON(feature, {{
-                pane: "parcelPane",
-                style: () => ({{
-                  color: "#FFD700",
-                  weight: 3,
-                  opacity: 1,
-                  fillColor: "#FFD700",
-                  fillOpacity: 0.12
-                }}),
-                interactive: false
-              }}).addTo(map);
-              map._parcelHighlight = hl;
-
-              // Position popup at the northernmost vertex of the parcel boundary
-              // so the callout stem touches the actual property line, not empty space
-              const coords = feature.geometry.type === "MultiPolygon"
-                ? feature.geometry.coordinates.flat(2)
-                : feature.geometry.coordinates.flat();
-              let apex = coords[0];
-              for (const pt of coords) {{
-                if (pt[1] > apex[1]) apex = pt;
-              }}
-              const popupLatLng = L.latLng(apex[1], apex[0]);
-
-              const p = feature.properties;
-              let elevHtml = '<em>Loading elevation...</em>';
-              const popup = L.popup().setLatLng(popupLatLng).setContent(buildParcelPopup(p, elevHtml)).openOn(map);
-              map.on("popupclose", function onClose() {{
-                if (map._parcelHighlight) {{
-                  map.removeLayer(map._parcelHighlight);
-                  map._parcelHighlight = null;
-                }}
-                map.off("popupclose", onClose);
-              }});
-              try {{
-                const elev = await fetchElevation(e.latlng.lat, e.latlng.lng);
-                elevHtml = `Elevation: ${{Math.round(elev).toLocaleString()}} ft`;
-              }} catch {{
-                elevHtml = 'Elevation: unavailable';
-              }}
-              popup.setContent(buildParcelPopup(p, elevHtml));
-            }});
+          const response = await fetch(`${{serviceUrl}}?${{params.toString()}}`, {{ signal }});
+          if (!response.ok) {{
+            console.warn(`Parcel query failed for ${{county}}: ${{response.status}}`);
+            break;
           }}
-        }});
+          const data = await response.json();
+          if (data.error) {{
+            console.warn(`Parcel query error for ${{county}}:`, data.error.message);
+            break;
+          }}
 
-        // Merge into existing layer (don't clear old parcels)
-        parcelLayer.addLayer(geoLayer);
-        newFeatures += features.length;
+          const features = data.features || [];
+          if (!features.length) break;
 
-        const total = (parcelState.parcelCount || 0) + newFeatures;
-        if (status) status.textContent = `loading… ${{total.toLocaleString()}} parcels`;
+          const geoLayer = L.geoJSON({{ type: "FeatureCollection", features }}, {{
+            renderer: parcelRenderer,
+            pane: "parcelPane",
+            style: () => ({{
+              color: parcelColor,
+              weight: 1,
+              opacity: 0.7,
+              fillColor: "transparent",
+              fillOpacity: 0
+            }}),
+            onEachFeature: onParcelClick
+          }});
 
-        // Check if more pages
-        if (data.exceededTransferLimit || features.length === 2000) {{
-          offset += features.length;
-        }} else {{
-          break;
+          parcelLayer.addLayer(geoLayer);
+          newFeatures += features.length;
+
+          const total = parcelState.parcelCount + newFeatures;
+          if (status) status.textContent = `loading… ${{total.toLocaleString()}} parcels`;
+
+          pages++;
+          if (data.exceededTransferLimit || features.length === 2000) {{
+            offset += features.length;
+          }} else {{
+            break;
+          }}
         }}
+      }}
+
+      // Mark tile as loaded even if it had no parcels (e.g. mountain/water)
+      if (!signal.aborted) {{
+        parcelState.loadedTiles.add(tile.key);
       }}
     }}
 
     if (signal.aborted) return;
 
-    // Expand loadedBounds to cover both old and new areas
-    if (parcelState.loadedBounds) {{
-      parcelState.loadedBounds = parcelState.loadedBounds.extend(fetchBounds.getSouthWest()).extend(fetchBounds.getNorthEast());
-    }} else {{
-      parcelState.loadedBounds = fetchBounds;
-    }}
-    parcelState.parcelCount = (parcelState.parcelCount || 0) + newFeatures;
+    parcelState.parcelCount += newFeatures;
     parcelState.loading = false;
     parcelState.loadingBounds = null;
     if (status) {{
