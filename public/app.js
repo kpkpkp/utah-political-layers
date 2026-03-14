@@ -1243,6 +1243,7 @@ const loadParcelsForView = async () => {
   if (zoom < parcelState.minZoom) {
     parcelLayer.clearLayers();
     parcelState.loadedBounds = null;
+    parcelState.parcelCount = 0;
     if (status) status.textContent = "zoom in to see";
     return;
   }
@@ -1263,7 +1264,7 @@ const loadParcelsForView = async () => {
   const signal = parcelState.abortController.signal;
 
   parcelState.loading = true;
-  if (status) status.textContent = "loading...";
+  if (status) status.textContent = "loading…";
 
   const counties = getCountiesInBounds(fetchBounds);
   if (!counties.length) {
@@ -1276,18 +1277,17 @@ const loadParcelsForView = async () => {
   const envelope = `${fetchBounds.getWest()},${fetchBounds.getSouth()},${fetchBounds.getEast()},${fetchBounds.getNorth()}`;
   const parcelColor = styleState.lineColors.parcels || "#888888";
 
-  const tempParcelGroup = L.layerGroup();
-  let totalFeatures = 0;
-  const maxTotal = 4000;
+  let newFeatures = 0;
+  const maxTotal = 6000;
 
   try {
     for (const county of counties) {
-      if (signal.aborted || totalFeatures >= maxTotal) break;
+      if (signal.aborted || (parcelState.parcelCount || 0) + newFeatures >= maxTotal) break;
 
       const serviceUrl = `${PARCEL_BASE_URL}/Parcels_${county}_LIR/FeatureServer/0/query`;
       let offset = 0;
 
-      while (totalFeatures < maxTotal) {
+      while ((parcelState.parcelCount || 0) + newFeatures < maxTotal) {
         if (signal.aborted) break;
         const params = new URLSearchParams({
           geometry: envelope,
@@ -1367,10 +1367,12 @@ const loadParcelsForView = async () => {
           }
         });
 
-        tempParcelGroup.addLayer(geoLayer);
-        totalFeatures += features.length;
+        // Merge into existing layer (don't clear old parcels)
+        parcelLayer.addLayer(geoLayer);
+        newFeatures += features.length;
 
-        if (status) status.textContent = `${totalFeatures.toLocaleString()} parcels`;
+        const total = (parcelState.parcelCount || 0) + newFeatures;
+        if (status) status.textContent = `loading… ${total.toLocaleString()} parcels`;
 
         // Check if more pages
         if (data.exceededTransferLimit || features.length === 2000) {
@@ -1383,14 +1385,16 @@ const loadParcelsForView = async () => {
 
     if (signal.aborted) return;
 
-    // Atomic swap: clear old, add new — no visible gap
-    parcelLayer.clearLayers();
-    tempParcelGroup.eachLayer(l => parcelLayer.addLayer(l));
-
-    parcelState.loadedBounds = fetchBounds;
+    // Expand loadedBounds to cover both old and new areas
+    if (parcelState.loadedBounds) {
+      parcelState.loadedBounds = parcelState.loadedBounds.extend(fetchBounds.getSouthWest()).extend(fetchBounds.getNorthEast());
+    } else {
+      parcelState.loadedBounds = fetchBounds;
+    }
+    parcelState.parcelCount = (parcelState.parcelCount || 0) + newFeatures;
     parcelState.loading = false;
     if (status) {
-      status.textContent = totalFeatures > 0 ? `${totalFeatures.toLocaleString()} parcels` : "";
+      status.textContent = parcelState.parcelCount > 0 ? `${parcelState.parcelCount.toLocaleString()} parcels` : "";
     }
   } catch (err) {
     if (err.name === "AbortError") return;
