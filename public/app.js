@@ -121,18 +121,48 @@ const ZoomIndicator = L.Control.extend({
   options: { position: 'bottomright' },
   onAdd: function () {
     const div = L.DomUtil.create('div', 'zoom-indicator');
-    div.style.cssText = 'background:rgba(255,255,255,0.85);padding:2px 6px;border-radius:4px;font-size:11px;color:#333;border:1px solid #aaa;pointer-events:none;';
+    div.style.cssText = 'background:rgba(255,255,255,0.85);padding:2px 6px;border-radius:4px;font-size:11px;color:#333;border:1px solid #aaa;pointer-events:none;white-space:nowrap;';
     this._div = div;
     this._update();
     map.on('zoomend', () => this._update());
+    map.on('moveend', () => this._update());
     return div;
   },
   _update: function () {
     const z = map.getZoom();
-    this._div.textContent = z != null ? `Zoom: ${z.toFixed(1)}` : '';
+    if (z == null) { this._div.textContent = ''; return; }
+    const parts = [`Zoom: ${z.toFixed(1)}`];
+    try {
+      const bounds = map.getBounds();
+
+      // Count population dots in viewport
+      if (populationPane && populationPane.style.display !== 'none') {
+        let popCount = 0;
+        populationLayer.eachLayer((m) => {
+          if (m.getLatLng && bounds.contains(m.getLatLng())) popCount++;
+        });
+        if (popCount > 0) parts.push(`Pop: ${popCount.toLocaleString()}`);
+      }
+
+      // Count parcel features in viewport
+      if (parcelState && parcelState.enabled) {
+        let parcelCount = 0;
+        parcelLayer.eachLayer((group) => {
+          if (group.eachLayer) {
+            group.eachLayer((f) => {
+              if (f.getBounds && bounds.intersects(f.getBounds())) parcelCount++;
+            });
+          }
+        });
+        if (parcelCount > 0) parts.push(`Parcels: ${parcelCount.toLocaleString()}`);
+      }
+    } catch (_) {
+      // Variables not yet initialized during startup
+    }
+    this._div.textContent = parts.join(' | ');
   }
 });
-new ZoomIndicator().addTo(map);
+const zoomIndicator = new ZoomIndicator().addTo(map);
 
 // Ensure Leaflet controls are visible - diagnostic and fix
 window.addEventListener('load', () => {
@@ -238,15 +268,34 @@ let populationHighlight = null;
 const parcelRenderer = L.canvas({ padding: 0.5, pane: "parcelPane", tolerance: isTouchDevice ? 12 : 0 });
 const parcelLayer = L.layerGroup();
 
-const PARCEL_TILE_SIZE = 0.008; // ~900m per tile
+const PARCEL_MAX_POP_DOTS = 500; // parcels only load when fewer pop dots are visible
+
+// Adaptive tile size: larger tiles at lower zoom to reduce request count
+const getParcelTileSize = () => {
+  const zoom = map.getZoom();
+  if (zoom >= 17) return 0.005;  // ~550m — dense urban detail
+  if (zoom >= 15) return 0.015;  // ~1.7km
+  if (zoom >= 14) return 0.04;   // ~4.4km
+  return 0.1;                    // ~11km — wide rural view
+};
 const parcelState = {
   loading: false,
   enabled: false,
-  loadedTiles: new Set(),   // keys like "col_row" for globally-aligned grid
+  loadedTiles: new Set(),   // keys like "ts_col_row" for globally-aligned grid
+  currentTileSize: null,    // track tile size to invalidate cache on zoom change
   loadingBounds: null,
   abortController: null,
-  parcelCount: 0,
-  minZoom: 14
+  parcelCount: 0
+};
+
+const countVisiblePopDots = () => {
+  const bounds = map.getBounds();
+  let count = 0;
+  populationLayer.eachLayer((m) => {
+    if (count > PARCEL_MAX_POP_DOTS) return; // early-ish exit
+    if (m.getLatLng && bounds.contains(m.getLatLng())) count++;
+  });
+  return count;
 };
 
 let countyBoundsData = null;
@@ -487,6 +536,8 @@ baseTiles = createBaseTiles(selectedTileStyle).addTo(map);
 const populationState = {
   loaded: false,
   loading: false,
+  viewportLoaded: false,  // true once initial viewport population is loaded
+  abortController: null,  // AbortController for in-flight population fetches
   maxDensity: 1,
   totalCount: 0
 };
@@ -699,6 +750,7 @@ const attachToggle = (checkboxId, layerKey) => {
       map.removeLayer(layer);
       trackEvent('layer_toggle', { layer: layerKey, enabled: false });
     }
+    zoomIndicator._update();
   });
 };
 
@@ -758,6 +810,16 @@ const refreshPartyFill = (parties) => {
       return congressFutureStyle(info?.party);
     });
   }
+
+  // Update parcel line styles to match appearance settings
+  parcelLayer.eachLayer((group) => {
+    if (group.setStyle) {
+      group.setStyle({
+        weight: lineWeight(0.7),
+        opacity: styleState.lineOpacity
+      });
+    }
+  });
 
   // Set pointer-events after styles are applied
   // Use requestAnimationFrame to ensure DOM is updated
@@ -1080,7 +1142,7 @@ const buildPopulationMarker = (feature, baseColor, cache) => {
     // Async elevation fetch
     try {
       const elev = await fetchElevation(e.latlng.lat, e.latlng.lng);
-      elevText = `Elevation: ${Math.round(elev).toLocaleString()} ft`;
+      elevText = `Elevation: ${Math.round(elev).toLocaleString()} ft (${Math.round(elev * 0.3048).toLocaleString()} m)`;
     } catch {
       elevText = "Elevation: unavailable";
     }
@@ -1092,14 +1154,18 @@ const buildPopulationMarker = (feature, baseColor, cache) => {
   return marker;
 };
 
-const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
+// loadedFids: optional Set of FIDs already loaded (to skip duplicates in phase 2)
+// envelope: optional {xmin,ymin,xmax,ymax} to spatially filter the query
+// signal: optional AbortSignal to cancel in-flight fetches
+const loadPopulationPointsViaRest = async (baseColor, cache, status, { envelope, loadedFids, receivedSoFar, signal } = {}) => {
   const baseUrl =
     "https://services1.arcgis.com/99lidPhWCzftIe9K/arcgis/rest/services/Blocks_PopDensity_5orMore_Albers_Equal_Area/FeatureServer/0/query";
   const pageSize = 2000;
   let offset = 0;
-  let received = 0;
+  let received = receivedSoFar || 0;
 
   while (true) {
+    if (signal && signal.aborted) break;
     if (status) {
       const total = populationState.totalCount;
       const fetchMsg = total
@@ -1116,9 +1182,14 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
       resultOffset: String(offset),
       resultRecordCount: String(pageSize)
     });
+    if (envelope) {
+      params.set("geometry", `${envelope.xmin},${envelope.ymin},${envelope.xmax},${envelope.ymax}`);
+      params.set("inSR", "4326");
+      params.set("spatialRel", "esriSpatialRelIntersects");
+    }
     let response, data;
     try {
-      response = await fetch(`${baseUrl}?${params.toString()}`);
+      response = await fetch(`${baseUrl}?${params.toString()}`, signal ? { signal } : undefined);
     } catch (fetchErr) {
       throw new Error("fetch failed: " + (fetchErr.message || fetchErr));
     }
@@ -1143,6 +1214,10 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
     const markers = [];
     features.forEach((feature) => {
       try {
+        const fid = String(feature.properties?.FID || "");
+        // Skip if already loaded in a previous phase
+        if (loadedFids && loadedFids.has(fid)) return;
+        if (loadedFids) loadedFids.add(fid);
         const marker = buildPopulationMarker(feature, baseColor, cache);
         if (marker) {
           markers.push(marker);
@@ -1196,8 +1271,17 @@ const loadPopulationPointsViaRest = async (baseColor, cache, status) => {
 };
 
 const loadPopulationPoints = async () => {
-  if (populationState.loaded || populationState.loading) return;
+  if (populationState.loaded) return;
+
+  // Abort any in-flight population load (e.g. viewport changed during Phase 1)
+  if (populationState.abortController) {
+    populationState.abortController.abort();
+  }
+  populationState.abortController = new AbortController();
+  const signal = populationState.abortController.signal;
+
   populationState.loading = true;
+  populationState.viewportLoaded = false;
   const status = ensurePopulationStatus();
   let loadingDots = 0;
   let loadingTimer = null;
@@ -1208,21 +1292,40 @@ const loadPopulationPoints = async () => {
       status.textContent = `loading${".".repeat(loadingDots + 1)}`;
     }, 500);
   }
-  try {
-    populationState.totalCount = await fetchPopulationCount();
-  } catch (error) {
-    console.warn("Population count failed", error);
+  if (!populationState.totalCount) {
+    try {
+      populationState.totalCount = await fetchPopulationCount();
+    } catch (error) {
+      console.warn("Population count failed", error);
+    }
   }
   if (loadingTimer) {
     clearInterval(loadingTimer);
     loadingTimer = null;
   }
+  if (signal.aborted) return;
   try {
     const baseColor = mixColor(hexToRgb(populationTintColor), 0.5);
     const cache = loadPopulationPointCache();
-    const restCount = await loadPopulationPointsViaRest(baseColor, cache, status);
+    const loadedFids = populationState._loadedFids || new Set();
+    populationState._loadedFids = loadedFids;
+
+    // Phase 1: load population blocks in the current viewport first
+    const vb = map.getBounds().pad(0.2);
+    const envelope = { xmin: vb.getWest(), ymin: vb.getSouth(), xmax: vb.getEast(), ymax: vb.getNorth() };
+    const phase1Count = await loadPopulationPointsViaRest(baseColor, cache, status, { envelope, loadedFids, signal });
+    if (signal.aborted) return;
+    populationState.viewportLoaded = true;
+    zoomIndicator._update();
+    // Trigger parcel load now that viewport pop data is ready
+    debouncedParcelLoad();
+
+    // Phase 2: load the rest of the state (skipping already-loaded FIDs)
+    const restCount = await loadPopulationPointsViaRest(baseColor, cache, status, { loadedFids, receivedSoFar: phase1Count, signal });
+    if (signal.aborted) return;
     populationState.loaded = true;
     populationState.loading = false;
+    populationState.abortController = null;
     updatePopulationStyles();
     persistPopulationPointCache();
     if (status) {
@@ -1234,6 +1337,7 @@ const loadPopulationPoints = async () => {
       populationOutlinePane.style.display = "none";
       populationLayer.addTo(map);
     }
+    zoomIndicator._update();
     const populationToggle = document.getElementById("toggle-population");
     if (populationToggle && populationToggle.checked) {
       populationPane.style.display = "";
@@ -1241,6 +1345,7 @@ const loadPopulationPoints = async () => {
     }
     enablePopulationCanvasClicks();
   } catch (error) {
+    if (error.name === "AbortError") return;
     populationState.loading = false;
     if (loadingTimer) {
       clearInterval(loadingTimer);
@@ -1298,9 +1403,16 @@ const PARCEL_OUT_FIELDS = "PARCEL_ID,PARCEL_ADD,PARCEL_CITY,TOTAL_MKT_VALUE,LAND
 
 const loadParcelsForView = async () => {
   const status = document.getElementById("parcel-status");
-  const zoom = map.getZoom();
 
-  if (zoom < parcelState.minZoom) {
+  // Block until population viewport data is loaded so dot count is meaningful
+  if (!populationState.viewportLoaded) {
+    if (status) status.textContent = "waiting for pop data…";
+    return;
+  }
+
+  const visiblePop = countVisiblePopDots();
+
+  if (visiblePop > PARCEL_MAX_POP_DOTS) {
     if (parcelState.abortController) {
       parcelState.abortController.abort();
       parcelState.abortController = null;
@@ -1311,16 +1423,23 @@ const loadParcelsForView = async () => {
     parcelState.parcelCount = 0;
     parcelState.loading = false;
     if (status) status.textContent = "zoom in to see";
+    zoomIndicator._update();
     return;
   }
 
   const viewBounds = map.getBounds();
   const fetchBounds = viewBounds.pad(0.3);
 
+  // Adaptive tile size — invalidate cache when tile grid changes
+  const ts = getParcelTileSize();
+  if (parcelState.currentTileSize !== ts) {
+    parcelLayer.clearLayers();
+    parcelState.loadedTiles.clear();
+    parcelState.parcelCount = 0;
+    parcelState.currentTileSize = ts;
+  }
+
   // Build globally-aligned tile grid covering the fetch area
-  // Using a fixed global grid means the same geographic area always maps to the
-  // same tile key, so already-loaded tiles are skipped on pan.
-  const ts = PARCEL_TILE_SIZE;
   const colMin = Math.floor(fetchBounds.getWest() / ts);
   const colMax = Math.floor(fetchBounds.getEast() / ts);
   const rowMin = Math.floor(fetchBounds.getSouth() / ts);
@@ -1329,7 +1448,7 @@ const loadParcelsForView = async () => {
   const newTiles = [];
   for (let r = rowMin; r <= rowMax; r++) {
     for (let c = colMin; c <= colMax; c++) {
-      const key = `${c}_${r}`;
+      const key = `${ts}_${c}_${r}`;
       if (!parcelState.loadedTiles.has(key)) {
         newTiles.push({ c, r, key, w: c * ts, s: r * ts, e: (c + 1) * ts, n: (r + 1) * ts });
       }
@@ -1360,7 +1479,24 @@ const loadParcelsForView = async () => {
         map.removeLayer(map._parcelHighlight);
         map._parcelHighlight = null;
       }
-      const hl = L.geoJSON(feature, {
+
+      // Collect all parcel fragments sharing the same PARCEL_ID
+      const parcelId = feature.properties?.PARCEL_ID;
+      const matchingFeatures = [feature];
+      if (parcelId) {
+        parcelLayer.eachLayer((group) => {
+          if (group.eachLayer) {
+            group.eachLayer((f) => {
+              if (f.feature && f.feature !== feature &&
+                  f.feature.properties?.PARCEL_ID === parcelId) {
+                matchingFeatures.push(f.feature);
+              }
+            });
+          }
+        });
+      }
+
+      const hl = L.geoJSON({ type: "FeatureCollection", features: matchingFeatures }, {
         pane: "parcelPane",
         style: () => ({
           color: "#FFD700",
@@ -1373,12 +1509,15 @@ const loadParcelsForView = async () => {
       }).addTo(map);
       map._parcelHighlight = hl;
 
-      const coords = feature.geometry.type === "MultiPolygon"
-        ? feature.geometry.coordinates.flat(2)
-        : feature.geometry.coordinates.flat();
-      let apex = coords[0];
-      for (const pt of coords) {
-        if (pt[1] > apex[1]) apex = pt;
+      // Position popup at the northernmost point across all matching fragments
+      let apex = null;
+      for (const mf of matchingFeatures) {
+        const coords = mf.geometry.type === "MultiPolygon"
+          ? mf.geometry.coordinates.flat(2)
+          : mf.geometry.coordinates.flat();
+        for (const pt of coords) {
+          if (!apex || pt[1] > apex[1]) apex = pt;
+        }
       }
       const popupLatLng = L.latLng(apex[1], apex[0]);
 
@@ -1394,7 +1533,7 @@ const loadParcelsForView = async () => {
       });
       try {
         const elev = await fetchElevation(e.latlng.lat, e.latlng.lng);
-        elevHtml = `Elevation: ${Math.round(elev).toLocaleString()} ft`;
+        elevHtml = `Elevation: ${Math.round(elev).toLocaleString()} ft (${Math.round(elev * 0.3048).toLocaleString()} m)`;
       } catch {
         elevHtml = 'Elevation: unavailable';
       }
@@ -1402,82 +1541,91 @@ const loadParcelsForView = async () => {
     });
   };
 
-  try {
-    for (const tile of newTiles) {
+  // Fetch a single tile (all counties + pagination) and return features added
+  const fetchTile = async (tile) => {
+    if (signal.aborted) return 0;
+    const tileEnvelope = `${tile.w},${tile.s},${tile.e},${tile.n}`;
+    const tileCounties = getCountiesInBounds(L.latLngBounds(
+      L.latLng(tile.s, tile.w), L.latLng(tile.n, tile.e)
+    ));
+    let tileFeatures = 0;
+
+    for (const county of tileCounties) {
       if (signal.aborted) break;
+      const serviceUrl = `${PARCEL_BASE_URL}/Parcels_${county}_LIR/FeatureServer/0/query`;
+      let offset = 0;
+      let pages = 0;
 
-      const tileEnvelope = `${tile.w},${tile.s},${tile.e},${tile.n}`;
-      const tileCounties = getCountiesInBounds(L.latLngBounds(
-        L.latLng(tile.s, tile.w), L.latLng(tile.n, tile.e)
-      ));
-
-      for (const county of tileCounties) {
+      while (pages < 3) {
         if (signal.aborted) break;
+        const params = new URLSearchParams({
+          geometry: tileEnvelope,
+          geometryType: "esriGeometryEnvelope",
+          spatialRel: "esriSpatialRelIntersects",
+          inSR: "4326",
+          outFields: PARCEL_OUT_FIELDS,
+          outSR: "4326",
+          f: "geojson",
+          resultOffset: String(offset),
+          resultRecordCount: "2000"
+        });
 
-        const serviceUrl = `${PARCEL_BASE_URL}/Parcels_${county}_LIR/FeatureServer/0/query`;
-        let offset = 0;
-        let pages = 0;
+        const response = await fetch(`${serviceUrl}?${params.toString()}`, { signal });
+        if (!response.ok) {
+          console.warn(`Parcel query failed for ${county}: ${response.status}`);
+          break;
+        }
+        const data = await response.json();
+        if (data.error) {
+          console.warn(`Parcel query error for ${county}:`, data.error.message);
+          break;
+        }
 
-        while (pages < 3) {
-          if (signal.aborted) break;
-          const params = new URLSearchParams({
-            geometry: tileEnvelope,
-            geometryType: "esriGeometryEnvelope",
-            spatialRel: "esriSpatialRelIntersects",
-            inSR: "4326",
-            outFields: PARCEL_OUT_FIELDS,
-            outSR: "4326",
-            f: "geojson",
-            resultOffset: String(offset),
-            resultRecordCount: "2000"
-          });
+        const features = data.features || [];
+        if (!features.length) break;
 
-          const response = await fetch(`${serviceUrl}?${params.toString()}`, { signal });
-          if (!response.ok) {
-            console.warn(`Parcel query failed for ${county}: ${response.status}`);
-            break;
-          }
-          const data = await response.json();
-          if (data.error) {
-            console.warn(`Parcel query error for ${county}:`, data.error.message);
-            break;
-          }
+        const geoLayer = L.geoJSON({ type: "FeatureCollection", features }, {
+          renderer: parcelRenderer,
+          pane: "parcelPane",
+          style: () => ({
+            color: parcelColor,
+            weight: lineWeight(0.7),
+            opacity: styleState.lineOpacity,
+            fillColor: "transparent",
+            fillOpacity: 0
+          }),
+          onEachFeature: onParcelClick
+        });
 
-          const features = data.features || [];
-          if (!features.length) break;
+        parcelLayer.addLayer(geoLayer);
+        tileFeatures += features.length;
+        newFeatures += features.length;
 
-          const geoLayer = L.geoJSON({ type: "FeatureCollection", features }, {
-            renderer: parcelRenderer,
-            pane: "parcelPane",
-            style: () => ({
-              color: parcelColor,
-              weight: 1,
-              opacity: 0.7,
-              fillColor: "transparent",
-              fillOpacity: 0
-            }),
-            onEachFeature: onParcelClick
-          });
+        const total = parcelState.parcelCount + newFeatures;
+        if (status) status.textContent = `loading… ${total.toLocaleString()} parcels`;
 
-          parcelLayer.addLayer(geoLayer);
-          newFeatures += features.length;
-
-          const total = parcelState.parcelCount + newFeatures;
-          if (status) status.textContent = `loading… ${total.toLocaleString()} parcels`;
-
-          pages++;
-          if (data.exceededTransferLimit || features.length === 2000) {
-            offset += features.length;
-          } else {
-            break;
-          }
+        pages++;
+        if (data.exceededTransferLimit || features.length === 2000) {
+          offset += features.length;
+        } else {
+          break;
         }
       }
+    }
 
-      // Mark tile as loaded even if it had no parcels (e.g. mountain/water)
-      if (!signal.aborted) {
-        parcelState.loadedTiles.add(tile.key);
-      }
+    if (!signal.aborted) {
+      parcelState.loadedTiles.add(tile.key);
+    }
+    return tileFeatures;
+  };
+
+  try {
+    // Fetch tiles in parallel batches of 6
+    const BATCH_SIZE = 6;
+    for (let i = 0; i < newTiles.length; i += BATCH_SIZE) {
+      if (signal.aborted) break;
+      const batch = newTiles.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(fetchTile));
     }
 
     if (signal.aborted) return;
@@ -1488,6 +1636,7 @@ const loadParcelsForView = async () => {
     if (status) {
       status.textContent = parcelState.parcelCount > 0 ? `${parcelState.parcelCount.toLocaleString()} parcels` : "";
     }
+    zoomIndicator._update();
   } catch (err) {
     if (err.name === "AbortError") return;
     parcelState.loading = false;
@@ -2080,13 +2229,24 @@ const init = async () => {
   map.on("moveend", storeView);
   map.on("zoomend", storeView);
 
-  // Viewport-driven loading for parcels
-  map.on("moveend", () => {
+  // Viewport-driven loading for parcels and population restart
+  let popRestartTimeout = null;
+  const onViewportChange = () => {
     debouncedParcelLoad();
-  });
-  map.on("zoomend", () => {
-    debouncedParcelLoad();
-  });
+    // If population isn't fully loaded yet, restart to prioritize new viewport
+    if (!populationState.loaded) {
+      clearTimeout(popRestartTimeout);
+      popRestartTimeout = setTimeout(() => {
+        if (!populationState.loaded) {
+          loadPopulationPoints().catch(err => {
+            if (err.name !== "AbortError") console.error("Pop restart:", err);
+          });
+        }
+      }, 600);
+    }
+  };
+  map.on("moveend", onViewportChange);
+  map.on("zoomend", onViewportChange);
 };
 
 init().catch((error) => {
