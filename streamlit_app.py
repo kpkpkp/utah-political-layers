@@ -2499,17 +2499,17 @@ if (storedView) {{
   }});
 }}
 
+const parcelPane = map.createPane("parcelPane");
+parcelPane.style.zIndex = "445";  // Below population so dots remain clickable through parcel outlines
+parcelPane.style.pointerEvents = "auto";
+
 const populationPane = map.createPane("populationPane");
-populationPane.style.zIndex = "450";  // Above overlays (400) so dots aren't hidden by party fill
+populationPane.style.zIndex = "450";  // Above parcels and overlays (400)
 populationPane.style.pointerEvents = "none";  // Allow clicks to pass through to districts
 
 const populationOutlinePane = map.createPane("populationOutlinePane");
 populationOutlinePane.style.zIndex = "460";  // Just above population pane
 populationOutlinePane.style.pointerEvents = "auto";  // Allow clicks on outline to dismiss it
-
-const parcelPane = map.createPane("parcelPane");
-parcelPane.style.zIndex = "455";  // Above population (450) so parcels are clickable when both layers on
-parcelPane.style.pointerEvents = "auto";
 
 const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
 const populationRenderer = L.canvas({{ padding: 0.5, pane: "populationPane", tolerance: isTouchDevice ? 12 : 0 }});
@@ -2527,18 +2527,80 @@ const parcelState = {{
   loadingBounds: null,
   abortController: null,
   parcelCount: 0,
-  minZoom: 15
+  minZoom: 14
 }};
 
 let countyBoundsData = null;
 
-// Helper to enable pointer-events on the population canvas
-// Called after canvas is created (when first marker is added)
+// Track whether a population feature handled the current click
+let _populationClickHandled = false;
+
+// Helper to enable pointer-events on the population canvas and set up
+// click-forwarding to the parcel canvas when no population dot is hit.
+// Called after canvas is created (when first marker is added).
 const enablePopulationCanvasClicks = () => {{
   const canvas = populationPane.querySelector('canvas');
   if (canvas && canvas.style.pointerEvents !== "auto") {{
     canvas.style.pointerEvents = "auto";
-    console.log('Enabled pointer-events on population canvas');
+
+    // Forward unhandled clicks to the parcel canvas so parcels remain
+    // clickable even though the population canvas sits above them (z-index).
+    // Leaflet's canvas _onClick fires synchronously; if a population dot
+    // was hit, the marker's click handler sets _populationClickHandled = true
+    // before this listener runs.
+    canvas.addEventListener('click', (e) => {{
+      if (!_populationClickHandled && parcelState.enabled) {{
+        const parcelCanvas = parcelPane.querySelector('canvas');
+        if (parcelCanvas) {{
+          parcelCanvas.dispatchEvent(new MouseEvent('click', {{
+            clientX: e.clientX,
+            clientY: e.clientY,
+            button: e.button,
+            bubbles: true,
+            cancelable: true,
+            view: window
+          }}));
+        }}
+      }}
+      _populationClickHandled = false;
+    }});
+
+    // Forward mousemove to the parcel canvas so hover cursor works even
+    // though the population canvas sits above it.  When a population dot
+    // is hovered, Leaflet's leaflet-interactive class handles the cursor.
+    // When no dot is hovered, we check if a parcel outline is under the
+    // cursor and mirror its pointer state onto the population canvas.
+    let _hoverRafPending = false;
+    canvas.addEventListener('mousemove', (e) => {{
+      if (_hoverRafPending || map.dragging.moving()) return;
+      _hoverRafPending = true;
+      requestAnimationFrame(() => {{
+        _hoverRafPending = false;
+        if (map.dragging.moving()) {{ canvas.style.cursor = ''; return; }}
+        // Population dot hovered — let Leaflet's CSS class handle cursor
+        if (canvas.classList.contains('leaflet-interactive')) {{
+          canvas.style.cursor = '';
+          return;
+        }}
+        // No population dot — forward to parcel canvas for hover detection
+        if (parcelState.enabled) {{
+          const pc = parcelPane.querySelector('canvas');
+          if (pc) {{
+            pc.dispatchEvent(new MouseEvent('mousemove', {{
+              clientX: e.clientX, clientY: e.clientY,
+              bubbles: true, cancelable: true, view: window
+            }}));
+            if (pc.classList.contains('leaflet-interactive')) {{
+              canvas.style.cursor = 'pointer';
+              return;
+            }}
+          }}
+        }}
+        canvas.style.cursor = '';
+      }});
+    }});
+
+    canvas.addEventListener('mouseout', () => {{ canvas.style.cursor = ''; }});
   }}
 }};
 
@@ -2699,7 +2761,8 @@ const selectedTileStyle = uiState.tileStyle ?? "osm";
 
 const createBaseTiles = (styleKey) =>
   L.tileLayer(tileSources[styleKey].url, {{
-    maxZoom: tileSources[styleKey].maxZoom,
+    maxNativeZoom: tileSources[styleKey].maxZoom,
+    maxZoom: 22,
     attribution: tileSources[styleKey].attribution
   }});
 
@@ -3259,6 +3322,7 @@ const buildPopulationMarker = (feature, baseColor, cache) => {{
 
   // Click handler to highlight the block boundary
   marker.on("click", async (e) => {{
+    _populationClickHandled = true;
     L.DomEvent.stopPropagation(e);
 
     const highlightId = String(feature.properties?.FID ?? "");
@@ -3305,14 +3369,7 @@ const buildPopulationMarker = (feature, baseColor, cache) => {{
       elevText = "Elevation: unavailable";
     }}
     if (populationHighlight && populationHighlight._highlightId === highlightId) {{
-      populationHighlight.unbindTooltip();
-      populationHighlight.bindTooltip(makeTooltipHtml(), {{
-        direction: "top",
-        offset: [0, -8],
-        opacity: 0.95,
-        className: "population-tooltip",
-        sticky: true
-      }});
+      populationHighlight.setTooltipContent(makeTooltipHtml());
     }}
   }});
 

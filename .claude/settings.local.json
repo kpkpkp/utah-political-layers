@@ -79,7 +79,20 @@
       "Bash(adb:*)",
       "Bash(git -C:*)",
       "Bash(sleep:*)",
-      "Bash(/tmp/iframe_test.html:*)"
+      "Bash(/tmp/iframe_test.html:*)",
+      "Bash(find /mnt/c/Users/kpkpk/.cursor/projects/utah-political-layers -name \"fetch-*.js\" -type f 2>/dev/null | head -20)",
+      "Bash(grep -l \"zoom\\\\|population\\\\|block\" /mnt/c/Users/kpkpk/.cursor/projects/utah-political-layers/tests/*.spec.js 2>/dev/null | head -5)",
+      "WebFetch(domain:gis.utah.gov)",
+      "WebFetch(domain:sgid-utah.opendata.arcgis.com)",
+      "WebFetch(domain:epqs.nationalmap.gov)",
+      "Bash(git show:*)",
+      "Bash(mkdir -p /tmp/test_old/js /tmp/test_old/css /tmp/test_old/data && git show 1abb6bc:public/index.html > /tmp/test_old/index.html && git show 1abb6bc:public/app.js > /tmp/test_old/app.js && git show 1abb6bc:public/styles.css > /tmp/test_old/styles.css && git show 1abb6bc:public/css/tour.css > /tmp/test_old/css/tour.css && git show 1abb6bc:public/js/tour.js > /tmp/test_old/js/tour.js && cp -r /mnt/c/Users/kpkpk/.cursor/projects/utah-political-layers/public/data/* /tmp/test_old/data/ && echo \"OK\")",
+      "WebFetch(domain:opendata.gis.utah.gov)",
+      "WebFetch(domain:elevation.nationalmap.gov)",
+      "WebFetch(domain:carto.nationalmap.gov)",
+      "WebFetch(domain:elevation.arcgis.com)",
+      "WebFetch(domain:services.arcgis.com)",
+      "WebFetch(domain:basemap.nationalmap.gov)"
     ],
     "deny": [
       "Bash(git push --force:*)",
