@@ -394,7 +394,8 @@ const defaultColorConfig = {
     house: "#ff6f00",
     senate: "#66777f",
     congressCurrent: "#524619",
-    congressFuture: "#f68a0e"
+    congressFuture: "#f68a0e",
+    burrn: "#FF8C00"
   }
 };
 
@@ -456,7 +457,8 @@ const defaultLineColors = {
   senate: colorConfig.outline.senate,
   congressCurrent: colorConfig.outline.congressCurrent,
   congressFuture: colorConfig.outline.congressFuture,
-  parcels: "#888888"
+  parcels: "#888888",
+  burrn: colorConfig.outline.burrn
 };
 
 const loadStoredColors = () => {
@@ -685,6 +687,15 @@ const congressFutureStyle = (party) => ({
   ...withPartyFill(partyColor(party), 0.15)
 });
 
+const burrnStyle = () => ({
+  color: styleState.lineColors.burrn || "#FF8C00",
+  weight: lineWeight(1.5),
+  opacity: styleState.lineOpacity,
+  fill: true,
+  fillColor: styleState.lineColors.burrn || "#FF8C00",
+  fillOpacity: 0.08
+});
+
 const layerState = {
   tiles: baseTiles,
   population: populationLayer,
@@ -693,7 +704,8 @@ const layerState = {
   senate: null,
   congressCurrent: null,
   congressFuture: null,
-  parcels: parcelLayer
+  parcels: parcelLayer,
+  burrn: null
 };
 
 // Expose for debugging
@@ -1665,7 +1677,8 @@ const bindColorPickers = (parties) => {
     { id: "outline-color-house", key: "house" },
     { id: "outline-color-senate", key: "senate" },
     { id: "outline-color-congress-current", key: "congressCurrent" },
-    { id: "outline-color-congress-future", key: "congressFuture" }
+    { id: "outline-color-congress-future", key: "congressFuture" },
+    { id: "outline-color-burrn", key: "burrn" }
   ];
 
   outlineConfig.forEach(({ id, key }) => {
@@ -1678,9 +1691,11 @@ const bindColorPickers = (parties) => {
       const updatedConfig = updateColorConfig({ outline: { [key]: input.value } });
       // Update the in-memory colorConfig object
       Object.assign(colorConfig, updatedConfig);
-      // Update boundary layer style directly
+      // Update boundary/burrn layer style directly (no party fill)
       if (key === "boundary" && layerState.boundary) {
         layerState.boundary.setStyle({ color: input.value });
+      } else if (key === "burrn" && layerState.burrn) {
+        layerState.burrn.setStyle({ color: input.value, fillColor: input.value });
       } else {
         // Update styleState lineColors to match
         styleState.lineColors[key] = input.value;
@@ -1707,7 +1722,8 @@ const recenterMap = (parties) => {
     { id: "outline-color-house", key: "house" },
     { id: "outline-color-senate", key: "senate" },
     { id: "outline-color-congress-current", key: "congressCurrent" },
-    { id: "outline-color-congress-future", key: "congressFuture" }
+    { id: "outline-color-congress-future", key: "congressFuture" },
+    { id: "outline-color-burrn", key: "burrn" }
   ];
 
   outlineInputs.forEach(({ id, key }) => {
@@ -1859,14 +1875,16 @@ const bindLineControls = (parties) => {
 };
 
 const init = async () => {
-  const [boundary, house, senate, congressCurrent, congressFuture, parties, countyBounds] = await Promise.all([
+  const [boundary, house, senate, congressCurrent, congressFuture, parties, countyBounds, counties, burrnData] = await Promise.all([
     loadJson("data/utah_boundary.geojson"),
     loadJson("data/utah_house_2022.geojson"),
     loadJson("data/utah_senate_2022.geojson"),
     loadJson("data/utah_congress_2022.geojson"),
     loadJson("data/utah_congress_2026.geojson"),
     loadJson("data/utah_parties.json"),
-    loadJson("data/utah_county_bounds.json")
+    loadJson("data/utah_county_bounds.json"),
+    loadJson("data/utah_counties.geojson"),
+    loadJson("data/burrn_county_clerks.json")
   ]);
   countyBoundsData = countyBounds;
 
@@ -1874,6 +1892,18 @@ const init = async () => {
   if (!storedView) {
     map.fitBounds(layerState.boundary.getBounds(), { padding: [20, 20] });
   }
+
+  const buildBurrnPopup = (countyName, clerkData) => {
+    const clerk = clerkData[countyName];
+    let html = `<strong>BURRN &mdash; ${countyName} County</strong>`;
+    html += `<br /><a href="https://burrn.org/signature-search" target="_blank" rel="noopener">Check if you signed the petition</a>`;
+    html += `<br /><a href="https://burrn.org/remove-your-signature" target="_blank" rel="noopener">Remove your signature</a>`;
+    if (clerk) {
+      html += `<br />County Clerk: ${clerk.clerk_phone}`;
+      if (clerk.clerk_url) html += ` &middot; <a href="${clerk.clerk_url}" target="_blank" rel="noopener">Website</a>`;
+    }
+    return html;
+  };
 
   const buildCombinedPopup = (latlng) => {
     const point = [latlng.lng, latlng.lat];
@@ -1895,6 +1925,15 @@ const init = async () => {
     checkLayer(layerState.senate, "Senate District", parties.senate, "DIST", "");
     checkLayer(layerState.congressCurrent, "Federal House District", parties.congress_current, "DISTRICT", "");
     checkLayer(layerState.congressFuture, "Federal House District", parties.congress_future, "DISTRICT", " (coming)");
+    // BURRN county layer
+    if (layerState.burrn && map.hasLayer(layerState.burrn)) {
+      layerState.burrn.eachLayer((sublayer) => {
+        if (!sublayer.feature) return;
+        if (pointInGeometry(point, sublayer.feature.geometry)) {
+          sections.push(buildBurrnPopup(sublayer.feature.properties.NAME20, burrnData));
+        }
+      });
+    }
     return sections.length > 0 ? sections.join('<hr style="margin:6px 0;border:none;border-top:1px solid #ddd">') : null;
   };
 
@@ -1978,6 +2017,19 @@ const init = async () => {
     }
   });
 
+  layerState.burrn = L.geoJSON(counties, {
+    style: burrnStyle,
+    onEachFeature: (feature, layer) => {
+      const countyName = feature.properties.NAME20;
+      const popupContent = buildBurrnPopup(countyName, burrnData);
+      layer.on('click', (e) => {
+        const content = buildCombinedPopup(e.latlng) || popupContent;
+        if (content) L.popup().setLatLng(e.latlng).setContent(content).openOn(map);
+        trackEvent('district_click', { type: 'burrn', county: countyName });
+      });
+    }
+  });
+
   const toggleConfig = [
     { id: "toggle-boundary", key: "boundary" },
     { id: "toggle-tiles", key: "tiles" },
@@ -1986,7 +2038,8 @@ const init = async () => {
     { id: "toggle-senate", key: "senate" },
     { id: "toggle-congress-current", key: "congressCurrent" },
     { id: "toggle-congress-future", key: "congressFuture" },
-    { id: "toggle-parcels", key: "parcels" }
+    { id: "toggle-parcels", key: "parcels" },
+    { id: "toggle-burrn", key: "burrn" }
   ];
 
   toggleConfig.forEach(({ id, key }) => {
@@ -2279,6 +2332,7 @@ const getCurrentDefaults = () => ({
     senate: document.getElementById('toggle-senate')?.checked ?? true,
     congressCurrent: document.getElementById('toggle-congress-current')?.checked ?? true,
     congressFuture: document.getElementById('toggle-congress-future')?.checked ?? false,
+    burrn: document.getElementById('toggle-burrn')?.checked ?? false,
     partyFill: document.getElementById('toggle-party-fill')?.checked ?? true
   },
   sliders: {

@@ -14,6 +14,8 @@ const utahSenate = readFileSync('public/data/utah_senate_2022.geojson', 'utf-8')
 const utahCongressCurrent = readFileSync('public/data/utah_congress_2022.geojson', 'utf-8');
 const utahCongressFuture = readFileSync('public/data/utah_congress_2026.geojson', 'utf-8');
 const utahParties = readFileSync('public/data/utah_parties.json', 'utf-8');
+const utahCounties = readFileSync('public/data/utah_counties.geojson', 'utf-8');
+const burrnClerkData = readFileSync('public/data/burrn_county_clerks.json', 'utf-8');
 
 console.log('✓ Read all source files');
 console.log(`  - utah_boundary.geojson: ${(utahBoundary.length / 1024).toFixed(1)} KB`);
@@ -21,7 +23,9 @@ console.log(`  - utah_house_2022.geojson: ${(utahHouse.length / 1024).toFixed(1)
 console.log(`  - utah_senate_2022.geojson: ${(utahSenate.length / 1024).toFixed(1)} KB`);
 console.log(`  - utah_congress_2022.geojson: ${(utahCongressCurrent.length / 1024).toFixed(1)} KB`);
 console.log(`  - utah_congress_2026.geojson: ${(utahCongressFuture.length / 1024).toFixed(1)} KB`);
-console.log(`  - utah_parties.json: ${(utahParties.length / 1024).toFixed(1)} KB\n`);
+console.log(`  - utah_parties.json: ${(utahParties.length / 1024).toFixed(1)} KB`);
+console.log(`  - utah_counties.geojson: ${(utahCounties.length / 1024).toFixed(1)} KB`);
+console.log(`  - burrn_county_clerks.json: ${(burrnClerkData.length / 1024).toFixed(1)} KB\n`);
 
 // Modify app.js to use embedded data instead of fetch calls
 let modifiedAppJs = appJs;
@@ -37,7 +41,9 @@ modifiedAppJs = modifiedAppJs.replace(
     'data/utah_senate_2022.geojson': EMBEDDED_DATA.senate,
     'data/utah_congress_2022.geojson': EMBEDDED_DATA.congressCurrent,
     'data/utah_congress_2026.geojson': EMBEDDED_DATA.congressFuture,
-    'data/utah_parties.json': EMBEDDED_DATA.parties
+    'data/utah_parties.json': EMBEDDED_DATA.parties,
+    'data/utah_counties.geojson': EMBEDDED_DATA.counties,
+    'data/burrn_county_clerks.json': EMBEDDED_DATA.burrnClerkData
   };
   return dataMap[url] || null;
 };`
@@ -55,7 +61,9 @@ const EMBEDDED_DATA = {
   senate: ${utahSenate},
   congressCurrent: ${utahCongressCurrent},
   congressFuture: ${utahCongressFuture},
-  parties: ${utahParties}
+  parties: ${utahParties},
+  counties: ${utahCounties},
+  burrnClerkData: ${burrnClerkData}
 };
 console.log('✓ Embedded data loaded');
   </script>`;

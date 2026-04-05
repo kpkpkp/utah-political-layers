@@ -1,0 +1,118 @@
+{
+  "Beaver": {
+    "clerk_phone": "(435) 438-6463",
+    "clerk_url": "https://www.beaver.utah.gov/87/Elections"
+  },
+  "Box Elder": {
+    "clerk_phone": "(435) 734-3393",
+    "clerk_url": "https://www.boxeldercountyut.gov/320/Elections"
+  },
+  "Cache": {
+    "clerk_phone": "(435) 755-1460",
+    "clerk_url": "https://www.cachecounty.org/elections/"
+  },
+  "Carbon": {
+    "clerk_phone": "(435) 636-3221",
+    "clerk_url": "https://www.carbon.utah.gov/"
+  },
+  "Daggett": {
+    "clerk_phone": "(435) 784-3154",
+    "clerk_url": "https://www.daggettcounty.org/90/Elections"
+  },
+  "Davis": {
+    "clerk_phone": "(801) 451-3213",
+    "clerk_url": "https://www.daviscountyutah.gov/clerk/election/elections"
+  },
+  "Duchesne": {
+    "clerk_phone": "(435) 738-1228",
+    "clerk_url": "https://duchesne.utah.gov/gov/elected-officials/clerk-auditor/elections-home/"
+  },
+  "Emery": {
+    "clerk_phone": "(435) 381-3550",
+    "clerk_url": "https://emerycounty.com/home/offices/clerk-auditor/election/"
+  },
+  "Garfield": {
+    "clerk_phone": "(435) 676-1120",
+    "clerk_url": "https://www.garfield.utah.gov/departments/auditor-clerk"
+  },
+  "Grand": {
+    "clerk_phone": "(435) 259-1321",
+    "clerk_url": "https://www.grandcountyutah.net/612/Elections"
+  },
+  "Iron": {
+    "clerk_phone": "(435) 477-8340",
+    "clerk_url": "https://www.ironcountyut.gov/clerk"
+  },
+  "Juab": {
+    "clerk_phone": "(435) 623-3410",
+    "clerk_url": "http://www.co.juab.ut.us/County/clerk/election.html"
+  },
+  "Kane": {
+    "clerk_phone": "(435) 644-2458",
+    "clerk_url": "https://kane.utah.gov/311/Elections"
+  },
+  "Millard": {
+    "clerk_phone": "(435) 743-6223",
+    "clerk_url": "https://millardcounty.gov/your-government/elected-officials/clerk/elections/"
+  },
+  "Morgan": {
+    "clerk_phone": "(801) 845-4011",
+    "clerk_url": "https://www.morgancountyutah.gov/election-information"
+  },
+  "Piute": {
+    "clerk_phone": "(435) 577-2840",
+    "clerk_url": "https://piute.gov/your-government/elected-officials/clerk-auditor/"
+  },
+  "Rich": {
+    "clerk_phone": "(435) 793-2415",
+    "clerk_url": "https://www.richcounty.gov/election/"
+  },
+  "Salt Lake": {
+    "clerk_phone": "(385) 468-7400",
+    "clerk_url": "https://slco.org/clerk/elections/"
+  },
+  "San Juan": {
+    "clerk_phone": "(435) 587-3223",
+    "clerk_url": "https://sanjuancountyut.gov/clerk/page/candidates-application-general-election-information"
+  },
+  "Sanpete": {
+    "clerk_phone": "(435) 835-2131",
+    "clerk_url": "https://www.sanpete.com/elections.html"
+  },
+  "Sevier": {
+    "clerk_phone": "(435) 893-0401",
+    "clerk_url": "https://www.sevier.utah.gov/departments/clerk___auditor/index.php"
+  },
+  "Summit": {
+    "clerk_phone": "(435) 336-3204",
+    "clerk_url": "https://www.summitcountyutah.gov/281/Voter-Registration-Elections"
+  },
+  "Tooele": {
+    "clerk_phone": "(435) 843-3140",
+    "clerk_url": "https://tooeleco.gov/departments/elections/"
+  },
+  "Uintah": {
+    "clerk_phone": "(435) 781-5360",
+    "clerk_url": "https://www.uintah.gov/departments/a_-_e_departments/clerk_auditor/election_information.php"
+  },
+  "Utah": {
+    "clerk_phone": "(801) 851-8128",
+    "clerk_url": "https://vote.utahcounty.gov/home"
+  },
+  "Wasatch": {
+    "clerk_phone": "(435) 657-3190",
+    "clerk_url": "https://www.wasatchcounty.gov/ClerkAuditor"
+  },
+  "Washington": {
+    "clerk_phone": "(435) 301-7248",
+    "clerk_url": "https://www.washco.utah.gov/departments/clerk-auditor/election-info/"
+  },
+  "Wayne": {
+    "clerk_phone": "(435) 836-1300",
+    "clerk_url": "https://waynecountyutah.gov/pages/county-offices#clerk"
+  },
+  "Weber": {
+    "clerk_phone": "(801) 399-8034",
+    "clerk_url": "https://www.weberelections.gov/"
+  }
+}

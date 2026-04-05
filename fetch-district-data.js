@@ -45,6 +45,12 @@ const layers = {
     url: `${SGID_BASE}/Political_USHouse2026/FeatureServer/0`,
     where: "STATE='UT'",
     outfile: 'utah_congress_2026.geojson'
+  },
+  utah_counties: {
+    name: 'Utah County Boundaries',
+    url: `${SGID_BASE}/CensusCounties2020/FeatureServer/0`,
+    where: "STATEFP20='49'",
+    outfile: 'utah_counties.geojson'
   }
 };
 
