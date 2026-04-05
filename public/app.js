@@ -486,7 +486,7 @@ const loadStoredUi = () => {
 
 const storedUi = loadStoredUi();
 const uiState = { ...storedUi };
-const defaultPopulationColor = "#ccb43e";
+const defaultPopulationColor = "#933ecc";
 let populationTintColor = storedUi.populationColor ?? defaultPopulationColor;
 let populationPointCache = null;
 
@@ -598,7 +598,7 @@ const styleState = {
   partyFill: storedUi.partyFill ?? false,
   lineColors: loadStoredColors(),
   lineWidth: storedUi.lineWidth ?? 0.57,
-  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 0.83),
+  lineOpacity: Math.max(0.1, storedUi.lineOpacity ?? 1),
   fillOpacity: storedUi.fillOpacity ?? 0.58
 };
 
@@ -2337,11 +2337,11 @@ const getCurrentDefaults = () => ({
   },
   sliders: {
     lineWidth: document.getElementById('line-width')?.value ?? '0.57',
-    lineOpacity: document.getElementById('line-opacity')?.value ?? '0.83',
+    lineOpacity: document.getElementById('line-opacity')?.value ?? '1',
     fillOpacity: document.getElementById('fill-opacity')?.value ?? '0.58'
   },
   tileStyle: document.getElementById('tile-style-select')?.value ?? 'osm',
-  populationColor: document.getElementById('color-population')?.value ?? '#ff0000'
+  populationColor: document.getElementById('color-population')?.value ?? '#933ecc'
 });
 
 const saveDefaults = (target) => {
