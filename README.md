@@ -1,7 +1,16 @@
 # Utah Political Layers
 
-Local web map that overlays Utah State House and State Senate districts with party affiliation colors, plus a toggleable Utah boundary outline.
-Includes current and coming Utah congressional district layers.
+Interactive web visualization of Utah political boundaries — precincts, state house/senate districts, and congressional districts with party affiliation overlays.
+
+**[Live app →](https://utah-political-layers.streamlit.app/)**
+
+## Built with TAC
+
+This project was built using **TAC (Tactical Agentic Coding)** — a structured methodology for human-AI pair programming where Claude operates as a co-developer under explicit architectural direction.
+
+- 175+ commits with Claude as a contributor
+- 200 deployments
+- The `ai_docs/` and `adws/` directories contain the TAC infrastructure
 
 ## Run locally
 
@@ -18,5 +27,9 @@ Includes current and coming Utah congressional district layers.
   - Utah state boundary
   - US Congress districts 2022-2032
   - US Congress districts 2026-2032
-- Party & member roster: Utah Legislature roster (`https://le.utah.gov/asp/roster/roster.asp?house=H`)
-- Congressional delegation: Ballotpedia (`https://ballotpedia.org/United_States_congressional_delegations_from_Utah`)
+- Party & member roster: [Utah Legislature roster](https://le.utah.gov/asp/roster/roster.asp?house=H)
+- Congressional delegation: [Ballotpedia — Utah](https://ballotpedia.org/United_States_congressional_delegations_from_Utah)
+
+## Tech
+
+HTML, JavaScript, Streamlit, GitHub Pages
